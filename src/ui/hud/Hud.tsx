@@ -374,7 +374,7 @@ function heroFallen(s: RunState, uid: string): boolean {
   return false;
 }
 
-/** Fallen in battle: the portrait cracks like shattered jade, a soul wisp rises, and a vermilion 陨 seal is stamped on it. */
+/** Fallen in battle: the portrait cracks like shattered jade, a soul wisp rises, and a vermilion seal bearing a jade skull is stamped on it. */
 function FallenMark() {
   return (
     <div class="fallen-mark">
@@ -390,7 +390,7 @@ function FallenMark() {
       </div>
       <div class="fallen-soul" />
       <div class="fallen-seal" {...tip(<><h4 class="kw-Execute">Fallen</h4><p>This disciple has fallen in battle. They return for the next fight.</p></>, 'above')}>
-        <span class="brush">陨</span>
+        <i class="fallen-skull" aria-hidden="true" />
       </div>
     </div>
   );

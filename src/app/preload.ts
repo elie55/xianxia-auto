@@ -28,6 +28,7 @@ const ART = [
   'art/ui/button_gold.png',
   'art/ui/button_gold_9.png',
   'art/ui/button_red_9.png',
+  'art/ui/fallen_skull.webp',
 ];
 
 function image(url: string): Promise<void> {

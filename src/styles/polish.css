@@ -2748,7 +2748,7 @@ input[type='range']:hover::-webkit-slider-thumb {
   transition: width 0.2s linear;
 }
 
-/* ───────── FALLEN DISCIPLE: shattered jade portrait, rising soul, vermilion 陨 seal ───────── */
+/* ───────── FALLEN DISCIPLE: shattered jade portrait, rising soul, vermilion seal with a jade skull ───────── */
 .hero-slot.fallen .mini-portrait {
   filter: grayscale(1) brightness(0.48) contrast(1.15);
   transition: filter 0.7s ease-out;
@@ -2851,11 +2851,13 @@ input[type='range']:hover::-webkit-slider-thumb {
   pointer-events: auto;
   animation: seal-stamp 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) 0.25s both;
 }
-.fallen-seal .brush {
-  font-size: calc(var(--portrait, 104px) * 0.27);
-  line-height: 1;
-  color: #fff4ec;
-  text-shadow: 0 1px 0 rgba(90, 0, 0, 0.7), 0 0 6px rgba(255, 200, 180, 0.35);
+/* the painted jade skull (ChatGPT, fallen_skull.webp) sits on the seal in place of a character */
+.fallen-seal .fallen-skull {
+  display: block;
+  width: 88%;
+  height: 88%;
+  background: url('/assets/art/ui/fallen_skull.webp') center / contain no-repeat;
+  filter: drop-shadow(0 1px 1px rgba(60, 0, 0, 0.85)) drop-shadow(0 0 5px rgba(255, 190, 160, 0.3));
 }
 @keyframes seal-stamp {
   0% {
