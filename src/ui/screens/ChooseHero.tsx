@@ -29,7 +29,12 @@ export function ChooseHero() {
         <div class="display draft-title">Choose Your First Disciple</div>
         <div class="muted">Your sect begins with one cultivator. Recruit more in the shop after each fight.</div>
       </div>
-      <div class="draft-cards stagger" data-tut="draft-cards">
+      <div class="draft-cards stagger" data-tut="draft-cards" key={`deal${d.rerolls}`} ref={(el) => {
+        if (el && !el.dataset.dealt) {
+          el.dataset.dealt = '1';
+          audio.sfx('ui_flip', { volume: 0.35 });
+        }
+      }}>
         {d.heroes.map((id) => (
           <HeroCard
             key={id + d.rerolls}

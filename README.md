@@ -19,7 +19,7 @@ npm run electron:dev   # desktop shell against the dev server
 npm run electron:build # Windows installer + portable exe in release/
 ```
 
-Developer shortcuts (dev server): `?demo` puts a ready 5-disciple party on the board; `?demo=boss|draft|battle|single|result|defeat|shop|rankup|reward|challenge|cleared|end` opens that scene; `?demo=li_jian,shan_tie` picks the party; `?demo=event:spirit_spring` opens an event; `?screen=compendium|settings|credits|newRun` jumps to a menu screen. Add `&noanim` to freeze entrance animations (deterministic screenshots) and `&notut` to suppress the tutorial. `&realm=1|2|3` shows that realm's arena painting.
+Developer shortcuts (dev server): `?demo` puts a ready 5-disciple party on the board; `?demo=boss|draft|battle|single|result|defeat|shop|rankup|reward|challenge|cleared|end` opens that scene; `?demo=li_jian,shan_tie` picks the party; `?demo=event:spirit_spring` opens an event; `?screen=compendium|settings|credits|newRun` jumps to a menu screen. Add `&noanim` to freeze entrance animations (deterministic screenshots) and `&notut` to suppress the tutorial. `&realm=1|2|3` shows that realm's arena painting. `?screen=compendium&tab=treasures` opens a Compendium tab. QA URLs skip the loading veil.
 
 ### Android
 
@@ -59,6 +59,7 @@ Every disciple and enemy has a sprite pack in `public/assets/art/sprites/<id>/pa
 - `scripts/ground-anchors.mjs` — measures feet and pivots from pixel alpha so every clip stands on its hex.
 - `scripts/fix-anim-scale.mjs` — normalises each clip's zoom to the idle clip (AutoSprite renders clips at different zooms).
 - `scripts/split-icon-sheet.mjs` — splits a generated 4×4 icon sheet into painted icons under `public/assets/icons/painted` and registers them.
+- `scripts/make-ui-sounds.mjs` — synthesises the hover tick and card-flip whoosh (WAV) that have no recorded asset.
 - `scripts/import-fx-sheet.mjs` — imports a generated 4×4 VFX flipbook (frames on black, played additively) as `public/assets/art/fx/<name>.jpg`.
 
 ## Credits

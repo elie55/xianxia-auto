@@ -2,7 +2,7 @@ import { hasSavedRun, loadRun, meta, screen, setRun, showToast } from '@/app/sto
 import { resetItemQuests } from '@/core/run';
 import { Icon } from '@/ui/components/Icon';
 import { audio } from '@/audio/AudioManager';
-import { useEffect } from 'preact/hooks';
+import { useEffect, useRef } from 'preact/hooks';
 
 const isElectron = typeof navigator !== 'undefined' && /Electron/i.test(navigator.userAgent);
 
@@ -11,6 +11,14 @@ export function MainMenu() {
     audio.playMusic('menu');
   }, []);
   const m = meta.value;
+  const rootRef = useRef<HTMLDivElement>(null);
+  // the key art, embers and logo drift a few pixels against the pointer (CSS reads --px / --py)
+  const onMove = (e: PointerEvent) => {
+    const el = rootRef.current;
+    if (!el) return;
+    el.style.setProperty('--px', ((e.clientX / window.innerWidth) * 2 - 1).toFixed(3));
+    el.style.setProperty('--py', ((e.clientY / window.innerHeight) * 2 - 1).toFixed(3));
+  };
   const continueRun = () => {
     const s = loadRun();
     if (!s) {
@@ -23,7 +31,7 @@ export function MainMenu() {
     audio.sfx('ui_confirm');
   };
   return (
-    <div class="screen menu-screen">
+    <div class="screen menu-screen" ref={rootRef} onPointerMove={onMove}>
       <div class="menu-bg">
         <div class="menu-keyart" />
         <div class="menu-mist" />

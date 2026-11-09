@@ -27,7 +27,11 @@ const RARITY_ORDER: Record<string, number> = { common: 0, rare: 1, epic: 2, uniq
 
 /** The Compendium: every disciple, class, enemy, Treasure and Dao Insight in the game, with full tooltips. */
 export function Compendium() {
-  const [tab, setTab] = useState<Tab>('disciples');
+  // ?screen=compendium&tab=treasures opens a tab directly (QA)
+  const [tab, setTab] = useState<Tab>(() => {
+    const q = new URLSearchParams(location.search).get('tab');
+    return TABS.some((t) => t.id === q) ? (q as Tab) : 'disciples';
+  });
   return (
     <div class="screen codex-screen">
       <div class="newrun-bg">
@@ -111,7 +115,7 @@ export function Compendium() {
           <div class="codex-grid three">
             {ENEMIES.map((e) => (
               <div key={e.id} class={`panel codex-enemy ${e.boss ? 'boss' : e.elite ? 'elite' : ''}`}>
-                <div class="codex-enemy-art">
+                <div class="codex-enemy-art" style={{ ['--plate' as string]: `url(./assets/art/bg/${e.realm === 2 ? 'realm2_abyss' : e.boss && e.realm !== 1 ? 'realm3_ladder' : 'realm1_bamboo'}.jpg)` }}>
                   <img src={`./assets/art/sprites/${e.sprite}.png`} alt="" draggable={false} />
                 </div>
                 <div class="codex-enemy-body">
@@ -147,46 +151,47 @@ export function Compendium() {
           </div>
         )}
         {tab === 'treasures' && (
-          <div class="codex-grid three">
+          <div class="codex-grid four">
             {ITEMS.slice()
               .sort((a, b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity] || a.name.localeCompare(b.name))
               .map((it) => (
-                <div key={it.id} class={`panel plain codex-row rar-${it.rarity}`} {...tip(<ItemTip itemId={it.id} />)}>
-                  <ItemChip itemId={it.id} size={48} />
-                  <div class="codex-row-body">
-                    <div class="codex-row-name" style={{ color: 'var(--rar)' }}>
-                      {it.name} <span class="codex-row-rar">{it.rarity}</span>
-                    </div>
-                    <div class="codex-row-desc">
-                      {it.stats &&
-                        Object.entries(it.stats).map(([k, v]) => (
-                          <span key={k} class="stat-inline" style={{ color: STAT_COLOR[k], marginRight: 8 }}>
-                            <Icon name={STAT_ICON[k]} size={12} /> +{k === 'omnivamp' ? `${v}%` : v}
-                          </span>
-                        ))}
-                      {it.desc && <RichText text={it.desc} />}
-                    </div>
+                <div key={it.id} class={`codex-card rar-${it.rarity}`} {...tip(<ItemTip itemId={it.id} />)}>
+                  <div class="codex-medal">
+                    <ItemChip itemId={it.id} size={86} />
                   </div>
+                  <div class="codex-card-name">{it.name}</div>
+                  <div class="codex-card-rar">{it.rarity} Treasure</div>
+                  {it.stats && (
+                    <div class="codex-card-stats">
+                      {Object.entries(it.stats).map(([k, v]) => (
+                        <span key={k} style={{ color: STAT_COLOR[k] }}>
+                          <Icon name={STAT_ICON[k]} size={13} /> +{k === 'omnivamp' ? `${v}%` : v}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {it.desc && (
+                    <div class="codex-card-desc">
+                      <RichText text={it.desc} />
+                    </div>
+                  )}
                 </div>
               ))}
           </div>
         )}
         {tab === 'insights' && (
-          <div class="codex-grid three">
+          <div class="codex-grid four">
             {RELICS.slice()
               .sort((a, b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity] || a.name.localeCompare(b.name))
               .map((r) => (
-                <div key={r.id} class={`panel plain codex-row rar-${r.rarity}`} {...tip(<RelicTip relicId={r.id} />)}>
-                  <div class={`relic-chip rar-${r.rarity}`} style={{ margin: 6 }}>
-                    <Icon name={`relic_${r.icon}`} size={22} />
+                <div key={r.id} class={`codex-card rar-${r.rarity}`} {...tip(<RelicTip relicId={r.id} />)}>
+                  <div class="codex-medal">
+                    <Icon name={`relic_${r.icon}`} size={70} />
                   </div>
-                  <div class="codex-row-body">
-                    <div class="codex-row-name" style={{ color: 'var(--rar)' }}>
-                      {r.name} <span class="codex-row-rar">{r.rarity}</span>
-                    </div>
-                    <div class="codex-row-desc">
-                      <RichText text={r.desc} />
-                    </div>
+                  <div class="codex-card-name">{r.name}</div>
+                  <div class="codex-card-rar">{r.rarity} Dao Insight</div>
+                  <div class="codex-card-desc">
+                    <RichText text={r.desc} />
                   </div>
                 </div>
               ))}

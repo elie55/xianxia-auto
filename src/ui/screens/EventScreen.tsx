@@ -60,16 +60,21 @@ export function EventScreen() {
                     const active = pendingChoice === c.id;
                     return (
                       <button key={c.id} class={`event-choice ${available ? '' : 'disabled'} ${active ? 'active' : ''}`} disabled={!available} onClick={() => choose(c.id)}>
-                        <div class="choice-label display">
-                          {c.label}
-                          {c.cost ? (
-                            <span class="price-inline">
-                              <Icon name="stones" size={16} /> {c.cost}
-                            </span>
-                          ) : null}
+                        <div class="choice-icon">
+                          <Icon name={choiceIcon(c.desc)} size={50} />
                         </div>
-                        <div class="choice-desc">
-                          <RichText text={c.desc} />
+                        <div class="choice-main">
+                          <div class="choice-label display">
+                            {c.label}
+                            {c.cost ? (
+                              <span class="price-inline">
+                                <Icon name="stones" size={16} /> {c.cost}
+                              </span>
+                            ) : null}
+                          </div>
+                          <div class="choice-desc">
+                            <RichText text={c.desc} />
+                          </div>
                         </div>
                       </button>
                     );
@@ -151,4 +156,20 @@ export function EventScreen() {
       </Hud>
     </div>
   );
+}
+
+/** Painted icon for an event choice, read from what its description promises. */
+function choiceIcon(desc: string): string {
+  const d = desc.toLowerCase();
+  if (/1v1|defeat the creature/.test(d)) return 'choice_fight';
+  if (/ranks? up/.test(d)) return 'choice_breakthrough';
+  if (/permanently gains/.test(d)) return 'choice_cultivate';
+  if (/50%|wager|lose \[?\d+%/.test(d)) return 'choice_gamble';
+  if (/dao insight/.test(d)) return 'choice_insight';
+  if (/treasure/.test(d)) return 'choice_treasure';
+  if (/nothing happens/.test(d)) return 'choice_leave';
+  if (/heal|restore/.test(d)) return 'choice_heal';
+  if (/disciple/.test(d)) return 'choice_disciple';
+  if (/spirit stones/.test(d)) return 'stones';
+  return 'choice_leave';
 }

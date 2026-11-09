@@ -45,7 +45,7 @@ const STAT_SHORT: Record<string, string> = {
 };
 
 /** Flipbook sheets (4×4 frames on black, played additively) under public/assets/art/fx. */
-const FLIPBOOK_SHEETS = ['fx_qi_cast', 'fx_fire_burst', 'fx_frost_burst', 'fx_lightning_strike', 'fx_heal_bloom', 'fx_shadow_burst', 'fx_slash_arc', 'fx_poison_cloud', 'fx_water_splash', 'fx_death_burst', 'fx_impact_hit', 'fx_blood_burst', 'fx_buff_rise'];
+export const FLIPBOOK_SHEETS = ['fx_qi_cast', 'fx_fire_burst', 'fx_frost_burst', 'fx_lightning_strike', 'fx_heal_bloom', 'fx_shadow_burst', 'fx_slash_arc', 'fx_poison_cloud', 'fx_water_splash', 'fx_death_burst', 'fx_impact_hit', 'fx_blood_burst', 'fx_buff_rise'];
 
 /** Which flipbook plays for an ability VFX key, on top of the procedural effect. */
 const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: number; ground?: boolean; fps?: number; directional?: boolean; behind?: boolean }> = {
@@ -739,7 +739,7 @@ export class BattleView {
         if (!v) break;
         const src = this.viewOf(e.sourceId);
         if (e.dot) {
-          if (showNumbers) this.texts.spawn(v.x, v.y + v.headY, `${e.amount}`, (e.dot === 'tribulation' ? 'tribulation' : e.dot) as NumberKind, { dot: true });
+          if (showNumbers) this.texts.spawn(v.x, v.y + v.headY, `${e.amount}`, (e.dot === 'tribulation' ? 'tribulation' : e.dot) as NumberKind, { dot: true, amount: e.amount });
           if (e.dot === 'burn') this.fx.embers(v.x, v.y, STATUS_COLORS.burn, 3);
           if (e.dot === 'poison') this.fx.burst(v.x, v.y - 50, STATUS_COLORS.poison, { count: 3, speed: 30, size: 10, life: 0.5 });
           if (e.dot === 'bleed') this.fx.burst(v.x, v.y + v.chestY, STATUS_COLORS.bleed, { count: 3, speed: 50, size: 10, life: 0.4, gravity: 30 });
@@ -753,7 +753,7 @@ export class BattleView {
         }
         v.hurtAnim(e.crit, src?.x);
         const kind: NumberKind = e.crit ? 'crit' : e.absorbed >= e.amount ? 'shield' : e.kind === 'true' ? 'true' : e.kind === 'magic' ? 'magic' : 'physical';
-        if (showNumbers) this.texts.spawn(v.x, v.y + v.headY, e.crit ? `${e.amount}!` : `${e.amount}`, kind, { crit: e.crit });
+        if (showNumbers) this.texts.spawn(v.x, v.y + v.headY, e.crit ? `${e.amount}!` : `${e.amount}`, kind, { crit: e.crit, amount: e.amount });
         const dir = src ? (v.x >= src.x ? 1 : -1) : -v.unit.facing;
         const hitColor = e.crit ? 0xffd84a : e.kind === 'magic' ? 0xb57cff : e.kind === 'true' ? 0xffd9a1 : 0xfff1c0;
         this.fx.sparks(v.x - dir * 8, v.y + v.chestY, dir, hitColor, e.crit ? 11 : 5, e.crit ? 340 : 220);
@@ -770,7 +770,7 @@ export class BattleView {
       case 'heal': {
         const v = this.viewOf(e.id);
         if (!v || e.amount <= 0) break;
-        if (showNumbers) this.texts.spawn(v.x, v.y + v.headY, `+${e.amount}`, 'heal');
+        if (showNumbers) this.texts.spawn(v.x, v.y + v.headY, `+${e.amount}`, 'heal', { amount: e.amount });
         this.fx.motes(v.x, v.y, 0x8dff9a, 8, 120);
         this.fx.ring(v.x, v.y, 0x8dff9a, 50, 2, 0.5, hexLayout.squash);
         audio.sfx('heal', { volume: 0.35, throttleMs: 300 });

@@ -27,7 +27,7 @@ export function Settings() {
       <div class="settings-body anim-rise">
         <div class="panel settings-panel">
           <Row label="Music volume">
-            <input type="range" min={0} max={1} step={0.05} value={m.settings.music} onInput={(e) => set((s) => (s.music = parseFloat((e.target as HTMLInputElement).value)))} />
+            <input type="range" min={0} max={1} step={0.05} value={m.settings.music} style={{ ['--pct' as string]: `${m.settings.music * 100}%` }} onInput={(e) => set((s) => (s.music = parseFloat((e.target as HTMLInputElement).value)))} />
             <span class="muted">{Math.round(m.settings.music * 100)}%</span>
           </Row>
           <Row label="Sound effects">
@@ -37,6 +37,7 @@ export function Settings() {
               max={1}
               step={0.05}
               value={m.settings.sfx}
+              style={{ ['--pct' as string]: `${m.settings.sfx * 100}%` }}
               onInput={(e) => set((s) => (s.sfx = parseFloat((e.target as HTMLInputElement).value)))}
               onChange={() => audio.sfx('ui_click')}
             />

@@ -1,4 +1,5 @@
 import { useEffect } from 'preact/hooks';
+import { flyTo } from '@/ui/flourish';
 import { act, run, showToast } from '@/app/store';
 import { beginRankUps, buyHero, buyItem, buyRelic, proceedFromShop, rerollCost, shopReroll, toggleFreeze, type RunState } from '@/core/run';
 import { ITEM_BY_ID } from '@/content/items';
@@ -23,7 +24,12 @@ export function ShopScreen() {
   const dragging = drag.value;
   const cost = rerollCost(s);
   const ctx = teamContext(s);
+  const offerEl = (key: string) => document.querySelector(`[data-offer="${key}"]`);
+  const lastFilled = (sel: string) => [...document.querySelectorAll(sel)].filter((el) => el.firstElementChild).pop() ?? null;
   const onBuyHero = (key: string) => {
+    const src = offerEl(key);
+    const defId = shop.heroes.find((o) => o?.key === key)?.defId;
+    let ok = false;
     act((st) => {
       const r = buyHero(st, key);
       if (!r.ok) {
@@ -31,10 +37,46 @@ export function ShopScreen() {
         audio.sfx('ui_error');
         return;
       }
+      ok = true;
       audio.sfx('ui_buy');
       if (r.rankedUp) beginRankUps(st, 'shop');
     });
+    if (ok) flyTo(src, () => document.querySelector(`.bottombar .hero-slot[data-hero-def="${defId}"] .slot-portrait`) ?? document.querySelector('.bottombar'), { pick: 'img', size: 120 });
   };
+  const onBuyItem = (key: string) => {
+    const src = offerEl(key);
+    let ok = false;
+    act((st) => {
+      const r = buyItem(st, key);
+      if (!r.ok) {
+        if (r.reason) showToast(r.reason, 'error');
+        audio.sfx('ui_error');
+      } else {
+        ok = true;
+        audio.sfx('ui_buy');
+      }
+    });
+    if (ok) flyTo(src, () => lastFilled('.leftrail .inv-slot'), { pick: '.item-chip', size: 64 });
+  };
+  const onBuyRelic = (key: string, toBar = false) => {
+    const src = offerEl(key);
+    let ok = false;
+    act((st) => {
+      const r = buyRelic(st, key);
+      if (!r.ok) {
+        if (r.reason) showToast(r.reason, 'error');
+        audio.sfx('ui_error');
+      } else {
+        ok = true;
+        audio.sfx('ui_buy');
+      }
+    });
+    if (ok) flyTo(src, () => (toBar ? document.querySelector('.bottombar') : [...document.querySelectorAll('.leftrail .relic-grid .relic-chip')].pop() ?? null), { pick: toBar ? '.icon' : '.relic-chip', size: 64 });
+  };
+  const heroKeys = shop.heroes.map((o) => o?.key ?? '-').join(',');
+  useEffect(() => {
+    audio.sfx('ui_flip', { volume: 0.35 });
+  }, [heroKeys]);
   return (
     <div class="screen">
       <Hud showTracker={false}>
@@ -75,13 +117,7 @@ export function ShopScreen() {
               <div class="shop-section-title">Treasures</div>
               {shop.items.map((o, i) =>
                 o ? (
-                  <ShopItemRow key={o.key} s={s} offer={o} onBuy={() => act((st) => {
-                    const r = buyItem(st, o.key);
-                    if (!r.ok) {
-                      if (r.reason) showToast(r.reason, 'error');
-                      audio.sfx('ui_error');
-                    } else audio.sfx('ui_buy');
-                  })} />
+                  <ShopItemRow key={o.key} s={s} offer={o} onBuy={() => onBuyItem(o.key)} />
                 ) : (
                   <div key={i} class="shop-row sold">Sold</div>
                 ),
@@ -91,13 +127,7 @@ export function ShopScreen() {
               </div>
               {shop.relics.map((o, i) =>
                 o ? (
-                  <ShopRelicRow key={o.key} s={s} offer={o} onBuy={() => act((st) => {
-                    const r = buyRelic(st, o.key);
-                    if (!r.ok) {
-                      if (r.reason) showToast(r.reason, 'error');
-                      audio.sfx('ui_error');
-                    } else audio.sfx('ui_buy');
-                  })} />
+                  <ShopRelicRow key={o.key} s={s} offer={o} onBuy={() => onBuyRelic(o.key)} />
                 ) : (
                   <div key={i} class="shop-row sold">Sold</div>
                 ),
@@ -114,16 +144,9 @@ export function ShopScreen() {
                           <button
                             key={o.key}
                             class="team-size-offer"
+                            data-offer={o.key}
                             {...tip(<RelicTip relicId={o.relicId} />)}
-                            onClick={() =>
-                              act((st) => {
-                                const r = buyRelic(st, o.key);
-                                if (!r.ok) {
-                                  if (r.reason) showToast(r.reason, 'error');
-                                  audio.sfx('ui_error');
-                                } else audio.sfx('ui_buy');
-                              })
-                            }
+                            onClick={() => onBuyRelic(o.key, true)}
                           >
                             <Icon name={`relic_${RELIC_BY_ID[o.relicId].icon}`} size={52} color="var(--gold-bright)" />
                             <span class="ts-name">{RELIC_BY_ID[o.relicId].name}</span>
@@ -143,7 +166,7 @@ export function ShopScreen() {
                 {shop.heroes.map((o, i) => {
                   const owned = !!o && s.roster.some((h) => h.defId === o.defId);
                   return (
-                    <div key={o ? o.key : `sold${i}`} class="shop-card-wrap">
+                    <div key={o ? o.key : `sold${i}`} class="shop-card-wrap" data-offer={o?.key}>
                       <div class={`rankup-ribbon ${owned ? '' : 'hidden'}`} {...(owned ? tip(<><h4>Rank Up</h4><p>You already own this disciple. Buying the card again raises their rank.</p></>) : {})}>
                         ▲ Rank Up
                       </div>
@@ -170,11 +193,11 @@ export function ShopScreen() {
   );
 }
 
-function ShopItemRow({ s, offer, onBuy }: { s: RunState; offer: { itemId: string; price: number; sale: boolean }; onBuy: () => void }) {
+function ShopItemRow({ s, offer, onBuy }: { s: RunState; offer: { key: string; itemId: string; price: number; sale: boolean }; onBuy: () => void }) {
   const it = ITEM_BY_ID[offer.itemId];
   const can = s.stones >= offer.price;
   return (
-    <button class={`shop-row rar-${it.rarity} ${can ? "" : "poor"}`} onClick={onBuy} {...tip(<ItemTip itemId={offer.itemId} />)}>
+    <button class={`shop-row rar-${it.rarity} ${can ? "" : "poor"}`} data-offer={offer.key} onClick={onBuy} {...tip(<ItemTip itemId={offer.itemId} />)}>
       <ItemChip itemId={offer.itemId} size={58} />
       <div class="shop-row-info">
         <div class={`shop-row-name rar-${it.rarity}`}>{it.name}</div>
@@ -197,11 +220,11 @@ function ShopItemRow({ s, offer, onBuy }: { s: RunState; offer: { itemId: string
   );
 }
 
-function ShopRelicRow({ s, offer, onBuy }: { s: RunState; offer: { relicId: string; price: number; sale: boolean }; onBuy: () => void }) {
+function ShopRelicRow({ s, offer, onBuy }: { s: RunState; offer: { key: string; relicId: string; price: number; sale: boolean }; onBuy: () => void }) {
   const r = RELIC_BY_ID[offer.relicId];
   const can = s.stones >= offer.price;
   return (
-    <button class={`shop-row relic rar-${r.rarity} ${can ? "" : "poor"}`} onClick={onBuy} {...tip(<RelicTip relicId={offer.relicId} />)}>
+    <button class={`shop-row relic rar-${r.rarity} ${can ? "" : "poor"}`} data-offer={offer.key} onClick={onBuy} {...tip(<RelicTip relicId={offer.relicId} />)}>
       <div class={`relic-chip rar-${r.rarity}`}>
         <Icon name={`relic_${r.icon}`} size={44} />
       </div>

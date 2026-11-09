@@ -26,9 +26,12 @@ let seq = 0;
 export class FloatingTextLayer extends Container {
   private pool: Text[] = [];
 
-  spawn(x: number, y: number, text: string, kind: NumberKind, opts: { size?: number; crit?: boolean; dot?: boolean; speed?: number } = {}): void {
+  spawn(x: number, y: number, text: string, kind: NumberKind, opts: { size?: number; crit?: boolean; dot?: boolean; speed?: number; amount?: number } = {}): void {
     const c = COLORS[kind];
-    const size = opts.size ?? (opts.crit ? 44 : opts.dot ? 18 : kind === 'label' ? 20 : 28);
+    // heavier hits read heavier: ~0.82× for chip damage, 1× at 10, ~1.36× at 1 000, capped at 1.5× (ticks scale half as much)
+    const weight = opts.size === undefined && opts.amount ? Math.min(1.5, Math.max(0.82, 0.82 + 0.18 * Math.log10(Math.max(1, opts.amount)))) : 1;
+    const k = opts.dot ? 1 + (weight - 1) * 0.5 : weight;
+    const size = Math.round((opts.size ?? (opts.crit ? 44 : opts.dot ? 18 : kind === 'label' ? 20 : 28)) * k);
     const t = this.pool.pop() ?? new Text({ text: '', style: new TextStyle({ fontFamily: 'Noto Sans', fontWeight: '800' }) });
     t.text = text;
     const style = t.style as TextStyle;
@@ -47,8 +50,8 @@ export class FloatingTextLayer extends Container {
     t.scale.set(opts.crit ? 0.4 : 0.7);
     t.rotation = opts.crit ? (Math.random() - 0.5) * 0.25 : 0;
     this.addChild(t);
-    const rise = opts.dot ? 34 : opts.crit ? 70 : 54;
-    const dur = (opts.dot ? 0.8 : opts.crit ? 1.3 : 1.0) / (opts.speed ?? 1);
+    const rise = (opts.dot ? 34 : opts.crit ? 70 : 54) + (k > 1.25 ? 12 : 0);
+    const dur = ((opts.dot ? 0.8 : opts.crit ? 1.3 : 1.0) * (k > 1.25 ? 1.15 : 1)) / (opts.speed ?? 1);
     const tl = gsap.timeline({
       onComplete: () => {
         this.removeChild(t);

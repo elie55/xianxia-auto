@@ -291,7 +291,7 @@ function HeroSlot({ s, uid, ctx, drop, dragging, reserve, portrait = 104, sock =
   const size = reserve ? Math.min(portrait, 92) : portrait;
   const chip = reserve ? 20 : sock - 6;
   return (
-    <div class={`hero-slot ${h ? 'filled' : 'empty'} ${over && (acceptsHero || acceptsItem) ? 'drop-ok' : ''} ${reserve ? 'reserve' : ''}`} data-drop={h ? `hero:${uid}` : drop}>
+    <div class={`hero-slot ${h ? 'filled' : 'empty'} ${over && (acceptsHero || acceptsItem) ? 'drop-ok' : ''} ${reserve ? 'reserve' : ''}`} data-drop={h ? `hero:${uid}` : drop} data-hero-def={h?.defId}>
       {h && def && (
         <>
           <div
@@ -360,14 +360,14 @@ function HeroSlotTip({ h, s, ctx }: { h: HeroState; s: RunState; ctx: TeamContex
       <div class="tip-bar" style={{ height: 13 }}>
         <i style={{ width: `${hpPct}%`, background: 'linear-gradient(180deg,#7ef29a,#2f9c4b)' }} />
         {shieldPct > 0 && <i style={{ left: `${hpPct}%`, width: `${shieldPct}%`, background: 'linear-gradient(180deg,#e6f3ff,#9fd5ff)' }} />}
-        <span style={{ fontSize: 11 }}>
+        <span style={{ fontSize: 12 }}>
           HP {Math.round(hp)} / {maxHp}
           {shield > 0 ? ` (+${Math.round(shield)} shield)` : ''}
         </span>
       </div>
       <div class="tip-bar" style={{ height: 13 }}>
         <i style={{ width: `${qiPct}%`, background: 'linear-gradient(180deg,#8fd5ff,#2f7fc4)' }} />
-        <span style={{ fontSize: 11 }}>
+        <span style={{ fontSize: 12 }}>
           Qi {Math.round(qi)} / {maxQi}
           {live ? '' : ' to cast'}
         </span>
@@ -538,11 +538,11 @@ function PauseMenu() {
         <div class="panel-title display">Paused</div>
         <div class="settings-row">
           <div class="settings-label display">Music</div>
-          <input type="range" min={0} max={1} step={0.05} value={m.settings.music} onInput={(e) => updateMeta((mm) => (mm.settings.music = parseFloat((e.target as HTMLInputElement).value)))} />
+          <input type="range" min={0} max={1} step={0.05} value={m.settings.music} style={{ ['--pct' as string]: `${m.settings.music * 100}%` }} onInput={(e) => updateMeta((mm) => (mm.settings.music = parseFloat((e.target as HTMLInputElement).value)))} />
         </div>
         <div class="settings-row">
           <div class="settings-label display">Sound</div>
-          <input type="range" min={0} max={1} step={0.05} value={m.settings.sfx} onInput={(e) => updateMeta((mm) => (mm.settings.sfx = parseFloat((e.target as HTMLInputElement).value)))} />
+          <input type="range" min={0} max={1} step={0.05} value={m.settings.sfx} style={{ ['--pct' as string]: `${m.settings.sfx * 100}%` }} onInput={(e) => updateMeta((mm) => (mm.settings.sfx = parseFloat((e.target as HTMLInputElement).value)))} />
         </div>
         <div class="col" style={{ marginTop: 18, gap: 10 }}>
           <button class="btn primary" onClick={() => (showMenu.value = false)}>

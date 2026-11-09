@@ -16,6 +16,8 @@ const MUSIC: Record<MusicKey, { src: string; loop: boolean; volume: number }> = 
 /** SFX keys → files under /assets/audio/sfx (multiple variants allowed). */
 const SFX: Record<string, string[]> = {
   ui_click: ['ui_click.ogg'],
+  ui_hover: ['ui_hover.wav'],
+  ui_flip: ['ui_flip.wav'],
   ui_confirm: ['ui_confirm.ogg'],
   ui_back: ['ui_back.ogg'],
   ui_card: ['ui_card.ogg'],

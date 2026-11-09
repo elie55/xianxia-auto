@@ -148,7 +148,7 @@ export function HeroCard(p: HeroCardProps) {
           </div>
         </div>
         <div class="ability-diamond" {...tip(<AbilityTip hero={hero} />)}>
-          <Icon name={classes[0] ? `class_${classes[0]}` : 'ui_info'} size={22} />
+          <Icon name={classes[0] ? `class_${classes[0]}` : 'ui_info'} size={30} />
         </div>
       </div>
       {p.footer && <div class="card-footer">{p.footer}</div>}
