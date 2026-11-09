@@ -2633,3 +2633,71 @@ input[type='range']:hover::-webkit-slider-thumb {
   width: 40px;
   height: 40px;
 }
+
+/* Centred overlays use the independent \`translate\` property: entrance animations animate \`transform\`, which used to
+   cancel a translateX(-50%) centring, so toasts, the encounter banner, the champion picker and the battle timer
+   appeared shifted right (the banner stayed shifted, since its animation keeps its last frame). */
+.toast,
+.encounter-banner,
+.champion-panel,
+.battle-timer {
+  transform: none;
+  translate: -50% 0;
+}
+
+/* ───────── PLAQUE SHADOWS FOLLOW THE PAINTED SHAPE ─────────
+   box-shadow draws a rectangle around the element's box, which showed as a dark or glowing box around the cloud
+   ornaments of every painted button. drop-shadow() follows the plaque's own alpha, so depth and the hover glow hug
+   the painted outline. The pulsing Fight button glows the same way. */
+.btn,
+.speed-btn,
+.codex-tab,
+.tracker-tabs button,
+.result-tabs button,
+.toast {
+  box-shadow: none !important;
+}
+.btn,
+.speed-btn,
+.codex-tab,
+.tracker-tabs button,
+.result-tabs button {
+  filter: drop-shadow(0 6px 7px rgba(0, 0, 0, 0.55));
+}
+.btn:hover:not(:disabled),
+.speed-btn:hover,
+.codex-tab:hover,
+.tracker-tabs button:hover,
+.result-tabs button:hover {
+  filter: brightness(1.14) drop-shadow(0 0 6px rgba(243, 207, 120, 0.85)) drop-shadow(0 7px 8px rgba(0, 0, 0, 0.55)) !important;
+}
+.btn.primary:hover:not(:disabled),
+.speed-btn.on:hover,
+.codex-tab.on:hover,
+.tracker-tabs button.on:hover,
+.result-tabs button.on:hover {
+  filter: brightness(1.12) drop-shadow(0 0 7px rgba(122, 240, 207, 0.85)) drop-shadow(0 7px 8px rgba(0, 0, 0, 0.55)) !important;
+}
+.btn.danger:hover:not(:disabled) {
+  filter: brightness(1.12) drop-shadow(0 0 7px rgba(255, 120, 100, 0.85)) drop-shadow(0 7px 8px rgba(0, 0, 0, 0.55)) !important;
+}
+.btn:disabled {
+  filter: grayscale(0.75) brightness(0.72) drop-shadow(0 6px 7px rgba(0, 0, 0, 0.5)) !important;
+}
+/* the hover sheen stays inside the plaque's lacquer face */
+.btn::after {
+  border-radius: 999px;
+}
+/* Fight: the pulse is a glow around the plaque's outline */
+.fight-btn {
+  animation: plaque-pulse 2.4s ease-in-out infinite;
+}
+@keyframes plaque-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 2px rgba(122, 240, 207, 0.35)) drop-shadow(0 6px 7px rgba(0, 0, 0, 0.55));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px rgba(122, 240, 207, 0.85)) drop-shadow(0 6px 7px rgba(0, 0, 0, 0.55));
+  }
+}
