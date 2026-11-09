@@ -4,19 +4,19 @@ import { DIFFICULTIES } from '@/content/difficulties';
 import { HERO_BY_ID } from '@/content/heroes';
 import { RELIC_BY_ID } from '@/content/relics';
 import { ITEM_BY_ID } from '@/content/items';
-import { heroItemSlots, type HeroState } from '@/core/builder';
+import { heroAbility, heroItemSlots, heroStats, type HeroState, type TeamContext } from '@/core/builder';
 import { equipItem, heroByUid, moveHero, relicDefs, sellHero, sellItem, teamContext, unequipItem, itemQuestState, type RunState, setPosition } from '@/core/run';
-import { Icon, STAT_COLOR, STAT_ICON } from '@/ui/components/Icon';
+import { Icon, STAT_COLOR, STAT_ICON, STAT_LABEL } from '@/ui/components/Icon';
 import { RichText } from '@/ui/components/RichText';
 import { tip } from '@/ui/components/Tooltip';
 import { MiniPortrait } from '@/ui/components/MiniPortrait';
-import { ItemChip, ItemTip, RankGlyph, AbilityTip } from '@/ui/components/HeroCard';
+import { ItemChip, ItemTip, RankGlyph, AbilityTip, fmtStat } from '@/ui/components/HeroCard';
 import { drag, startDrag, type DragPayload } from '@/ui/drag';
 import { getBattleView } from '@/battle/view/BattleView';
 import { audio } from '@/audio/AudioManager';
 import { toDesign } from '@/app/scale';
 import { isAllyZone } from '@/battle/sim/hex';
-import type { NodeKind } from '@/core/types';
+import { RANK_NAMES, type NodeKind } from '@/core/types';
 
 /** Incremented a few times per second during battle so tracker panels refresh. */
 export const battleTick = signal(0);
@@ -298,7 +298,7 @@ function HeroSlot({ s, uid, ctx, drop, dragging, reserve, portrait = 104, sock =
             class="slot-portrait"
             style={{ width: size + 4, height: size + 4 }}
             onPointerDown={(e) => startDrag({ kind: 'hero', uid: h.uid }, e)}
-            {...tip(<HeroSlotTip h={h} />, 'above')}
+            {...tip(<HeroSlotTip h={h} s={s} ctx={ctx} />, 'above')}
           >
             <MiniPortrait defId={h.defId} size={size} />
             <div class="slot-rank">
@@ -330,16 +330,68 @@ function HeroSlot({ s, uid, ctx, drop, dragging, reserve, portrait = 104, sock =
   );
 }
 
-function HeroSlotTip({ h }: { h: HeroState }) {
+const TIP_STATS = ['attack', 'spirit', 'defense', 'attackSpeed', 'crit', 'range'] as const;
+
+/** Party-bar hero tooltip: HP and Qi bars with values, the stat grid and the ability. Shows live combat values during a battle. */
+function HeroSlotTip({ h, s, ctx }: { h: HeroState; s: RunState; ctx: TeamContext }) {
+  void battleTick.value; // refreshes a few times per second while a battle runs
   const def = HERO_BY_ID[h.defId];
+  const stats = heroStats(h, ctx, s.positions[h.uid] ?? null);
+  const ability = heroAbility(h);
+  const live = s.phase === 'battle' ? getBattleView().unitForHero(h.uid) : null;
+  const maxHp = live ? live.maxHp : Math.round(stats.hp);
+  const hp = live ? Math.max(0, live.hp) : maxHp;
+  const shield = live ? live.shield : 0;
+  const maxQi = live ? live.maxQi : ability.qiCost;
+  const qi = live ? live.qi : Math.min(maxQi, Math.round(stats.qi));
+  const hpPct = Math.min(100, (hp / Math.max(1, maxHp)) * 100);
+  const shieldPct = Math.min(100 - hpPct, (shield / Math.max(1, maxHp)) * 100);
+  const qiPct = maxQi > 0 ? Math.min(100, (qi / maxQi) * 100) : 0;
+  const value = (k: (typeof TIP_STATS)[number]) => (live ? (k === 'attackSpeed' ? `${live.attacksPerSecond.toFixed(2)}/s` : fmtStat(k, live.stat(k))) : fmtStat(k, stats[k]));
+  const extra = (['qiRegen', 'omnivamp'] as const).filter((k) => stats[k] > 0);
   return (
     <>
       <h4>
         {def.name} <span class="brush gold">{def.hanzi}</span>
       </h4>
-      <div class="sub">{def.title}</div>
+      <div class="sub">
+        {def.title} · {RANK_NAMES[h.rank].name}
+      </div>
+      <div class="tip-bar" style={{ height: 13 }}>
+        <i style={{ width: `${hpPct}%`, background: 'linear-gradient(180deg,#7ef29a,#2f9c4b)' }} />
+        {shieldPct > 0 && <i style={{ left: `${hpPct}%`, width: `${shieldPct}%`, background: 'linear-gradient(180deg,#e6f3ff,#9fd5ff)' }} />}
+        <span style={{ fontSize: 10 }}>
+          HP {Math.round(hp)} / {maxHp}
+          {shield > 0 ? ` (+${Math.round(shield)} shield)` : ''}
+        </span>
+      </div>
+      <div class="tip-bar" style={{ height: 13 }}>
+        <i style={{ width: `${qiPct}%`, background: 'linear-gradient(180deg,#8fd5ff,#2f7fc4)' }} />
+        <span style={{ fontSize: 10 }}>
+          Qi {Math.round(qi)} / {maxQi}
+          {live ? '' : ' to cast'}
+        </span>
+      </div>
+      <div class="tip-stats">
+        {TIP_STATS.map((k) => (
+          <div key={k} class="tip-stat" style={{ color: STAT_COLOR[k] }}>
+            <Icon name={STAT_ICON[k]} size={13} /> {value(k)}
+            <span class="faint" style={{ fontWeight: 400, fontSize: 11 }}>
+              {STAT_LABEL[k]}
+            </span>
+          </div>
+        ))}
+        {extra.map((k) => (
+          <div key={k} class="tip-stat" style={{ color: STAT_COLOR[k] }}>
+            <Icon name={STAT_ICON[k]} size={13} /> {fmtStat(k, stats[k])}
+            <span class="faint" style={{ fontWeight: 400, fontSize: 11 }}>
+              {STAT_LABEL[k]}
+            </span>
+          </div>
+        ))}
+      </div>
       <AbilityTip hero={h} />
-      <p class="hint">Drag to the board, to the reserve, or onto the sell zone in the shop.</p>
+      <p class="hint">{live ? 'Live combat values.' : 'Drag to the board, to the reserve, or onto the sell zone in the shop.'}</p>
     </>
   );
 }

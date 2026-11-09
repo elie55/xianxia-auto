@@ -1293,3 +1293,8 @@
 .rightrail {
   top: 104px;
 }
+
+/* Cinzel capitals sit about 1.5 px above the line centre at display sizes; nudge big labels onto the plaque axis */
+.btn.big {
+  padding-top: 3px;
+}

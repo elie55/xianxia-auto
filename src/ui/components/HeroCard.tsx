@@ -155,7 +155,7 @@ export function HeroCard(p: HeroCardProps) {
   );
 }
 
-function fmtStat(k: string, v: number): string {
+export function fmtStat(k: string, v: number): string {
   if (k === 'omnivamp') return `${Math.round(v)}%`;
   if (k === 'crit') return `${Math.round(v)}`;
   return `${Math.round(v)}`;

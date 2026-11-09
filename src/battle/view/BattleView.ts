@@ -288,6 +288,12 @@ export class BattleView {
     return { x: minX, y: minY - 90, w: maxX - minX, h: maxY - minY + 100 };
   }
 
+  /** The live sim unit fighting for a hero (by run uid), or null when none is on the board. */
+  unitForHero(uid: string): Unit | null {
+    for (const v of this.views.values()) if (v.unit.heroUid === uid) return v.unit;
+    return null;
+  }
+
   /** Finds the hero uid rendered at a design-space point (placement mode). */
   heroAtDesign(x: number, y: number): string | null {
     const u = this.unitAtDesign(x, y);
