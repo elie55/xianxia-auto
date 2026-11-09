@@ -59,6 +59,7 @@ Every disciple and enemy has a sprite pack in `public/assets/art/sprites/<id>/pa
 - `scripts/ground-anchors.mjs` — measures feet and pivots from pixel alpha so every clip stands on its hex.
 - `scripts/fix-anim-scale.mjs` — normalises each clip's zoom to the idle clip (AutoSprite renders clips at different zooms).
 - `scripts/split-icon-sheet.mjs` — splits a generated 4×4 icon sheet into painted icons under `public/assets/icons/painted` and registers them.
+- `scripts/import-fx-sheet.mjs` — imports a generated 4×4 VFX flipbook (frames on black, played additively) as `public/assets/art/fx/<name>.jpg`.
 
 ## Credits
 
