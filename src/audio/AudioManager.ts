@@ -1,4 +1,5 @@
 import { Howl, Howler } from 'howler';
+import { computed, effect } from '@preact/signals';
 import { meta } from '@/app/store';
 
 type MusicKey = 'menu' | 'battle' | 'boss' | 'shop' | 'event' | 'realm2shop' | 'victory';
@@ -70,6 +71,13 @@ class AudioManager {
     };
     window.addEventListener('pointerdown', unlock);
     window.addEventListener('keydown', unlock);
+    // The Music slider (Settings screen and pause menu) applies at once to the track that is playing. Before, only
+    // the next track read the setting, so music went on at the old volume, even at 0%.
+    const musicSetting = computed(() => meta.value.settings.music);
+    effect(() => {
+      const setting = musicSetting.value;
+      if (this.music && this.musicKey) this.music.volume(MUSIC[this.musicKey].volume * setting);
+    });
   }
 
   get musicVolume(): number {
@@ -93,7 +101,10 @@ class AudioManager {
     }
     const h = new Howl({ src: [def.src], loop: def.loop, volume: 0, html5: true });
     h.play();
-    h.fade(0, def.volume * this.musicVolume, 900);
+    // fade in; at 0% there is nothing to fade, and Howler never ends a 0 → 0 fade, which would hold back any
+    // volume change queued behind it while the track loads
+    const target = def.volume * this.musicVolume;
+    if (target > 0) h.fade(0, target, 900);
     this.music = h;
     this.musicKey = key;
   }
