@@ -21,7 +21,7 @@ export function RealmCleared() {
   const realmName = s.realm === 1 ? 'Azure Bamboo Province' : s.realm === 2 ? 'Blood Moon Abyss' : `Heavenly Ladder · Floor ${s.floor}`;
   return (
     <div class="screen cleared-screen">
-      <div class="cleared-bg" />
+      <div class="cleared-bg" style={{ ['--realm-art' as string]: `url(./assets/art/bg/${s.realm === 1 ? 'realm1_bamboo' : s.realm === 2 ? 'realm2_abyss' : 'realm3_ladder'}.jpg)` }} />
       <div class="cleared-body anim-rise">
         <div class="brush cleared-glyph">封</div>
         <div class="display cleared-title">Rift Sealed</div>

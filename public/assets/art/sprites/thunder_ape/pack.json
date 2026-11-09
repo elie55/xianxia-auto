@@ -7,11 +7,12 @@
       "frameW": 256,
       "frameH": 256,
       "fps": 10.7,
-      "pivotX": 0.4883,
-      "pivotY": 0.875,
-      "charH": 224,
+      "pivotX": 0.4387,
+      "pivotY": 0.9014,
+      "charH": 219,
       "loop": false,
-      "hitFrame": 11
+      "hitFrame": 11,
+      "charW": 165
     },
     "idle": {
       "sheet": "idle.png",
@@ -20,10 +21,11 @@
       "frameW": 256,
       "frameH": 256,
       "fps": 10.7,
-      "pivotX": 0.3262,
-      "pivotY": 0.9453,
-      "charH": 221,
-      "loop": true
+      "pivotX": 0.4387,
+      "pivotY": 0.9414,
+      "charH": 219,
+      "loop": true,
+      "charW": 165
     },
     "hurt": {
       "sheet": "hurt.png",
@@ -32,10 +34,11 @@
       "frameW": 256,
       "frameH": 256,
       "fps": 10.7,
-      "pivotX": 0.3105,
+      "pivotX": 0.4387,
       "pivotY": 0.9141,
-      "charH": 206,
-      "loop": false
+      "charH": 219,
+      "loop": false,
+      "charW": 165
     },
     "walk": {
       "sheet": "walk.png",
@@ -44,10 +47,11 @@
       "frameW": 256,
       "frameH": 256,
       "fps": 10.7,
-      "pivotX": 0.502,
-      "pivotY": 0.9258,
-      "charH": 217,
-      "loop": true
+      "pivotX": 0.4387,
+      "pivotY": 0.9336,
+      "charH": 219,
+      "loop": true,
+      "charW": 165
     }
   }
 }

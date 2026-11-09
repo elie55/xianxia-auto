@@ -65,7 +65,13 @@ export function MainMenu() {
           >
             <span class="btn-glyph">始</span> New Run
           </button>
-          <button class="btn big ghost" disabled>
+          <button
+            class="btn big ghost"
+            onClick={() => {
+              audio.sfx('ui_click');
+              screen.value = 'compendium';
+            }}
+          >
             <span class="btn-glyph">典</span> Compendium
           </button>
           <button

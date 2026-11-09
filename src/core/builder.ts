@@ -224,6 +224,7 @@ export function buildEnemyUnit(def: EnemyDef, level: number, id: number, pos: He
     projectile: def.projectile,
     accent: def.accent,
     boss: def.boss,
+    flying: def.flying,
     elite: def.elite,
   };
 }

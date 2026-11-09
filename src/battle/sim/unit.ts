@@ -57,6 +57,8 @@ export interface UnitInit {
   accent?: string;
   boss?: boolean;
   elite?: boolean;
+  /** Visual-only: the unit hovers instead of standing. */
+  flying?: boolean;
   /** Visual-only: portrait key for the tracker. */
   portrait?: string;
   /** Item slot count for "items per rank" difficulty, informational. */
@@ -81,6 +83,7 @@ export class Unit {
   readonly accent?: string;
   readonly boss: boolean;
   readonly elite: boolean;
+  readonly flying: boolean;
   readonly portrait?: string;
   readonly isSummon: boolean;
   readonly targeting: 'nearest' | 'lowestHp' | 'farthest' | 'random';
@@ -165,6 +168,7 @@ export class Unit {
     this.accent = init.accent;
     this.boss = !!init.boss;
     this.elite = !!init.elite;
+    this.flying = !!init.flying;
     this.portrait = init.portrait;
     this.isSummon = !!init.isSummon;
     this.targeting = init.targeting ?? (init.classes.includes('shadow') ? 'lowestHp' : 'nearest');

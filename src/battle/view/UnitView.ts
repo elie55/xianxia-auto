@@ -1,4 +1,4 @@
-import { AnimatedSprite, ColorMatrixFilter, Container, Graphics, Sprite, Text, TextStyle } from 'pixi.js';
+import { AnimatedSprite, ColorMatrixFilter, Container, Graphics, Sprite, Text, TextStyle, Texture } from 'pixi.js';
 import gsap from 'gsap';
 import type { Unit } from '@/battle/sim/unit';
 import { STATUS_COLORS } from './Vfx';
@@ -7,14 +7,40 @@ import { loadUnitTexture } from './textures';
 
 /** On-screen height (design px) of a scale-1 character. */
 const UNIT_HEIGHT = 150;
+/** Flying units hover this far above their hex (design px, before scale). */
+const HOVER_LIFT = 16;
+
+let shadowTex: Texture | null = null;
+/** Soft radial ground shadow shared by every unit. */
+function softShadow(): Texture {
+  if (shadowTex) return shadowTex;
+  const c = document.createElement('canvas');
+  c.width = 128;
+  c.height = 64;
+  const g = c.getContext('2d')!;
+  const grd = g.createRadialGradient(64, 32, 2, 64, 32, 30);
+  grd.addColorStop(0, 'rgba(0,0,0,0.55)');
+  grd.addColorStop(0.55, 'rgba(0,0,0,0.32)');
+  grd.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = grd;
+  g.save();
+  g.scale(2, 1);
+  g.beginPath();
+  g.arc(32, 32, 31, 0, Math.PI * 2);
+  g.fill();
+  g.restore();
+  shadowTex = Texture.from(c);
+  return shadowTex;
+}
 
 export class UnitView extends Container {
   readonly unit: Unit;
+  /** Holds the sprite; offset for hover, hit reactions and the idle bob. */
   private body = new Container();
   private pack: SpritePack | null = null;
   private anim: AnimatedSprite | null = null;
   private currentAnim = 'idle';
-  private shadow = new Graphics();
+  private shadow = new Sprite(softShadow());
   private aura: Graphics;
   private bars = new Container();
   private hpBar = new Graphics();
@@ -27,6 +53,8 @@ export class UnitView extends Container {
   private auraColor = 0x3fbf9f;
   private auraAlpha = 0.35;
   private hasRealArt = false;
+  /** Visible width of the character in design px (from the pack), for shadows and hit boxes. */
+  private visualW: number;
   dead = false;
   barWidth: number;
 
@@ -34,14 +62,17 @@ export class UnitView extends Container {
     super();
     this.unit = unit;
     this.baseScale = unit.visualScale;
+    this.visualW = 60 * this.baseScale;
     this.barWidth = unit.boss ? 160 : unit.elite ? 100 : 74;
 
-    this.shadow.ellipse(0, 0, 34 * this.baseScale, 12 * this.baseScale).fill({ color: 0x000000, alpha: 0.45 });
+    this.shadow.anchor.set(0.5, 0.5);
+    this.shadow.y = 2;
     this.addChild(this.shadow);
+    this.fitShadow();
 
     this.aura = new Graphics();
     this.auraColor = unit.side === 'ally' ? 0x3fbf9f : 0xd2382c;
-    this.aura.ellipse(0, 0, 38 * this.baseScale, 14 * this.baseScale).stroke({ color: this.auraColor, width: 3, alpha: 0.9 });
+    this.drawAura(this.auraColor);
     this.aura.alpha = 0;
     this.addChild(this.aura);
 
@@ -71,20 +102,37 @@ export class UnitView extends Container {
     this.refreshBars();
   }
 
+  private fitShadow(): void {
+    const w = Math.max(44, this.visualW * 1.05);
+    this.shadow.width = w;
+    this.shadow.height = w * 0.34;
+    this.shadow.alpha = this.unit.flying ? 0.55 : 0.9;
+  }
+
+  private drawAura(color: number): void {
+    const rx = Math.max(38 * this.baseScale, this.visualW * 0.6);
+    this.aura.clear();
+    this.aura.ellipse(0, 0, rx, rx * 0.37).stroke({ color, width: 3, alpha: 0.9 });
+  }
+
   /** Prefer an animated sprite pack, then a static PNG, else keep the procedural placeholder. */
   private async tryLoadArt(): Promise<void> {
     const pack = await loadSpritePack(this.unit.sprite);
     if (this.destroyed) return;
     if (pack && pack.anims.idle?.length) {
       this.pack = pack;
+      const idle = pack.def.animations.idle;
+      if (idle.charW) this.visualW = (idle.charW / idle.charH) * UNIT_HEIGHT * this.baseScale;
       const a = new AnimatedSprite(pack.anims.idle);
       a.loop = true;
       this.body.removeChildren();
       this.anim = a;
       this.body.addChild(a);
       this.applyAnimDef('idle');
-      a.play();
+      a.gotoAndPlay(Math.floor(Math.random() * pack.anims.idle.length));
       this.hasRealArt = true;
+      this.fitShadow();
+      this.drawAura(this.auraColor);
       return;
     }
     const tex = await loadUnitTexture(this.unit.sprite);
@@ -93,9 +141,11 @@ export class UnitView extends Container {
     s.anchor.set(0.5, 1);
     const h = UNIT_HEIGHT * this.baseScale;
     s.scale.set(h / s.texture.height);
+    this.visualW = s.texture.width * s.scale.x;
     this.body.removeChildren();
     this.body.addChild(s);
     this.hasRealArt = true;
+    this.fitShadow();
   }
 
   /** Sets anchor/scale/speed for the given animation so the character keeps its on-screen size. */
@@ -193,9 +243,23 @@ export class UnitView extends Container {
 
   update(time: number, idleSpeed = 1): void {
     if (this.dead) return;
-    if (!this.anim) this.body.y = Math.sin(time * 2.2 * idleSpeed + this.bob) * (this.hasRealArt ? 1.5 : 2);
+    if (this.unit.flying) {
+      // hover: the body floats above the hex while the shadow breathes underneath
+      const t = Math.sin(time * 1.6 * idleSpeed + this.bob);
+      this.body.y = -HOVER_LIFT * this.baseScale + t * 5;
+      const k = 1 - (t + 1) * 0.08;
+      const s = this.shadowBaseScale;
+      this.shadow.scale.set(s * k, s * 0.68 * k);
+      this.shadow.alpha = 0.5 - (t + 1) * 0.08;
+    } else if (!this.anim) {
+      this.body.y = Math.sin(time * 2.2 * idleSpeed + this.bob) * (this.hasRealArt ? 1.5 : 2);
+    }
     this.aura.alpha = this.auraAlpha + Math.sin(time * 3 + this.bob) * 0.1;
     this.refreshBars();
+  }
+
+  private get shadowBaseScale(): number {
+    return Math.max(44, this.visualW * 1.05) / this.shadow.texture.width;
   }
 
   refreshBars(): void {
@@ -222,7 +286,8 @@ export class UnitView extends Container {
     if (u.maxQi > 0) {
       const qh = 4;
       q.roundRect(-w / 2 - 1, 2, w + 2, qh + 2, 1).fill({ color: 0x000000, alpha: 0.7 });
-      q.rect(-w / 2, 3, w * Math.min(1, u.qi / u.maxQi), qh).fill({ color: 0x5ab8ff });
+      const qf = Math.min(1, u.qi / u.maxQi);
+      q.rect(-w / 2, 3, w * qf, qh).fill({ color: qf >= 1 ? 0x9fe0ff : 0x5ab8ff });
     }
     this.statusRow.removeChildren();
     const chips: { color: number; text: string }[] = [];
@@ -249,10 +314,18 @@ export class UnitView extends Container {
   }
 
   get headY(): number {
-    return -UNIT_HEIGHT * this.baseScale * 0.85;
+    return -UNIT_HEIGHT * this.baseScale * 0.85 + (this.unit.flying ? -HOVER_LIFT * this.baseScale : 0);
   }
   get chestY(): number {
-    return -UNIT_HEIGHT * this.baseScale * 0.5;
+    return -UNIT_HEIGHT * this.baseScale * 0.5 + (this.unit.flying ? -HOVER_LIFT * this.baseScale : 0);
+  }
+  /** Half width of the visible body in design px. */
+  get halfWidth(): number {
+    return Math.max(30, this.visualW / 2);
+  }
+  /** Full height of the visible body in design px. */
+  get bodyHeight(): number {
+    return UNIT_HEIGHT * this.baseScale;
   }
 
   /** Attack: with a sheet, time the animation so its hit frame lands when the sim applies damage. */
@@ -263,7 +336,7 @@ export class UnitView extends Container {
       const hitFrame = def.hitFrame ?? Math.round(def.frames * 0.45);
       const fps = Math.min(60, Math.max(def.fps, hitFrame / Math.max(0.12, hitDelay)));
       this.playAnim('attack', { fps });
-      gsap.fromTo(this.body, { x: 0 }, { x: 8 * dir, duration: hitDelay, ease: 'power2.in', yoyo: true, repeat: 1, overwrite: 'auto' });
+      gsap.fromTo(this.body, { x: 0 }, { x: (ranged ? 4 : 10) * dir, duration: hitDelay, ease: 'power2.in', yoyo: true, repeat: 1, overwrite: 'auto' });
       return;
     }
     const tl = gsap.timeline();
@@ -284,11 +357,14 @@ export class UnitView extends Container {
     this.pulseAura(0xffffff, 0.9, 0.5);
   }
 
-  hurtAnim(crit: boolean): void {
+  /** Hit reaction: brightness flash, knock-back, and the hurt clip when the unit is otherwise idle. */
+  hurtAnim(crit: boolean, fromX?: number): void {
     this.flash(crit ? 2.2 : 1.6, crit ? 0.14 : 0.09);
-    const dir = this.body.scale.x >= 0 ? 1 : -1;
+    // knock away from the attacker when we know where the hit came from
+    const away = fromX !== undefined ? (fromX < this.x ? 1 : -1) : this.body.scale.x >= 0 ? -1 : 1;
     if (this.currentAnim === 'idle' || this.currentAnim === 'walk') this.playAnim('hurt', { fps: 36 });
-    gsap.fromTo(this.body, { x: -6 * dir }, { x: 0, duration: 0.18, ease: 'power2.out', overwrite: 'auto' });
+    gsap.fromTo(this.body, { x: (crit ? 12 : 6) * away }, { x: 0, duration: crit ? 0.26 : 0.18, ease: 'power2.out', overwrite: 'auto' });
+    if (crit) gsap.fromTo(this.body.scale, { y: 0.9 }, { y: 1, duration: 0.22, ease: 'back.out(3)', overwrite: 'auto' });
   }
 
   flash(brightness: number, duration: number): void {
@@ -300,10 +376,18 @@ export class UnitView extends Container {
     });
   }
 
+  /** Tints the body for a moment (frost = blue, poison = green...). */
+  tintFlash(color: number, duration = 0.35): void {
+    const targets = this.body.children as (Sprite | Container)[];
+    for (const c of targets) if ('tint' in c) (c as Sprite).tint = color;
+    gsap.delayedCall(duration, () => {
+      for (const c of targets) if ('tint' in c && !c.destroyed) (c as Sprite).tint = 0xffffff;
+    });
+  }
+
   pulseAura(color: number, alpha: number, duration: number): void {
     const g = this.aura;
-    g.clear();
-    g.ellipse(0, 0, 38 * this.baseScale, 14 * this.baseScale).stroke({ color, width: 3, alpha: 0.9 });
+    this.drawAura(color);
     gsap.fromTo(
       g,
       { alpha },
@@ -312,10 +396,7 @@ export class UnitView extends Container {
         duration,
         ease: 'power2.out',
         overwrite: 'auto',
-        onComplete: () => {
-          g.clear();
-          g.ellipse(0, 0, 38 * this.baseScale, 14 * this.baseScale).stroke({ color: this.auraColor, width: 3, alpha: 0.9 });
-        },
+        onComplete: () => this.drawAura(this.auraColor),
       },
     );
   }
@@ -323,17 +404,17 @@ export class UnitView extends Container {
   setAura(color: number, alpha: number): void {
     this.auraColor = color;
     this.auraAlpha = alpha;
-    this.aura.clear();
-    this.aura.ellipse(0, 0, 38 * this.baseScale, 14 * this.baseScale).stroke({ color, width: 3, alpha: 0.9 });
+    this.drawAura(color);
   }
 
   dieAnim(): void {
     this.dead = true;
     this.bars.visible = false;
     const dir = this.body.scale.x >= 0 ? 1 : -1;
-    if (!this.playAnim('death')) gsap.to(this.body, { rotation: -0.35 * dir, y: 10, duration: 0.5, ease: 'power2.in' });
+    if (!this.playAnim('death')) gsap.to(this.body, { rotation: -0.35 * dir, y: this.body.y + 10, duration: 0.5, ease: 'power2.in' });
     gsap.to(this, { alpha: 0, duration: 0.7, delay: 0.5, ease: 'power1.in' });
     gsap.to(this.shadow, { alpha: 0, duration: 0.5 });
+    gsap.to(this.aura, { alpha: 0, duration: 0.3 });
     this.brightness.reset();
     this.brightness.desaturate();
     this.brightness.enabled = true;
@@ -348,7 +429,7 @@ export class UnitView extends Container {
     this.body.rotation = 0;
     this.body.y = 0;
     this.alpha = 1;
-    this.shadow.alpha = 1;
+    this.shadow.alpha = this.unit.flying ? 0.55 : 0.9;
     this.playAnim('idle');
     gsap.fromTo(this.body.scale, { y: 0.4 }, { y: 1, duration: 0.5, ease: 'back.out(2)' });
   }

@@ -25,6 +25,11 @@ export function hideTooltip(): void {
   tooltip.value = null;
 }
 
+/** Shows a tooltip anchored at a design-space point (used for canvas units). */
+export function showTooltipAtDesign(x: number, y: number, content: ComponentChildren, anchor: TipState['anchor'] = 'above'): void {
+  tooltip.value = { x, y, content, anchor };
+}
+
 /** Props helper: spread onto an element to attach a tooltip. */
 export function tip(content: ComponentChildren | (() => ComponentChildren), anchor: TipState['anchor'] = 'right') {
   return {

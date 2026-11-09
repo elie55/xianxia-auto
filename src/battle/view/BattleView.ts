@@ -22,7 +22,7 @@ import {
 } from '@/battle/sim/hex';
 import { DESIGN_H, DESIGN_W, viewport, type Viewport } from '@/app/scale';
 import { UnitView, parseColor } from './UnitView';
-import { VfxLayer, PROJECTILE_STYLES, STATUS_COLORS } from './Vfx';
+import { VfxLayer, PROJECTILE_STYLES, STATUS_COLORS, CLASS_FX_COLOR } from './Vfx';
 import { FloatingTextLayer, type NumberKind } from './FloatingText';
 import { audio } from '@/audio/AudioManager';
 import { meta } from '@/app/store';
@@ -64,6 +64,7 @@ export class BattleView {
   private fx = new VfxLayer();
   private texts = new FloatingTextLayer();
   private overlay = new Graphics();
+  private flashOverlay = new Graphics();
   private tribulationLabel: Text | null = null;
 
   mode: ViewMode = 'idle';
@@ -73,9 +74,10 @@ export class BattleView {
   private acc = 0;
   private views = new Map<number, UnitView>();
   private shakeAmt = 0;
+  /** Milliseconds of simulation freeze left (impact "hit-stop"). Rendering keeps running. */
+  private hitStopMs = 0;
   private realm = 1;
   private elapsed = 0;
-  private endTimer = 0;
   onEnd: ((r: BattleResult) => void) | null = null;
   onTime: ((t: number) => void) | null = null;
   private ended = false;
@@ -98,7 +100,10 @@ export class BattleView {
     this.world.addChild(this.fx);
     this.world.addChild(this.texts);
     this.world.addChild(this.overlay);
+    this.world.addChild(this.flashOverlay);
     this.overlay.alpha = 0;
+    this.flashOverlay.alpha = 0;
+    this.flashOverlay.blendMode = 'add';
 
     // board origin: center the board horizontally, place vertically in the middle band
     const w = HEX_W * (BOARD_COLS - 1) + HEX_W / 2;
@@ -187,15 +192,12 @@ export class BattleView {
     const g = this.bgGradient;
     g.clear();
     const colors = this.realm === 1 ? [0x0f2a2a, 0x163d35, 0x0a1a19] : this.realm === 2 ? [0x2a0d14, 0x4a1420, 0x160609] : [0x101a33, 0x27345e, 0x0a0f1f];
-    // simple vertical bands as a gradient fallback
     const steps = 24;
     for (let i = 0; i < steps; i++) {
       const t = i / (steps - 1);
       const c = lerpColor(lerpColor(colors[0], colors[1], Math.min(1, t * 1.6)), colors[2], Math.max(0, t - 0.55) * 2.2);
       g.rect(0, (v.height * i) / steps, v.width, v.height / steps + 2).fill({ color: c });
     }
-    // soft vignette
-    g.rect(0, 0, v.width, v.height).fill({ color: 0x000000, alpha: 0.0 });
     this.fitBackground(v);
   }
 
@@ -207,10 +209,12 @@ export class BattleView {
     const cx = w / 2;
     const cy = h / 2;
     const col = this.realm === 1 ? 0x1d4a3d : this.realm === 2 ? 0x4a1d24 : 0x1f2c55;
-    const painted = !!this.bgSprite;
-    g.ellipse(cx, cy + 10, w * 0.78, h * 1.35).fill({ color: 0x000000, alpha: painted ? 0.22 : 0.35 });
-    g.ellipse(cx, cy, w * 0.72, h * 1.2).fill({ color: painted ? 0x000000 : col, alpha: painted ? 0.18 : 0.75 });
-    g.ellipse(cx, cy, w * 0.72, h * 1.2).stroke({ color: 0xd4a84b, width: 2, alpha: painted ? 0.28 : 0.35 });
+    // A painted arena is its own floor: draw nothing over it. The ellipses are only a fallback stage
+    // for when the background painting is missing.
+    if (this.bgSprite) return;
+    g.ellipse(cx, cy + 10, w * 0.78, h * 1.35).fill({ color: 0x000000, alpha: 0.35 });
+    g.ellipse(cx, cy, w * 0.72, h * 1.2).fill({ color: col, alpha: 0.75 });
+    g.ellipse(cx, cy, w * 0.72, h * 1.2).stroke({ color: 0xd4a84b, width: 2, alpha: 0.35 });
     g.ellipse(cx, cy, w * 0.66, h * 1.08).stroke({ color: 0xd4a84b, width: 1, alpha: 0.18 });
   }
 
@@ -260,21 +264,47 @@ export class BattleView {
     return { x: p.x + this.boardOrigin.x, y: p.y + this.boardOrigin.y };
   }
 
+  /** Design-space bounds of the ally placement zone (for tutorial highlights). */
+  allyZoneDesign(): { x: number; y: number; w: number; h: number } {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const h of allHexes()) {
+      const { col } = axialToOffset(h);
+      if (col > ALLY_MAX_COL) continue;
+      const p = this.hexCenterDesign(h);
+      minX = Math.min(minX, p.x - HEX_W / 2);
+      maxX = Math.max(maxX, p.x + HEX_W / 2);
+      minY = Math.min(minY, p.y - HEX_SIZE * HEX_SQUASH);
+      maxY = Math.max(maxY, p.y + HEX_SIZE * HEX_SQUASH);
+    }
+    return { x: minX, y: minY - 90, w: maxX - minX, h: maxY - minY + 100 };
+  }
+
   /** Finds the hero uid rendered at a design-space point (placement mode). */
   heroAtDesign(x: number, y: number): string | null {
+    const u = this.unitAtDesign(x, y);
+    return u && u.side === 'ally' && u.heroUid ? u.heroUid : null;
+  }
+
+  /** Finds any unit (ally or enemy) whose body covers a design-space point. */
+  unitAtDesign(x: number, y: number): Unit | null {
     const lx = x - this.boardOrigin.x;
     const ly = y - this.boardOrigin.y;
-    let best: { uid: string; d: number } | null = null;
+    let best: { u: Unit; d: number } | null = null;
     for (const v of this.views.values()) {
       const u = v.unit;
-      if (u.side !== 'ally' || !u.heroUid || !u.pos) continue;
-      const p = hexToPixel(u.pos);
-      const dx = lx - p.x;
-      const dy = ly - (p.y - 70);
-      const d = Math.hypot(dx, dy * 0.8);
-      if (d < 70 && (!best || d < best.d)) best = { uid: u.heroUid, d };
+      if (!u.onBoard || !u.pos || !v.visible || v.dead) continue;
+      const hw = v.halfWidth;
+      const hh = v.bodyHeight;
+      const dx = lx - v.x;
+      const dy = ly - (v.y - hh * 0.5);
+      if (Math.abs(dx) > hw || Math.abs(dy) > hh * 0.55) continue;
+      const d = Math.hypot(dx / hw, dy / (hh * 0.55));
+      if (!best || d < best.d) best = { u, d };
     }
-    return best?.uid ?? null;
+    return best?.u ?? null;
   }
 
   // ───────────────────────── placement ─────────────────────────
@@ -297,7 +327,6 @@ export class BattleView {
     if (this.mode !== 'placement') return this.showPlacement(allies, enemies);
     const wanted = new Map<number, UnitInit>();
     for (const i of [...allies, ...enemies]) wanted.set(i.id, i);
-    // remove stale
     for (const [id, v] of this.views) {
       const w = wanted.get(id);
       if (!w || w.defId !== v.unit.defId) {
@@ -353,12 +382,11 @@ export class BattleView {
     this.paused = false;
     this.acc = 0;
     this.ended = false;
-    this.endTimer = 0;
+    this.hitStopMs = 0;
     this.drawHexes(false);
     gsap.globalTimeline.timeScale(speed);
     for (const u of battle.units) this.addView(u, false);
     for (const v of this.views.values()) v.spawnAnim(Math.random() * 0.2);
-    // consume initial events (spawns etc.) on first tick
   }
 
   setSpeed(s: number): void {
@@ -375,6 +403,7 @@ export class BattleView {
     this.mode = 'idle';
     gsap.globalTimeline.timeScale(1);
     this.overlay.alpha = 0;
+    this.flashOverlay.alpha = 0;
     if (this.tribulationLabel) {
       this.tribulationLabel.destroy();
       this.tribulationLabel = null;
@@ -397,12 +426,16 @@ export class BattleView {
 
     const b = this.battle;
     if (b && this.mode === 'battle' && !this.paused && !this.ended) {
-      this.acc += dt * this.speed;
-      let guard = 0;
-      while (this.acc >= TICK && guard++ < 40) {
-        b.tick(TICK);
-        this.acc -= TICK;
-        if (b.over) break;
+      if (this.hitStopMs > 0) {
+        this.hitStopMs -= deltaMS;
+      } else {
+        this.acc += dt * this.speed;
+        let guard = 0;
+        while (this.acc >= TICK && guard++ < 40) {
+          b.tick(TICK);
+          this.acc -= TICK;
+          if (b.over) break;
+        }
       }
       for (const e of b.drainEvents()) this.handleEvent(e);
       this.onTime?.(b.time);
@@ -415,8 +448,6 @@ export class BattleView {
       }
     }
 
-    // update unit views
-    const simTime = b ? b.time : this.elapsed;
     for (const v of this.views.values()) {
       const u = v.unit;
       if (!u.onBoard || !u.pos) {
@@ -429,7 +460,7 @@ export class BattleView {
         const a = hexToPixel(u.moving.from);
         const c = hexToPixel(u.moving.to);
         v.x = a.x + (c.x - a.x) * t;
-        v.y = a.y + (c.y - a.y) * t - Math.sin(t * Math.PI) * (v.hasWalk ? 3 : 10);
+        v.y = a.y + (c.y - a.y) * t - Math.sin(t * Math.PI) * (v.hasWalk || u.flying ? 3 : 10);
       } else if (b) {
         const p = hexToPixel(u.pos);
         v.x = p.x;
@@ -447,8 +478,29 @@ export class BattleView {
     this.shakeAmt = Math.max(this.shakeAmt, amount);
   }
 
+  /** Freezes the simulation for a few milliseconds so a heavy hit "lands". */
+  hitStop(ms: number): void {
+    if (!meta.value.settings.screenShake) return;
+    this.hitStopMs = Math.max(this.hitStopMs, ms);
+  }
+
+  /** Brief full-screen tint (boss abilities, tribulation strikes). */
+  screenFlash(color: number, alpha = 0.25, duration = 0.35): void {
+    const g = this.flashOverlay;
+    g.clear();
+    g.rect(-400, -400, DESIGN_W + 800, DESIGN_H + 800).fill({ color, alpha: 1 });
+    gsap.killTweensOf(g);
+    g.alpha = alpha;
+    gsap.to(g, { alpha: 0, duration, ease: 'power2.out' });
+  }
+
   private viewOf(id: number): UnitView | undefined {
     return this.views.get(id);
+  }
+
+  private weaponColor(v: UnitView): number {
+    for (const c of v.unit.classes) if (CLASS_FX_COLOR[c]) return CLASS_FX_COLOR[c];
+    return v.unit.accent ? parseColor(v.unit.accent) : v.unit.side === 'ally' ? 0xe8f1ff : 0xff8a7a;
   }
 
   private handleEvent(e: BattleEvent): void {
@@ -457,13 +509,16 @@ export class BattleView {
       case 'spawn': {
         if (!this.views.has(e.unit.id) && this.battle) {
           const u = this.battle.unit(e.unit.id);
-          if (u) this.addView(u, true);
+          if (u) {
+            const v = this.addView(u, true);
+            this.fx.glyph(v.x, v.y, 0xb57cff, 50, 0.6);
+          }
         }
         break;
       }
       case 'move': {
         const v = this.viewOf(e.id);
-        if (v) {
+        if (v && !v.unit.flying) {
           const p = hexToPixel(e.from);
           this.fx.dust(p.x, p.y);
         }
@@ -474,10 +529,12 @@ export class BattleView {
         if (!v) break;
         if (e.from) {
           const a = hexToPixel(e.from);
-          this.fx.burst(a.x, a.y - 60, 0xb57cff, { count: 12, speed: 90, size: 16 });
+          this.fx.smoke(a.x, a.y, 0x6a3fb5, 6, 40);
+          this.fx.burst(a.x, a.y - 60, 0xb57cff, { count: 10, speed: 90, size: 16 });
         }
         const bpos = hexToPixel(e.to);
         this.fx.burst(bpos.x, bpos.y - 60, 0xb57cff, { count: 12, speed: 90, size: 16 });
+        this.fx.smoke(bpos.x, bpos.y, 0x6a3fb5, 6, 40);
         audio.sfx('blink');
         break;
       }
@@ -486,11 +543,20 @@ export class BattleView {
         const t = this.viewOf(e.targetId);
         if (!v) break;
         v.attackAnim(e.ranged, e.hitDelay);
+        const color = this.weaponColor(v);
         if (e.ranged && t) {
           const style = PROJECTILE_STYLES[e.projectile ?? 'spirit_bolt'] ?? PROJECTILE_STYLES.spirit_bolt;
           this.fx.projectile(v.x, v.y + v.chestY, t.x, t.y + t.chestY, e.hitDelay, style);
           audio.sfx(e.projectile === 'flying_sword' ? 'sword' : 'swing', { volume: 0.5 });
         } else {
+          // melee: the weapon arc lands on the target exactly when the sim applies the hit
+          if (t) {
+            const facing = v.unit.facing as 1 | -1;
+            gsap.delayedCall(Math.max(0.05, e.hitDelay - 0.04), () => {
+              if (t.destroyed) return;
+              this.fx.slash(t.x - facing * 10, t.y + t.chestY, facing, color, 58 + (v.unit.boss ? 40 : 0), (Math.random() - 0.5) * 0.6);
+            });
+          }
           audio.sfx(v.unit.classes.includes('sword') ? 'sword' : 'swing', { volume: 0.45 });
         }
         break;
@@ -499,40 +565,49 @@ export class BattleView {
         const v = this.viewOf(e.id);
         if (!v) break;
         v.castAnim();
+        const accent = v.unit.accent ? parseColor(v.unit.accent) : v.unit.side === 'ally' ? 0x6fe3c4 : 0xff6b5a;
         this.fx.ring(v.x, v.y, v.unit.side === 'ally' ? 0x6fe3c4 : 0xff6b5a, 80, 3, 0.6, HEX_SQUASH);
-        this.fx.flash(v.x, v.y + v.chestY, v.unit.accent ? parseColor(v.unit.accent) : 0xffffff, 160, 0.4);
+        this.fx.flash(v.x, v.y + v.chestY, accent, 160, 0.4);
+        if (v.unit.classes.includes('array') || v.unit.classes.includes('talisman') || v.unit.classes.includes('alchemist')) this.fx.glyph(v.x, v.y, accent, 62, 0.8);
         if (v.unit.boss) {
           this.shake(8);
+          this.hitStop(70);
+          this.screenFlash(0x3a0a12, 0.35, 0.5);
+          this.fx.shockwave(v.x, v.y, accent, 170, 0.6);
           audio.sfx('boss_roar', { volume: 0.6 });
         }
         audio.sfx('cast', { volume: 0.5 });
-        if (!this.texts) break;
         this.texts.spawn(v.x, v.y + v.headY - 20, e.name.toUpperCase(), 'label', { size: 15 });
         break;
       }
       case 'damage': {
         const v = this.viewOf(e.id);
         if (!v) break;
+        const src = this.viewOf(e.sourceId);
         if (e.dot) {
           if (showNumbers) this.texts.spawn(v.x, v.y + v.headY, `${e.amount}`, (e.dot === 'tribulation' ? 'tribulation' : e.dot) as NumberKind, { dot: true });
           if (e.dot === 'burn') this.fx.embers(v.x, v.y, STATUS_COLORS.burn, 3);
           if (e.dot === 'poison') this.fx.burst(v.x, v.y - 50, STATUS_COLORS.poison, { count: 3, speed: 30, size: 10, life: 0.5 });
+          if (e.dot === 'bleed') this.fx.burst(v.x, v.y + v.chestY, STATUS_COLORS.bleed, { count: 3, speed: 50, size: 10, life: 0.4, gravity: 30 });
           if (e.dot === 'tribulation') {
             this.fx.strike(v.x, v.y, 0xfff27a);
+            this.screenFlash(0xfff27a, 0.12, 0.25);
             this.shake(3);
-          }
-          if (e.hp <= 0) {
-            /* death event follows */
           }
           break;
         }
-        v.hurtAnim(e.crit);
+        v.hurtAnim(e.crit, src?.x);
         const kind: NumberKind = e.crit ? 'crit' : e.absorbed >= e.amount ? 'shield' : e.kind === 'true' ? 'true' : e.kind === 'magic' ? 'magic' : 'physical';
         if (showNumbers) this.texts.spawn(v.x, v.y + v.headY, e.crit ? `${e.amount}!` : `${e.amount}`, kind, { crit: e.crit });
-        this.fx.burst(v.x, v.y + v.chestY, e.crit ? 0xffd84a : e.kind === 'magic' ? 0xb57cff : 0xffffff, { count: e.crit ? 14 : 6, speed: e.crit ? 140 : 70, size: e.crit ? 20 : 12, life: 0.4 });
-        if (e.absorbed > 0) this.fx.ring(v.x, v.y + v.chestY, 0xbfe4ff, 50, 2, 0.3, 1);
+        const dir = src ? (v.x >= src.x ? 1 : -1) : -v.unit.facing;
+        const hitColor = e.crit ? 0xffd84a : e.kind === 'magic' ? 0xb57cff : e.kind === 'true' ? 0xffd9a1 : 0xfff1c0;
+        this.fx.sparks(v.x - dir * 8, v.y + v.chestY, dir, hitColor, e.crit ? 11 : 5, e.crit ? 340 : 220);
+        this.fx.flash(v.x, v.y + v.chestY, hitColor, e.crit ? 150 : 70, e.crit ? 0.35 : 0.2);
+        if (e.absorbed > 0) this.fx.dome(v.x, v.y, 0xbfe4ff, v.halfWidth + 14, v.bodyHeight);
         if (e.crit) {
           this.shake(v.unit.boss ? 10 : 5);
+          this.hitStop(v.unit.boss ? 60 : 38);
+          this.fx.shockwave(v.x, v.y, hitColor, 70, 0.4);
           audio.sfx('hit_crit', { volume: 0.7 });
         } else audio.sfx('hit_melee', { volume: 0.4 });
         break;
@@ -541,7 +616,8 @@ export class BattleView {
         const v = this.viewOf(e.id);
         if (!v || e.amount <= 0) break;
         if (showNumbers) this.texts.spawn(v.x, v.y + v.headY, `+${e.amount}`, 'heal');
-        this.fx.burst(v.x, v.y - 50, 0x8dff9a, { count: 6, speed: 40, size: 12, life: 0.6, gravity: -40 });
+        this.fx.motes(v.x, v.y, 0x8dff9a, 8, 120);
+        this.fx.ring(v.x, v.y, 0x8dff9a, 50, 2, 0.5, HEX_SQUASH);
         audio.sfx('heal', { volume: 0.35, throttleMs: 300 });
         break;
       }
@@ -549,7 +625,7 @@ export class BattleView {
         const v = this.viewOf(e.id);
         if (!v) break;
         if (showNumbers) this.texts.spawn(v.x, v.y + v.headY, `+${e.amount}`, 'shield', { size: 20 });
-        this.fx.ring(v.x, v.y + v.chestY, 0xbfe4ff, 70, 3, 0.5, 1);
+        this.fx.dome(v.x, v.y, 0xbfe4ff, v.halfWidth + 16, v.bodyHeight);
         audio.sfx('shield', { volume: 0.35, throttleMs: 300 });
         break;
       }
@@ -560,28 +636,36 @@ export class BattleView {
         switch (e.status) {
           case 'burn':
             this.fx.embers(v.x, v.y, color, 8);
+            v.tintFlash(0xffb080, 0.3);
             audio.sfx('fire', { volume: 0.4, throttleMs: 400 });
             break;
           case 'frost':
-            this.fx.burst(v.x, v.y - 50, color, { count: 8, speed: 60, size: 12, life: 0.5 });
+            this.fx.shards(v.x, v.y, color, 5, 0.6);
+            v.tintFlash(0xa8e4ff, 0.45);
             audio.sfx('frost', { volume: 0.3, throttleMs: 600 });
             break;
           case 'poison':
-            this.fx.burst(v.x, v.y - 50, color, { count: 6, speed: 40, size: 14, life: 0.6, gravity: -30 });
+            this.fx.smoke(v.x, v.y, color, 5, 40);
+            v.tintFlash(0xb8ff90, 0.4);
             audio.sfx('poison', { volume: 0.3, throttleMs: 500 });
             break;
           case 'stun':
             if (showNumbers) this.texts.spawn(v.x, v.y + v.headY - 10, 'STUN', 'label', { size: 14 });
             this.fx.burst(v.x, v.y + v.headY, 0xfff27a, { count: 6, speed: 50, size: 10, life: 0.5 });
+            this.fx.motes(v.x, v.y + v.headY - 10, 0xfff27a, 5, 30);
             break;
           case 'taunt':
             if (showNumbers) this.texts.spawn(v.x, v.y + v.headY - 10, 'TAUNTED', 'label', { size: 14 });
+            this.fx.ring(v.x, v.y, 0xffd27f, 60, 3, 0.5, HEX_SQUASH);
             break;
           case 'sunder':
             if (showNumbers) this.texts.spawn(v.x, v.y + v.headY - 10, `-${e.stacks} DEF`, 'label', { size: 13 });
+            this.fx.sparks(v.x, v.y + v.chestY, 1, 0xff9f7a, 3, 160);
+            this.fx.sparks(v.x, v.y + v.chestY, -1, 0xff9f7a, 3, 160);
             break;
           case 'weaken':
             if (showNumbers) this.texts.spawn(v.x, v.y + v.headY - 10, `WEAKENED`, 'label', { size: 13 });
+            this.fx.smoke(v.x, v.y, 0x7a6a9a, 4, 30);
             break;
           default:
             break;
@@ -590,23 +674,39 @@ export class BattleView {
       }
       case 'cleanse': {
         const v = this.viewOf(e.id);
-        if (v) this.fx.ring(v.x, v.y + v.chestY, 0xffffff, 60, 2, 0.4, 1);
+        if (v) {
+          this.fx.ring(v.x, v.y + v.chestY, 0xffffff, 60, 2, 0.4, 1);
+          this.fx.motes(v.x, v.y, 0xffffff, 6, 90);
+        }
         break;
       }
       case 'death': {
         const v = this.viewOf(e.id);
         if (!v) break;
         v.dieAnim();
+        const col = v.unit.side === 'ally' ? 0x9fd5ff : 0xff6b5a;
         this.fx.burst(v.x, v.y + v.chestY, v.unit.side === 'ally' ? 0x9fd5ff : 0x8a3a3a, { count: 16, speed: 110, size: 18, life: 0.7, gravity: 30 });
+        this.fx.wisp(v.x, v.y + v.chestY, col);
+        if (!v.unit.flying) this.fx.dust(v.x, v.y);
         audio.sfx('death', { volume: 0.5 });
-        if (v.unit.boss) this.shake(14);
+        this.hitStop(v.unit.boss ? 220 : 55);
+        if (v.unit.boss) {
+          this.shake(14);
+          this.screenFlash(0xffffff, 0.45, 0.8);
+          this.fx.shockwave(v.x, v.y, 0xff6b5a, 260, 0.9);
+          this.fx.shards(v.x, v.y, 0xff9a8a, 14, 1.2);
+        } else if (v.unit.elite) {
+          this.shake(6);
+          this.fx.shockwave(v.x, v.y, col, 120, 0.5);
+        }
         break;
       }
       case 'revive': {
         const v = this.viewOf(e.id);
         if (!v) break;
         v.reviveAnim();
-        this.fx.pillar(v.x, v.y, 0xff8a3c, 260, 0.8);
+        this.fx.fireColumn(v.x, v.y, 0xff8a3c, 260, 18);
+        this.fx.motes(v.x, v.y, 0xffd27f, 10, 160);
         this.texts.spawn(v.x, v.y + v.headY - 20, 'REBORN', 'label', { size: 20 });
         break;
       }
@@ -615,6 +715,7 @@ export class BattleView {
         if (!v || !showNumbers) break;
         const label = e.label ?? `${e.flat ? (e.flat > 0 ? '+' : '') + e.flat : (e.pct > 0 ? '+' : '') + e.pct + '%'} ${STAT_SHORT[e.stat] ?? e.stat}`;
         this.texts.spawn(v.x, v.y + v.headY - 24, label, 'buff', { size: 14 });
+        if (e.flat > 0 || e.pct > 0) this.fx.motes(v.x, v.y, 0xf3cf78, 4, 70);
         break;
       }
       case 'vfx': {
@@ -628,6 +729,7 @@ export class BattleView {
           v.setAura(0xffb86b, 0.7);
           this.texts.spawn(v.x, v.y + v.headY - 24, `SURGE · ${e.name.toUpperCase()}`, 'label', { size: 14 });
           this.fx.ring(v.x, v.y, 0xffb86b, 90, 3, 0.6, HEX_SQUASH);
+          this.fx.fireColumn(v.x, v.y, 0xffb86b, 140, 8);
         } else {
           v.setAura(v.unit.side === 'ally' ? 0x3fbf9f : 0xd2382c, 0.35);
         }
@@ -638,6 +740,8 @@ export class BattleView {
         if (!v) break;
         v.setAura(0xc9a7ff, 0.7);
         this.fx.pillar(v.x, v.y, 0xc9a7ff, 240, 0.8);
+        this.fx.motes(v.x, v.y, 0xc9a7ff, 14, 220);
+        this.fx.glyph(v.x, v.y, 0xc9a7ff, 70, 1.2);
         this.texts.spawn(v.x, v.y + v.headY - 24, `ENLIGHTENMENT · ${e.name.toUpperCase()}`, 'label', { size: 14 });
         audio.sfx('rankup', { volume: 0.4 });
         break;
@@ -650,6 +754,8 @@ export class BattleView {
           g.blendMode = 'add';
           this.fx.addChild(g);
           gsap.to(g, { alpha: 0, duration: 1.2, onComplete: () => g.destroy() });
+          this.fx.motes(a.x, a.y, 0xff9ad5, 6, 120);
+          this.fx.motes(b.x, b.y, 0xff9ad5, 6, 120);
           this.texts.spawn((a.x + b.x) / 2, (a.y + b.y) / 2 - 120, 'DAO COMPANIONS', 'label', { size: 18 });
         }
         break;
@@ -667,13 +773,18 @@ export class BattleView {
           gsap.fromTo(t.scale, { x: 1.4, y: 1.4 }, { x: 1, y: 1, duration: 0.5, ease: 'power3.out' });
           gsap.to(t, { alpha: 0.5, duration: 0.8, yoyo: true, repeat: -1 });
           this.shake(10);
+          this.screenFlash(0xfff27a, 0.3, 0.6);
+          for (let i = 0; i < 4; i++) gsap.delayedCall(i * 0.12, () => this.fx.strike((Math.random() - 0.2) * (DESIGN_W - this.boardOrigin.x * 2), 120 + Math.random() * 260, 0xfff27a));
           audio.sfx('tribulation', { volume: 0.7 });
         }
         break;
       }
       case 'stones': {
         const v = this.viewOf(e.sourceId);
-        if (v) this.texts.spawn(v.x, v.y + v.headY - 30, `+${e.amount} ◆`, 'stones', { size: 18 });
+        if (v) {
+          this.texts.spawn(v.x, v.y + v.headY - 30, `+${e.amount} ◆`, 'stones', { size: 18 });
+          this.fx.motes(v.x, v.y + v.chestY, 0xf3cf78, 5, 60);
+        }
         audio.sfx('stones', { volume: 0.5 });
         break;
       }
@@ -681,6 +792,7 @@ export class BattleView {
         break;
       case 'end': {
         audio.sfx(e.winner === 'ally' ? 'victory' : 'defeat', { volume: 0.7 });
+        if (e.winner === 'ally') this.screenFlash(0xf3cf78, 0.18, 0.9);
         break;
       }
     }
@@ -694,106 +806,153 @@ export class BattleView {
     if (!p) return;
     const chest = at ? at.chestY : -70;
     const facing = src ? (src.unit.facing as 1 | -1) : 1;
+    const from = src ? { x: src.x, y: src.y + src.chestY } : { x: p.x - facing * 160, y: p.y + chest };
     switch (key) {
       case 'lightning':
       case 'lightning_arc':
-      case 'thunder_call':
         this.fx.strike(p.x, p.y + chest, 0xfff27a);
+        if (src && tgt) this.fx.lightning(from.x, from.y, p.x, p.y + chest, 0xfff27a);
         audio.sfx('lightning', { volume: 0.5, throttleMs: 120 });
         this.shake(3);
+        break;
+      case 'thunder_call':
+        for (let i = 0; i < 3; i++) gsap.delayedCall(i * 0.09, () => this.fx.strike(p.x + (i - 1) * 50, p.y + (i === 1 ? chest : 0), 0xfff27a));
+        this.screenFlash(0xfff27a, 0.16, 0.3);
+        audio.sfx('lightning', { volume: 0.6, throttleMs: 120 });
+        this.shake(5);
         break;
       case 'sword_slash':
       case 'fire_slash':
       case 'shadow_slash':
-      case 'spear_line':
-      case 'arrow_pierce':
-      case 'sword_shard':
       case 'claw': {
         const color = key === 'fire_slash' ? 0xff8a3c : key === 'shadow_slash' ? 0xb57cff : key === 'claw' ? 0xffd27f : 0xe8f1ff;
-        this.fx.slash(p.x, p.y + chest, facing, color, key === 'claw' ? 50 : 70);
+        this.fx.slash(p.x, p.y + chest, facing, color, key === 'claw' ? 50 : 76, -0.2);
+        gsap.delayedCall(0.08, () => this.fx.slash(p.x, p.y + chest, facing, color, key === 'claw' ? 50 : 70, 0.35));
+        this.fx.sparks(p.x, p.y + chest, facing, color, 6, 240);
+        if (key === 'fire_slash') this.fx.embers(p.x, p.y, 0xff8a3c, 8);
+        if (key === 'shadow_slash') this.fx.smoke(p.x, p.y, 0x5a2d9a, 5, 40);
         break;
       }
+      case 'spear_line':
+      case 'arrow_pierce':
+      case 'gale_thrust':
+      case 'spear_sweep': {
+        const color = key === 'arrow_pierce' ? 0xffe9a0 : 0x5ad6a5;
+        this.fx.beam(from.x, from.y, p.x + facing * 90, p.y + chest, color, 22, 0.4);
+        this.fx.sparks(p.x, p.y + chest, facing, color, 6, 260);
+        break;
+      }
+      case 'sword_shard':
+        this.fx.shards(p.x, p.y, 0xe8f1ff, 10, 1);
+        this.fx.sparks(p.x, p.y + chest, facing, 0xe8f1ff, 6, 260);
+        break;
       case 'impact':
         this.fx.burst(p.x, p.y + chest, 0xffffff, { count: 10, speed: 120, size: 16, life: 0.4 });
-        this.shake(3);
+        this.fx.shockwave(p.x, p.y, 0xffd27f, 90, 0.45);
+        this.shake(4);
         break;
       case 'fist_flurry':
+        for (let i = 0; i < 4; i++) gsap.delayedCall(i * 0.06, () => this.fx.sparks(p.x + (Math.random() - 0.5) * 30, p.y + chest + (Math.random() - 0.5) * 40, facing, 0xffd27f, 4, 220));
         this.fx.burst(p.x, p.y + chest, 0xffd27f, { count: 6, speed: 80, size: 12, life: 0.3 });
         break;
       case 'heal_bloom':
       case 'sutra':
         this.fx.pillar(p.x, p.y, 0x8dff9a, 180, 0.6);
+        this.fx.motes(p.x, p.y, 0x8dff9a, 12, 160);
+        if (key === 'sutra') this.fx.glyph(p.x, p.y, 0xf3cf78, 60, 0.8);
         break;
       case 'shield_pop':
       case 'stone_aura':
       case 'obsidian':
-        this.fx.ring(p.x, p.y + chest, key === 'obsidian' ? 0x9a8ad0 : 0xbfe4ff, 80, 4, 0.5, 1);
+        this.fx.dome(p.x, p.y, key === 'obsidian' ? 0x9a8ad0 : 0xbfe4ff, (at?.halfWidth ?? 40) + 18, at?.bodyHeight ?? 150);
+        this.fx.ring(p.x, p.y, key === 'obsidian' ? 0x9a8ad0 : 0xbfe4ff, 80, 4, 0.5, HEX_SQUASH);
         break;
       case 'lotus_fire':
       case 'lotus_bloom':
       case 'phoenix_strike':
-      case 'ghost_fire':
-        this.fx.embers(p.x, p.y, key === 'ghost_fire' ? 0x7ff0e1 : 0xff8a3c, 14);
+      case 'ghost_fire': {
+        const color = key === 'ghost_fire' ? 0x7ff0e1 : 0xff8a3c;
+        this.fx.fireColumn(p.x, p.y, color, key === 'phoenix_strike' ? 240 : 180, 14);
         this.fx.ring(p.x, p.y, key === 'ghost_fire' ? 0x7ff0e1 : 0xff6b3c, 70, 3, 0.6, HEX_SQUASH);
         audio.sfx('fire', { volume: 0.5, throttleMs: 200 });
         break;
+      }
       case 'frost_array':
       case 'frost_burst':
       case 'freeze':
+        this.fx.shards(p.x, p.y, 0xa8e4ff, key === 'frost_array' ? 14 : 9, 1);
+        this.fx.ring(p.x, p.y, 0xa8e4ff, 90, 3, 0.6, HEX_SQUASH);
+        if (key === 'frost_array') this.fx.glyph(p.x, p.y, 0xa8e4ff, 80, 1);
+        audio.sfx('frost', { volume: 0.4, throttleMs: 200 });
+        break;
       case 'water_burst':
       case 'tidal_breath':
+        this.fx.beam(from.x, from.y, p.x + facing * 140, p.y + chest, 0x6ac8ff, 46, 0.55);
         this.fx.burst(p.x, p.y + chest, 0xa8e4ff, { count: 14, speed: 110, size: 16, life: 0.6 });
-        this.fx.ring(p.x, p.y, 0xa8e4ff, 90, 3, 0.6, HEX_SQUASH);
+        this.fx.shards(p.x, p.y, 0x9fd5ff, 6, 0.8);
+        this.fx.shockwave(p.x, p.y, 0x6ac8ff, 110, 0.5);
         audio.sfx('frost', { volume: 0.4, throttleMs: 200 });
         break;
       case 'shadow_blink':
+        this.fx.smoke(p.x, p.y, 0x5a2d9a, 8, 50);
         this.fx.burst(p.x, p.y + chest, 0xb57cff, { count: 14, speed: 100, size: 16, life: 0.5 });
         break;
       case 'tiger_roar':
       case 'tiger_form':
-        this.fx.ring(p.x, p.y, 0xffb347, 140, 5, 0.7, HEX_SQUASH);
+        this.fx.shockwave(p.x, p.y, 0xffb347, 160, 0.7);
+        this.screenFlash(0xffb347, 0.14, 0.4);
         this.shake(6);
         audio.sfx('boss_roar', { volume: 0.4 });
         break;
       case 'moon_pulse':
         this.fx.ring(p.x, p.y, 0xc9d8ff, 220, 4, 0.9, HEX_SQUASH);
-        this.fx.flash(p.x, p.y + chest, 0xc9d8ff, 200, 0.5);
+        this.fx.flash(p.x, p.y + chest, 0xc9d8ff, 220, 0.5);
+        this.fx.motes(p.x, p.y, 0xc9d8ff, 14, 200);
+        this.screenFlash(0xc9d8ff, 0.1, 0.5);
         break;
       case 'cinnabar_smoke':
       case 'poison_puff':
-        this.fx.burst(p.x, p.y + chest, 0x9fe85a, { count: 16, speed: 90, size: 22, life: 0.8, gravity: -30 });
+        this.fx.smoke(p.x, p.y, 0x9fe85a, 12, 80);
+        this.fx.burst(p.x, p.y + chest, 0x9fe85a, { count: 8, speed: 60, size: 18, life: 0.7, gravity: -30 });
         break;
       case 'phoenix_rebirth':
-        this.fx.pillar(p.x, p.y, 0xff8a3c, 300, 1);
+        this.fx.fireColumn(p.x, p.y, 0xff8a3c, 320, 24);
         this.fx.burst(p.x, p.y + chest, 0xffb347, { count: 24, speed: 160, size: 20, life: 0.9 });
+        this.fx.shockwave(p.x, p.y, 0xff8a3c, 150, 0.6);
+        this.screenFlash(0xff8a3c, 0.2, 0.6);
         this.shake(6);
         break;
       case 'enrage':
         this.fx.flash(p.x, p.y + chest, 0xff2e4d, 260, 0.6);
         this.fx.ring(p.x, p.y, 0xff2e4d, 150, 5, 0.7, HEX_SQUASH);
+        this.fx.fireColumn(p.x, p.y, 0xff2e4d, 200, 12);
+        this.screenFlash(0xff2e4d, 0.22, 0.6);
         this.shake(8);
         break;
       case 'summon':
+        this.fx.glyph(p.x, p.y, 0xb57cff, 70, 1);
         this.fx.pillar(p.x, p.y, 0xb57cff, 200, 0.7);
         break;
-      case 'gale_thrust':
-      case 'spear_sweep':
-        this.fx.slash(p.x, p.y + chest, facing, 0x5ad6a5, 80);
-        break;
       case 'sun_arrow':
+        this.fx.beam(from.x, from.y, p.x, p.y + chest, 0xffe9a0, 18, 0.35);
         this.fx.flash(p.x, p.y + chest, 0xffe9a0, 140, 0.3);
         break;
       case 'flying_sword':
         this.fx.flash(p.x, p.y + chest, 0x9fe0ff, 120, 0.3);
+        this.fx.slash(p.x, p.y + chest, facing, 0x9fe0ff, 70, 0.2);
+        this.fx.sparks(p.x, p.y + chest, facing, 0x9fe0ff, 6, 260);
         break;
       case 'tail_sweep':
-        this.fx.slash(p.x, p.y + chest, facing, 0x4fc3c7, 120);
+        this.fx.slash(p.x, p.y + chest, facing, 0x4fc3c7, 130, 0.1);
+        this.fx.shockwave(p.x, p.y, 0x4fc3c7, 130, 0.5);
         this.shake(6);
         break;
       case 'blood_nova':
       case 'blood_burst':
         this.fx.burst(p.x, p.y + chest, 0xff2e4d, { count: 18, speed: 140, size: 20, life: 0.7 });
-        this.fx.ring(p.x, p.y, 0xff2e4d, 200, 5, 0.8, HEX_SQUASH);
+        this.fx.shockwave(p.x, p.y, 0xff2e4d, key === 'blood_nova' ? 260 : 120, 0.8);
+        this.fx.smoke(p.x, p.y, 0x7a0f22, 10, 90);
+        if (key === 'blood_nova') this.screenFlash(0x7a0f22, 0.35, 0.7);
         this.shake(8);
         break;
       default:
@@ -801,11 +960,18 @@ export class BattleView {
     }
   }
 
-  /** Design-space position of a unit's head (for DOM overlays). */
+  /** Design-space position of a unit's feet (for DOM overlays). */
   unitScreenPos(id: number): { x: number; y: number } | null {
     const v = this.viewOf(id);
     if (!v) return null;
     return { x: v.x + this.boardOrigin.x, y: v.y + this.boardOrigin.y };
+  }
+
+  /** Design-space anchor above a unit's head (for DOM tooltips). */
+  unitHeadDesign(id: number): { x: number; y: number } | null {
+    const v = this.viewOf(id);
+    if (!v) return null;
+    return { x: v.x + this.boardOrigin.x, y: v.y + v.headY - 30 + this.boardOrigin.y };
   }
 }
 

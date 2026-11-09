@@ -1,22 +1,70 @@
 import { screen, setRun } from './store';
-import { addHero, draftPick, enterNode, newRun, resetItemQuests, equipItem, addItemToInventory } from '@/core/run';
+import {
+  addHero,
+  addItemToInventory,
+  addRelic,
+  battleConfig,
+  beginRankUps,
+  draftPick,
+  enterNode,
+  equipItem,
+  finishBattle,
+  newRun,
+  openShop,
+  queueRankUp,
+  resetItemQuests,
+  startBattle,
+  type RunState,
+} from '@/core/run';
 import { HEROES } from '@/content/heroes';
+import { RELICS } from '@/content/relics';
+import { Battle } from '@/battle/sim/battle';
+import { getBattleView } from '@/battle/view/BattleView';
+import { viewport } from './scale';
+import { run } from './store';
 
 /**
- * Developer shortcuts via URL query:
- *   ?demo            → a ready-made party of 5 on the board at node 1
- *   ?demo=boss       → same party, placed before the Realm I boss
- *   ?demo=<heroIds>  → comma-separated hero ids for the party
- *   ?demo=event:<id> → same party, opening the given event (e.g. event:spirit_spring)
+ * Developer shortcuts via URL query (dev builds and QA):
+ *   ?demo              → a ready-made party of 5 on the board at node 1
+ *   ?demo=boss         → same party, placed before the Realm I boss
+ *   ?demo=<heroIds>    → comma-separated hero ids for the party
+ *   ?demo=event:<id>   → opens the given event (e.g. event:spirit_spring)
+ *   ?demo=draft        → the opening draft
+ *   ?demo=battle       → starts the first fight immediately
+ *   ?demo=single       → board with the "choose your champion" trial panel
+ *   ?demo=result       → battle-won result screen
+ *   ?demo=defeat       → defeat screen with Time Reversal
+ *   ?demo=shop         → the shop
+ *   ?demo=rankup       → a breakthrough (Dao Path choice)
+ *   ?demo=reward       → Dao Insight reward pick
+ *   ?demo=challenge    → challenge offers
+ *   ?demo=cleared      → realm cleared
+ *   ?demo=end          → run end (victory)
  */
 export function applyDebugQuery(): boolean {
   const params = new URLSearchParams(location.search);
+  // QA hooks on the window (dev builds only)
+  if (import.meta.env.DEV) (window as unknown as { __nh: unknown }).__nh = { getBattleView, viewport, run };
+  // ?noanim freezes CSS entrance animations so QA screenshots are deterministic
+  if (params.has('noanim')) document.body.classList.add('no-anim');
+  // ?screen=compendium|settings|credits|newRun jumps straight to a menu screen
+  const scr = params.get('screen');
+  if (scr === 'compendium' || scr === 'settings' || scr === 'credits' || scr === 'newRun') {
+    screen.value = scr;
+    return true;
+  }
   if (!params.has('demo')) return false;
   const value = params.get('demo') ?? '';
   resetItemQuests();
   const s = newRun(0, 42);
+  if (value === 'draft') {
+    setRun(s);
+    screen.value = 'run';
+    return true;
+  }
   const eventId = value.startsWith('event:') ? value.slice(6) : null;
-  const ids = value && value !== 'boss' && !eventId ? value.split(',').filter((id) => HEROES.some((h) => h.id === id)) : ['li_jian', 'shan_tie', 'hong_lian', 'mei_yao', 'ying_wu'];
+  const SCENES = new Set(['boss', 'battle', 'single', 'result', 'defeat', 'shop', 'rankup', 'reward', 'challenge', 'cleared', 'end']);
+  const ids = value && !SCENES.has(value) && !eventId ? value.split(',').filter((id) => HEROES.some((h) => h.id === id)) : ['li_jian', 'shan_tie', 'hong_lian', 'mei_yao', 'ying_wu'];
   draftPick(s, ids[0] ?? 'li_jian', 'wealth');
   s.currentEvent = null;
   s.pendingRankUps = [];
@@ -27,13 +75,79 @@ export function applyDebugQuery(): boolean {
   addItemToInventory(s, 'azure_sword_talisman');
   addItemToInventory(s, 'jade_vitality_pendant');
   equipItem(s, 'azure_sword_talisman', s.roster[0].uid);
+  addRelic(s, RELICS[0].id);
   if (value === 'boss') s.nodeIndex = 11;
   if (eventId) {
     s.nodeIndex = 2;
     s.currentEvent = { eventId, outcome: null, chosen: null };
     s.phase = 'event';
-  } else enterNode(s);
+  } else if (value === 'challenge') {
+    s.nodeIndex = 3;
+    s.timeline[s.nodeIndex].kind = 'challenge';
+    enterNode(s);
+  } else {
+    enterNode(s);
+    applyScene(s, value);
+  }
   setRun(s);
   screen.value = 'run';
   return true;
+}
+
+function applyScene(s: RunState, scene: string): void {
+  switch (scene) {
+    case 'battle':
+      startBattle(s);
+      break;
+    case 'single':
+      s.fightReward = { actions: [], desc: 'An epic Treasure of your choice', single: true };
+      break;
+    case 'result':
+    case 'defeat': {
+      const cfg = battleConfig(s);
+      if (!cfg) break;
+      const r = new Battle(cfg).run();
+      if (scene === 'defeat') {
+        r.winner = 'enemy';
+        r.survivors = 0;
+      }
+      finishBattle(s, r);
+      break;
+    }
+    case 'shop':
+      openShop(s);
+      break;
+    case 'rankup': {
+      const h = s.roster[0];
+      h.rank = 1;
+      h.daoPathId = undefined;
+      queueRankUp(s, h.uid);
+      beginRankUps(s, 'board');
+      break;
+    }
+    case 'reward':
+      s.pendingReward = RELICS.slice(1, 4);
+      s.phase = 'reward';
+      break;
+    case 'cleared':
+      s.stats.wins = 12;
+      s.stats.stonesEarned = 340;
+      s.stats.damage = 48210;
+      s.stats.bestHit = 1260;
+      s.phase = 'realmCleared';
+      break;
+    case 'end':
+      s.victory = true;
+      s.realm = 2;
+      s.stats.wins = 24;
+      s.stats.fights = 26;
+      s.stats.stonesEarned = 780;
+      s.stats.damage = 180400;
+      s.stats.bestHit = 3120;
+      for (const h of s.roster) s.heroTotals[h.uid] = { dealt: 20000 + Math.random() * 30000, taken: 8000 + Math.random() * 9000, healed: Math.random() * 6000, kills: Math.floor(Math.random() * 20), crits: Math.floor(Math.random() * 60), bestHit: 800 + Math.random() * 2000, fights: 26 };
+      s.phase = 'runEnd';
+      break;
+    default:
+      break;
+  }
 }

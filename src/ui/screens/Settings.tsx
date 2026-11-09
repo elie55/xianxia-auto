@@ -1,5 +1,6 @@
 import { meta, screen, updateMeta } from '@/app/store';
 import { audio } from '@/audio/AudioManager';
+import { resetTutorial } from '@/ui/tutorial/Tutorial';
 
 export function Settings() {
   const m = meta.value;
@@ -58,6 +59,17 @@ export function Settings() {
           <Row label="Screen shake">
             <button class={`btn small ${m.settings.screenShake ? 'primary' : 'ghost'}`} onClick={() => set((s) => (s.screenShake = !s.screenShake))}>
               {m.settings.screenShake ? 'On' : 'Off'}
+            </button>
+          </Row>
+          <Row label="Tutorial">
+            <button
+              class="btn small ghost"
+              onClick={() => {
+                resetTutorial();
+                audio.sfx('ui_confirm');
+              }}
+            >
+              Replay on next run
             </button>
           </Row>
           <Row label="Damage numbers">

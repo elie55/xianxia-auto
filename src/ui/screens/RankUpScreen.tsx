@@ -50,7 +50,7 @@ export function RankUpScreen() {
             <div class="muted" style={{ marginBottom: 20 }}>
               {isDao ? `${def.name} has reached Foundation. Each path reshapes their cultivation — some even grant a second class.` : `${def.name} gains an Insight drawn from ${h.daoPathId ? 'their classes' : 'their class'}.`}
             </div>
-            <div class="upgrade-row stagger">
+            <div class="upgrade-row stagger" data-tut="upgrade-row">
               {c.options.map((u) => (
                 <button
                   key={u.id}

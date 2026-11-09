@@ -66,7 +66,7 @@ function TopBar({ s }: { s: RunState }) {
   const inBattle = s.phase === 'battle';
   const realmName = s.realm === 1 ? 'Azure Bamboo Province' : s.realm === 2 ? 'Blood Moon Abyss' : `Heavenly Ladder · Floor ${s.floor}`;
   return (
-    <div class="topbar">
+    <div class="topbar" data-tut="topbar">
       <div class="topbar-left">
         <div class="stones-pill big" {...tip(<><h4 class="gold">Spirit Stones</h4><p>Currency for disciples, Treasures and Dao Insights. Earned after every victory.</p></>)}>
           <Icon name="stones" size={22} color="var(--gold-bright)" /> {s.stones}
@@ -95,7 +95,7 @@ function TopBar({ s }: { s: RunState }) {
           <span>{level}</span>
         </div>
         {(inBattle || s.phase === 'board') && (
-          <div class="speed-controls">
+          <div class="speed-controls" data-tut="speed">
             <button
               class={`speed-btn ${meta.value.settings.autoBattle ? 'on' : ''}`}
               {...tip(<><h4>Auto</h4><p>Start fights automatically when the board is ready.</p></>, 'left')}
@@ -133,7 +133,7 @@ function LeftRail({ s }: { s: RunState }) {
   const dragging = drag.value;
   const canDropItem = dragging?.payload.kind === 'item' && !!dragging.payload.fromHero;
   return (
-    <div class="leftrail">
+    <div class="leftrail" data-tut="leftrail">
       <div class="rail-title">
         Dao Insights <span class="faint">{relics.length}</span>
       </div>
@@ -210,7 +210,7 @@ function RightRail({ s }: { s: RunState }) {
   const label = tab === 'damageDealt' ? 'Damage Dealt' : tab === 'damageTaken' ? 'Damage Taken' : 'Healing & Shields';
   const color = tab === 'damageDealt' ? '#ff6b9a' : tab === 'damageTaken' ? '#ffb347' : '#8dff9a';
   return (
-    <div class="rightrail panel plain">
+    <div class="rightrail panel plain" data-tut="tracker">
       <div class="tracker-tabs">
         <button class={tab === 'damageDealt' ? 'on' : ''} onClick={() => (trackerTab.value = 'damageDealt')} {...tip(<h4>Damage dealt</h4>, 'left')}>
           <Icon name="ui_damage" size={16} />
@@ -251,7 +251,7 @@ function BottomBar({ s }: { s: RunState }) {
   const ctx = teamContext(s);
   const dragging = drag.value;
   return (
-    <div class="bottombar">
+    <div class="bottombar" data-tut="party">
       <div class="bb-label display">
         Party <span class="faint">{s.party.filter(Boolean).length}/{s.partySize}</span>
       </div>

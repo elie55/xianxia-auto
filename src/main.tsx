@@ -2,6 +2,7 @@ import './styles/base.css';
 import './styles/screens.css';
 import './styles/hud.css';
 import './styles/run.css';
+import './styles/polish.css';
 import { render } from 'preact';
 import { App } from '@/app/App';
 import { installScaling } from '@/app/scale';

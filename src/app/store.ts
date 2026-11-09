@@ -12,6 +12,10 @@ export interface MetaSave {
   leaderboard: { name: string; score: number; tier: number; date: number }[];
   settings: { music: number; sfx: number; autoBattle: boolean; battleSpeed: 1 | 2 | 3; screenShake: boolean; showDamage: boolean };
   seenTutorial: boolean;
+  /** Tutorial chapters already shown (by id). */
+  tutorialSeen: string[];
+  /** Player skipped the tutorial: never show chapters again. */
+  tutorialDisabled: boolean;
 }
 
 const META_KEY = 'nine-heavens:meta';
@@ -26,6 +30,8 @@ export const defaultMeta = (): MetaSave => ({
   leaderboard: [],
   settings: { music: 0.6, sfx: 0.8, autoBattle: false, battleSpeed: 1, screenShake: true, showDamage: true },
   seenTutorial: false,
+  tutorialSeen: [],
+  tutorialDisabled: false,
 });
 
 function loadMeta(): MetaSave {

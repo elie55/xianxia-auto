@@ -4,9 +4,15 @@ import gsap from 'gsap';
 /**
  * Procedural VFX built from Graphics + GSAP. Keyed so content can request effects by name.
  * All durations respect the current battle speed via gsap.globalTimeline.timeScale.
+ * Everything is additive-blended and short-lived; particle counts are capped so a busy fight stays smooth.
  */
 export class VfxLayer extends Container {
   private softTex: Texture | null = null;
+  private shardTex: Texture | null = null;
+  /** Rough budget: skip decorative particles when the layer is already crowded. */
+  private get crowded(): boolean {
+    return this.children.length > 420;
+  }
 
   private soft(): Texture {
     if (this.softTex) return this.softTex;
@@ -23,9 +29,30 @@ export class VfxLayer extends Container {
     return this.softTex;
   }
 
+  private shard(): Texture {
+    if (this.shardTex) return this.shardTex;
+    const c = document.createElement('canvas');
+    c.width = 24;
+    c.height = 48;
+    const g = c.getContext('2d')!;
+    const grd = g.createLinearGradient(0, 0, 0, 48);
+    grd.addColorStop(0, 'rgba(255,255,255,1)');
+    grd.addColorStop(1, 'rgba(255,255,255,0.15)');
+    g.fillStyle = grd;
+    g.beginPath();
+    g.moveTo(12, 0);
+    g.lineTo(22, 34);
+    g.lineTo(12, 48);
+    g.lineTo(2, 34);
+    g.closePath();
+    g.fill();
+    this.shardTex = Texture.from(c);
+    return this.shardTex;
+  }
+
   /** Particle burst of soft dots. */
   burst(x: number, y: number, color: number, opts: { count?: number; speed?: number; size?: number; life?: number; gravity?: number; spread?: number } = {}): void {
-    const n = opts.count ?? 14;
+    const n = this.crowded ? Math.ceil((opts.count ?? 14) / 3) : (opts.count ?? 14);
     const tex = this.soft();
     for (let i = 0; i < n; i++) {
       const s = new Sprite(tex);
@@ -53,6 +80,26 @@ export class VfxLayer extends Container {
     }
   }
 
+  /** Thin directional streaks flying away from an impact point (melee hits). */
+  sparks(x: number, y: number, dirX: number, color = 0xfff1c0, count = 7, speed = 260): void {
+    const n = this.crowded ? 3 : count;
+    for (let i = 0; i < n; i++) {
+      const g = new Graphics();
+      const len = 10 + Math.random() * 18;
+      g.moveTo(0, 0).lineTo(len, 0).stroke({ color, width: 2 + Math.random() * 1.5, cap: 'round' });
+      g.moveTo(0, 0).lineTo(len * 0.6, 0).stroke({ color: 0xffffff, width: 1, alpha: 0.9 });
+      g.blendMode = 'add';
+      g.x = x;
+      g.y = y;
+      const ang = (dirX >= 0 ? 0 : Math.PI) + (Math.random() - 0.5) * 1.6;
+      g.rotation = ang;
+      this.addChild(g);
+      const spd = speed * (0.5 + Math.random());
+      const life = 0.22 + Math.random() * 0.18;
+      gsap.to(g, { x: x + Math.cos(ang) * spd * life, y: y + Math.sin(ang) * spd * life + 20 * life, alpha: 0, duration: life, ease: 'power2.out', onComplete: () => g.destroy() });
+    }
+  }
+
   /** Expanding ring. */
   ring(x: number, y: number, color: number, radius = 60, width = 4, duration = 0.5, squash = 0.5): void {
     const g = new Graphics();
@@ -75,6 +122,14 @@ export class VfxLayer extends Container {
     });
   }
 
+  /** Ground shockwave: a thick ring hugging the floor plus dust and a flash. */
+  shockwave(x: number, y: number, color: number, radius = 120, duration = 0.55): void {
+    this.ring(x, y, color, radius, 8, duration, 0.42);
+    this.ring(x, y, 0xffffff, radius * 0.7, 3, duration * 0.8, 0.42);
+    this.burst(x, y, 0xcfc6b0, { count: 10, speed: radius * 0.9, size: 22, life: 0.5, spread: 1.1, gravity: -10 });
+    this.flash(x, y - 20, color, radius * 0.9, 0.35);
+  }
+
   /** Flash a soft glow at a point. */
   flash(x: number, y: number, color: number, size = 120, duration = 0.3): void {
     const s = new Sprite(this.soft());
@@ -88,27 +143,35 @@ export class VfxLayer extends Container {
     gsap.to(s, { width: size, height: size, alpha: 0, duration, ease: 'power2.out', onComplete: () => s.destroy() });
   }
 
-  /** Curved slash arc. */
-  slash(x: number, y: number, facing: number, color = 0xffffff, size = 70): void {
+  /** Curved slash arc with a bright core. */
+  slash(x: number, y: number, facing: number, color = 0xffffff, size = 70, tilt = 0): void {
     const g = new Graphics();
     g.x = x;
     g.y = y;
     g.scale.x = facing;
+    g.rotation = tilt;
     g.blendMode = 'add';
     this.addChild(g);
     const state = { t: 0 };
     gsap.to(state, {
       t: 1,
-      duration: 0.22,
+      duration: 0.24,
       ease: 'power2.out',
       onUpdate: () => {
         g.clear();
         const a0 = -Math.PI * 0.55 + state.t * 0.2;
         const a1 = a0 + Math.PI * 0.7 * Math.min(1, state.t * 1.6);
         const r = size;
-        g.moveTo(Math.cos(a0) * r, Math.sin(a0) * r * 0.9);
-        for (let a = a0; a <= a1; a += 0.1) g.lineTo(Math.cos(a) * r, Math.sin(a) * r * 0.9);
-        g.stroke({ color, width: 7 * (1 - state.t * 0.7) + 1, alpha: 1 - state.t * 0.8, cap: 'round' });
+        const pts: number[] = [];
+        for (let a = a0; a <= a1; a += 0.08) pts.push(Math.cos(a) * r, Math.sin(a) * r * 0.9);
+        if (pts.length >= 4) {
+          g.moveTo(pts[0], pts[1]);
+          for (let i = 2; i < pts.length; i += 2) g.lineTo(pts[i], pts[i + 1]);
+          g.stroke({ color, width: 9 * (1 - state.t * 0.7) + 1, alpha: 0.9 - state.t * 0.7, cap: 'round' });
+          g.moveTo(pts[0], pts[1]);
+          for (let i = 2; i < pts.length; i += 2) g.lineTo(pts[i], pts[i + 1]);
+          g.stroke({ color: 0xffffff, width: 3 * (1 - state.t * 0.7) + 0.5, alpha: 1 - state.t * 0.8, cap: 'round' });
+        }
       },
       onComplete: () => g.destroy(),
     });
@@ -149,9 +212,215 @@ export class VfxLayer extends Container {
   strike(x: number, y: number, color = 0xfff27a): void {
     this.lightning(x + (Math.random() - 0.5) * 120, y - 520, x, y, color);
     this.burst(x, y, color, { count: 10, speed: 90, size: 14, life: 0.4 });
+    this.sparks(x, y - 10, 1, color, 4, 200);
+    this.sparks(x, y - 10, -1, color, 4, 200);
   }
 
-  /** Moving projectile; returns a promise resolved on arrival. */
+  /** Lightning that jumps along a list of points (chain lightning). */
+  chain(points: { x: number; y: number }[], color = 0xfff27a): void {
+    for (let i = 0; i + 1 < points.length; i++) {
+      const a = points[i];
+      const b = points[i + 1];
+      gsap.delayedCall(i * 0.07, () => this.lightning(a.x, a.y, b.x, b.y, color));
+    }
+  }
+
+  /** Tapered glowing beam between two points (breath attacks, piercing thrusts). */
+  beam(x0: number, y0: number, x1: number, y1: number, color: number, width = 26, duration = 0.45): void {
+    const g = new Graphics();
+    g.blendMode = 'add';
+    this.addChild(g);
+    const ang = Math.atan2(y1 - y0, x1 - x0);
+    const len = Math.hypot(x1 - x0, y1 - y0);
+    g.x = x0;
+    g.y = y0;
+    g.rotation = ang;
+    const state = { t: 0 };
+    gsap.to(state, {
+      t: 1,
+      duration,
+      ease: 'power1.out',
+      onUpdate: () => {
+        const t = state.t;
+        const reach = len * Math.min(1, t * 2.2);
+        const w = width * (1 - t * 0.85);
+        g.clear();
+        g.poly([0, -w * 0.5, reach, -w * 0.25, reach + w, 0, reach, w * 0.25, 0, w * 0.5]).fill({ color, alpha: 0.55 * (1 - t) });
+        g.poly([0, -w * 0.18, reach, -w * 0.08, reach + w * 0.6, 0, reach, w * 0.08, 0, w * 0.18]).fill({ color: 0xffffff, alpha: 0.9 * (1 - t) });
+      },
+      onComplete: () => g.destroy(),
+    });
+    this.flash(x0, y0, color, width * 3, 0.3);
+    gsap.delayedCall(duration * 0.45, () => this.flash(x1, y1, color, width * 4, 0.35));
+  }
+
+  /** Crystal shards bursting upward and falling back (ice, bone, glass). */
+  shards(x: number, y: number, color = 0xa8e4ff, count = 10, power = 1): void {
+    const n = this.crowded ? 4 : count;
+    const tex = this.shard();
+    for (let i = 0; i < n; i++) {
+      const s = new Sprite(tex);
+      s.anchor.set(0.5, 0.5);
+      s.tint = color;
+      s.blendMode = 'add';
+      const k = 0.5 + Math.random() * 0.7;
+      s.scale.set(k * 0.9, k);
+      s.x = x + (Math.random() - 0.5) * 30;
+      s.y = y - 10;
+      s.rotation = (Math.random() - 0.5) * 0.8;
+      this.addChild(s);
+      const vx = (Math.random() - 0.5) * 220 * power;
+      const vy = -(140 + Math.random() * 180) * power;
+      const life = 0.55 + Math.random() * 0.3;
+      const st = { t: 0 };
+      gsap.to(st, {
+        t: 1,
+        duration: life,
+        ease: 'none',
+        onUpdate: () => {
+          const t = st.t * life;
+          s.x = x + vx * t;
+          s.y = y - 10 + vy * t + 520 * t * t;
+          s.rotation += 0.12;
+          s.alpha = 1 - st.t * st.t;
+        },
+        onComplete: () => s.destroy(),
+      });
+    }
+    this.flash(x, y - 40, color, 110, 0.3);
+  }
+
+  /** Column of flame: rising puffs plus a bright core. */
+  fireColumn(x: number, y: number, color = 0xff8a3c, height = 200, count = 16): void {
+    const n = this.crowded ? 6 : count;
+    const tex = this.soft();
+    for (let i = 0; i < n; i++) {
+      const s = new Sprite(tex);
+      s.anchor.set(0.5);
+      s.tint = i % 3 === 0 ? 0xfff0a0 : color;
+      s.blendMode = 'add';
+      const sz = 26 + Math.random() * 30;
+      s.width = s.height = sz;
+      s.x = x + (Math.random() - 0.5) * 50;
+      s.y = y - Math.random() * 30;
+      this.addChild(s);
+      const delay = Math.random() * 0.25;
+      gsap.to(s, { y: y - height * (0.5 + Math.random() * 0.5), x: s.x + (Math.random() - 0.5) * 40, alpha: 0, duration: 0.6 + Math.random() * 0.4, delay, ease: 'power1.out', onComplete: () => s.destroy() });
+      gsap.to(s.scale, { x: s.scale.x * 0.3, y: s.scale.y * 0.3, duration: 0.9, delay, ease: 'power1.in' });
+    }
+    this.pillar(x, y, color, height * 0.8, 0.5);
+  }
+
+  /** Expanding smoke puffs (poison clouds, shadow mist). */
+  smoke(x: number, y: number, color = 0x9fe85a, count = 10, radius = 70): void {
+    const n = this.crowded ? 4 : count;
+    const tex = this.soft();
+    for (let i = 0; i < n; i++) {
+      const s = new Sprite(tex);
+      s.anchor.set(0.5);
+      s.tint = color;
+      s.alpha = 0.55;
+      const sz = 30 + Math.random() * 30;
+      s.width = s.height = sz;
+      s.x = x + (Math.random() - 0.5) * 30;
+      s.y = y - 20 - Math.random() * 30;
+      this.addChild(s);
+      const ang = Math.random() * Math.PI * 2;
+      gsap.to(s, { x: s.x + Math.cos(ang) * radius * Math.random(), y: s.y - 30 - Math.random() * 50, alpha: 0, duration: 0.9 + Math.random() * 0.5, ease: 'power1.out', onComplete: () => s.destroy() });
+      gsap.to(s, { width: sz * 2.2, height: sz * 2.2, duration: 1.1, ease: 'power1.out' });
+    }
+  }
+
+  /** Gentle rising sparkles that twinkle (heals, blessings, enlightenment). */
+  motes(x: number, y: number, color = 0x8dff9a, count = 10, height = 120): void {
+    const n = this.crowded ? 4 : count;
+    const tex = this.soft();
+    for (let i = 0; i < n; i++) {
+      const s = new Sprite(tex);
+      s.anchor.set(0.5);
+      s.tint = color;
+      s.blendMode = 'add';
+      const sz = 6 + Math.random() * 10;
+      s.width = s.height = sz;
+      s.x = x + (Math.random() - 0.5) * 70;
+      s.y = y - Math.random() * 20;
+      s.alpha = 0;
+      this.addChild(s);
+      const life = 0.8 + Math.random() * 0.6;
+      const delay = Math.random() * 0.3;
+      gsap.to(s, { alpha: 1, duration: 0.2, delay });
+      gsap.to(s, { y: s.y - height * (0.5 + Math.random() * 0.5), x: s.x + Math.sin(i) * 14, duration: life, delay, ease: 'sine.out' });
+      gsap.to(s, { alpha: 0, duration: 0.35, delay: delay + life - 0.35, onComplete: () => s.destroy() });
+      gsap.to(s.scale, { x: s.scale.x * 1.6, y: s.scale.y * 1.6, duration: 0.25, delay: delay + life * 0.4, yoyo: true, repeat: 1 });
+    }
+  }
+
+  /** Shield dome: a translucent arc that flares and fades over the unit. */
+  dome(x: number, y: number, color = 0xbfe4ff, rx = 60, ry = 90): void {
+    const g = new Graphics();
+    g.x = x;
+    g.y = y;
+    g.blendMode = 'add';
+    this.addChild(g);
+    const st = { a: 0.9, k: 0.85 };
+    const draw = () => {
+      g.clear();
+      g.ellipse(0, -ry * 0.55, rx * st.k, ry * 0.75 * st.k).fill({ color, alpha: st.a * 0.22 });
+      g.ellipse(0, -ry * 0.55, rx * st.k, ry * 0.75 * st.k).stroke({ color, width: 3, alpha: st.a });
+      g.ellipse(0, -ry * 0.55, rx * st.k * 0.8, ry * 0.75 * st.k * 0.8).stroke({ color: 0xffffff, width: 1, alpha: st.a * 0.6 });
+    };
+    draw();
+    gsap.to(st, { k: 1.08, duration: 0.25, ease: 'back.out(2)', onUpdate: draw });
+    gsap.to(st, { a: 0, duration: 0.5, delay: 0.25, ease: 'power1.in', onUpdate: draw, onComplete: () => g.destroy() });
+  }
+
+  /** Glowing soul wisp that drifts upward (death). */
+  wisp(x: number, y: number, color = 0x9fd5ff): void {
+    const s = new Sprite(this.soft());
+    s.anchor.set(0.5);
+    s.tint = color;
+    s.blendMode = 'add';
+    s.width = s.height = 54;
+    s.x = x;
+    s.y = y;
+    s.alpha = 0;
+    this.addChild(s);
+    const tl = gsap.timeline({ onComplete: () => s.destroy() });
+    tl.to(s, { alpha: 1, duration: 0.3 }, 0.25);
+    tl.to(s, { y: y - 170, x: x + (Math.random() - 0.5) * 60, duration: 1.4, ease: 'sine.out' }, 0.25);
+    tl.to(s, { alpha: 0, width: 10, height: 10, duration: 0.5, ease: 'power1.in' }, 1.15);
+    this.motes(x, y, color, 6, 140);
+  }
+
+  /** Rotating formation glyph on the ground (arrays, summons, talisman casts). */
+  glyph(x: number, y: number, color = 0x9fe0ff, radius = 70, duration = 0.9): void {
+    const g = new Graphics();
+    g.x = x;
+    g.y = y;
+    g.scale.y = 0.45;
+    g.blendMode = 'add';
+    this.addChild(g);
+    g.circle(0, 0, radius).stroke({ color, width: 2.5, alpha: 0.9 });
+    g.circle(0, 0, radius * 0.72).stroke({ color, width: 1.5, alpha: 0.7 });
+    for (let i = 0; i < 2; i++) {
+      const pts: number[] = [];
+      for (let k = 0; k < 3; k++) {
+        const a = (Math.PI * 2 * k) / 3 + (i ? Math.PI / 3 : 0) - Math.PI / 2;
+        pts.push(Math.cos(a) * radius * 0.86, Math.sin(a) * radius * 0.86);
+      }
+      g.poly(pts).stroke({ color: 0xffffff, width: 1.2, alpha: 0.75 });
+    }
+    for (let k = 0; k < 6; k++) {
+      const a = (Math.PI * 2 * k) / 6;
+      g.circle(Math.cos(a) * radius, Math.sin(a) * radius, 4).fill({ color: 0xffffff, alpha: 0.9 });
+    }
+    g.alpha = 0;
+    gsap.to(g, { alpha: 1, duration: 0.15 });
+    gsap.to(g, { rotation: Math.PI * 0.6, duration, ease: 'none' });
+    gsap.to(g, { alpha: 0, duration: 0.3, delay: duration - 0.3, onComplete: () => g.destroy() });
+  }
+
+  /** Moving projectile; bursts on arrival. */
   projectile(x0: number, y0: number, x1: number, y1: number, duration: number, style: ProjectileStyle): void {
     const c = new Container();
     c.x = x0;
@@ -198,7 +467,9 @@ export class VfxLayer extends Container {
         const t = state.t;
         c.x = x0 + (x1 - x0) * t;
         c.y = y0 + (y1 - y0) * t - Math.sin(t * Math.PI) * arc;
-        if (++trailTimer.n % 2 === 0) {
+        // keep the sprite pointing along its actual path
+        g.rotation = Math.atan2(c.y - lastY, c.x - lastX) || ang;
+        if (++trailTimer.n % 2 === 0 && !this.crowded) {
           const tr = new Sprite(this.soft());
           tr.anchor.set(0.5);
           tr.tint = color;
@@ -215,6 +486,7 @@ export class VfxLayer extends Container {
       onComplete: () => {
         c.destroy();
         this.burst(x1, y1, color, { count: 8, speed: 80, size: 14, life: 0.35 });
+        this.sparks(x1, y1, x1 - x0, color, 4, 180);
       },
     });
   }
@@ -222,7 +494,8 @@ export class VfxLayer extends Container {
   /** Rising embers around a unit (burn). */
   embers(x: number, y: number, color = 0xff8a3c, count = 6): void {
     const tex = this.soft();
-    for (let i = 0; i < count; i++) {
+    const n = this.crowded ? 2 : count;
+    for (let i = 0; i < n; i++) {
       const s = new Sprite(tex);
       s.anchor.set(0.5);
       s.tint = color;
@@ -288,4 +561,15 @@ export const STATUS_COLORS: Record<string, number> = {
   bleed: 0xff6b7a,
   weaken: 0xb0a0d0,
   sunder: 0xff9f7a,
+};
+
+/** Signature colour for a class's weapon trails. */
+export const CLASS_FX_COLOR: Record<string, number> = {
+  sword: 0xe8f1ff,
+  martial: 0xffd27f,
+  body: 0xffb347,
+  talisman: 0xffe9a0,
+  array: 0x9fe0ff,
+  alchemist: 0x9fe85a,
+  shadow: 0xb57cff,
 };

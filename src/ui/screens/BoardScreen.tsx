@@ -4,7 +4,9 @@ import { Battle } from '@/battle/sim/battle';
 import { battleConfig, finishBattle, heroByUid, startBattle, type RunState } from '@/core/run';
 import { getBattleView } from '@/battle/view/BattleView';
 import { Hud, battleSpeed, battleTick, battleTime, handleDrop, hoverTarget } from '@/ui/hud/Hud';
-import { setDropHandlers, startDrag } from '@/ui/drag';
+import { drag, setDropHandlers, startDrag } from '@/ui/drag';
+import { hideTooltip, showTooltipAtDesign } from '@/ui/components/Tooltip';
+import { UnitTip } from '@/ui/components/UnitTip';
 import { Icon } from '@/ui/components/Icon';
 import { MiniPortrait } from '@/ui/components/MiniPortrait';
 import { HERO_BY_ID } from '@/content/heroes';
@@ -87,19 +89,60 @@ export function BoardScreen() {
     if (s.phase === 'board') audio.playMusic(s.realm === 2 ? 'realm2shop' : 'shop');
   }, [s.phase]);
 
-  // drag heroes directly from the canvas
+  // drag heroes directly from the canvas; hover any unit for a live tooltip
   const ready = view.isReady.value;
   useEffect(() => {
-    if (isBattle || !ready) return;
+    if (!ready) return;
     const canvas = view.canvasEl;
     if (!canvas) return;
+    let hovered: number | null = null;
     const down = (e: PointerEvent) => {
+      if (isBattle) return;
       const d = toDesign(e.clientX, e.clientY);
       const uid = view.heroAtDesign(d.x, d.y);
-      if (uid) startDrag({ kind: 'hero', uid }, e);
+      if (uid) {
+        hovered = null;
+        hideTooltip();
+        startDrag({ kind: 'hero', uid }, e);
+      }
+    };
+    const move = (e: PointerEvent) => {
+      if (drag.value) {
+        hovered = null;
+        return;
+      }
+      const d = toDesign(e.clientX, e.clientY);
+      const u = view.unitAtDesign(d.x, d.y);
+      if (!u) {
+        if (hovered !== null) {
+          hovered = null;
+          hideTooltip();
+        }
+        canvas.style.cursor = '';
+        return;
+      }
+      canvas.style.cursor = u.side === 'ally' && !isBattle ? 'grab' : 'default';
+      const head = view.unitHeadDesign(u.id);
+      if (!head) return;
+      if (u.id !== hovered || isBattle) {
+        hovered = u.id;
+        showTooltipAtDesign(head.x, head.y, <UnitTip unit={u} />, 'above');
+      }
+    };
+    const leave = () => {
+      hovered = null;
+      canvas.style.cursor = '';
+      hideTooltip();
     };
     canvas.addEventListener('pointerdown', down);
-    return () => canvas.removeEventListener('pointerdown', down);
+    canvas.addEventListener('pointermove', move);
+    canvas.addEventListener('pointerleave', leave);
+    return () => {
+      canvas.removeEventListener('pointerdown', down);
+      canvas.removeEventListener('pointermove', move);
+      canvas.removeEventListener('pointerleave', leave);
+      hideTooltip();
+    };
   }, [isBattle, ready]);
 
   const enc = s.currentEncounter;
@@ -135,6 +178,7 @@ export function BoardScreen() {
             <div class="faint board-hint">Drag disciples onto the jade hexes · front row for melee, back row for ranged</div>
             <button
               class="btn primary big fight-btn"
+              data-tut="fight"
               disabled={!canFight || s.party.filter(Boolean).length === 0}
               onClick={() => {
                 if (s.party.filter(Boolean).length === 0 && !single) return void showToast('Place at least one disciple', 'error');
@@ -158,7 +202,7 @@ function BattleTimer() {
   const ss = Math.floor(t % 60);
   const trib = t >= 50;
   return (
-    <div class={`battle-timer ${trib ? 'trib' : ''}`}>
+    <div class={`battle-timer ${trib ? 'trib' : ''}`} data-tut="timer">
       <Icon name="kw_enlightenment" size={16} />
       {mm.toString().padStart(2, '0')}:{ss.toString().padStart(2, '0')}
     </div>

@@ -70,6 +70,7 @@ export const ENEMIES: EnemyDef[] = [
   },
   {
     id: 'ghost_lantern',
+    flying: true,
     name: 'Ghost Lantern',
     hanzi: '鬼灯',
     baseStats: { hp: 300, attack: 18, spirit: 45, defense: 10, range: 4, moveSpeed: 1.8 },
@@ -115,6 +116,7 @@ export const ENEMIES: EnemyDef[] = [
   },
   {
     id: 'flood_dragon',
+    flying: true,
     name: 'Flood Dragon of the Jade River',
     hanzi: '蛟龙',
     baseStats: { hp: 3600, attack: 68, spirit: 60, crit: 15, defense: 50, range: 2, moveSpeed: 1.6 },
@@ -162,6 +164,7 @@ export const ENEMIES: EnemyDef[] = [
   // ───────────── Realm II: Blood Moon Abyss ─────────────
   {
     id: 'blood_bat',
+    flying: true,
     name: 'Blood Bat',
     hanzi: '血蝠',
     baseStats: { hp: 380, attack: 34, attackSpeed: 35, omnivamp: 25, crit: 10, defense: 12, range: 1, moveSpeed: 3.4 },

@@ -39,7 +39,7 @@ export function ShopScreen() {
     <div class="screen">
       <Hud showTracker={false}>
         <div class="shop-panel panel anim-pop">
-          <div class="shop-toolbar">
+          <div class="shop-toolbar" data-tut="shop-toolbar">
             <button
               class="btn small"
               disabled={s.stones < cost}
@@ -71,7 +71,7 @@ export function ShopScreen() {
             </button>
           </div>
           <div class="shop-body">
-            <div class="shop-left">
+            <div class="shop-left" data-tut="shop-left">
               <div class="shop-section-title">Treasures</div>
               {shop.items.map((o, i) =>
                 o ? (
@@ -139,7 +139,7 @@ export function ShopScreen() {
             </div>
             <div class="shop-right">
               <div class="shop-section-title">Disciples</div>
-              <div class="shop-cards">
+              <div class="shop-cards" data-tut="shop-cards">
                 {shop.heroes.map((o, i) =>
                   o ? (
                     <HeroCard key={o.key} defId={o.defId} rank={o.rank} price={o.price} sale={o.sale} owned={s.roster.some((h) => h.defId === o.defId)} onClick={() => onBuyHero(o.key)} ctx={ctx} />
@@ -153,6 +153,7 @@ export function ShopScreen() {
                   ),
                 )}
               </div>
+              <div class="shop-footnote faint">Buying a disciple you already own ranks them up · Drag disciples or Treasures onto the sell zone to sell them</div>
             </div>
           </div>
         </div>

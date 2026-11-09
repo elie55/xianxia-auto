@@ -584,3 +584,11 @@ button:disabled {
   line-height: 1;
   user-select: none;
 }
+
+/* QA: ?noanim disables entrance animations for deterministic screenshots */
+.no-anim *,
+.no-anim *::before,
+.no-anim *::after {
+  animation: none !important;
+  transition: none !important;
+}

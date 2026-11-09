@@ -22,6 +22,8 @@ export interface SpriteAnimDef {
   pivotX: number;
   pivotY: number;
   charH: number;
+  /** Idle-pose width in frame pixels (drives the ground shadow). */
+  charW?: number;
   loop?: boolean;
   hitFrame?: number;
 }

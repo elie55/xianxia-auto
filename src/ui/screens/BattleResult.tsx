@@ -118,7 +118,7 @@ export function BattleResult() {
                   <span style={{ color: '#ff6b9a' }}>■</span> damage dealt <span style={{ color: '#ffb347' }}>■</span> damage taken <span style={{ color: '#8dff9a' }}>■</span> healing & shields
                 </div>
               </div>
-              <div class="panel result-rewards">
+              <div class="panel result-rewards" data-tut={won ? 'rewards' : 'fate'}>
                 <div class="panel-title display">{won ? 'Results' : 'Fate'}</div>
                 {won && b && (
                   <>

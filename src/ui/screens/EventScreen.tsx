@@ -54,7 +54,7 @@ export function EventScreen() {
             {!outcome && (
               <>
                 <p class="event-text">{ev.text}</p>
-                <div class="event-choices">
+                <div class="event-choices" data-tut="event-choices">
                   {ev.choices.map((c) => {
                     const available = !c.available || c.available(ctx);
                     const active = pendingChoice === c.id;

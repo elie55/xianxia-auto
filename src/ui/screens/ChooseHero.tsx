@@ -29,7 +29,7 @@ export function ChooseHero() {
         <div class="display draft-title">Choose Your First Disciple</div>
         <div class="muted">Your sect begins with one cultivator. Recruit more in the shop after each fight.</div>
       </div>
-      <div class="draft-cards stagger">
+      <div class="draft-cards stagger" data-tut="draft-cards">
         {d.heroes.map((id) => (
           <HeroCard
             key={id + d.rerolls}
@@ -45,7 +45,7 @@ export function ChooseHero() {
           />
         ))}
       </div>
-      <div class="draft-blessings">
+      <div class="draft-blessings" data-tut="draft-blessings">
         <div class="draft-sub display">Starting Blessing</div>
         <div class="blessing-row stagger">
           {d.blessings.map((bid) => {
@@ -88,7 +88,7 @@ export function ChooseHero() {
         >
           <Icon name="ui_reroll" size={18} /> Reroll disciples · <Icon name="stones" size={14} /> 1
         </button>
-        <button class="btn primary big" disabled={!hero || !blessing} onClick={confirm}>
+        <button class="btn primary big" data-tut="draft-accept" disabled={!hero || !blessing} onClick={confirm}>
           <span class="btn-glyph">拜</span> Accept into the Sect
         </button>
       </div>

@@ -350,6 +350,8 @@ export interface EnemyDef {
   scale?: number;
   boss?: boolean;
   elite?: boolean;
+  /** Hovers above the ground (bats, lanterns, dragons): anchored to its idle pose and bobbing. */
+  flying?: boolean;
   targeting?: 'nearest' | 'lowestHp' | 'farthest' | 'random';
   projectile?: string;
   /** Power budget cost used by the encounter generator. */
