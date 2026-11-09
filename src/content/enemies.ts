@@ -117,7 +117,7 @@ export const ENEMIES: EnemyDef[] = [
     id: 'flood_dragon',
     name: 'Flood Dragon of the Jade River',
     hanzi: '蛟龙',
-    baseStats: { hp: 4200, attack: 70, spirit: 60, crit: 15, defense: 50, range: 2, moveSpeed: 1.6 },
+    baseStats: { hp: 3600, attack: 68, spirit: 60, crit: 15, defense: 50, range: 2, moveSpeed: 1.6 },
     attackInterval: 1.3,
     ability: {
       id: 'tidal_breath',
@@ -254,7 +254,7 @@ export const ENEMIES: EnemyDef[] = [
     id: 'demon_general',
     name: 'Demon General',
     hanzi: '魔将',
-    baseStats: { hp: 3200, attack: 75, crit: 20, defense: 55, range: 1, moveSpeed: 1.8 },
+    baseStats: { hp: 2800, attack: 70, crit: 20, defense: 55, range: 1, moveSpeed: 1.8 },
     attackInterval: 1.2,
     ability: {
       id: 'warlord_roar',
@@ -280,7 +280,7 @@ export const ENEMIES: EnemyDef[] = [
     id: 'blood_moon_sovereign',
     name: 'Blood Moon Demon Sovereign',
     hanzi: '血月魔尊',
-    baseStats: { hp: 7800, attack: 95, spirit: 90, crit: 25, defense: 60, omnivamp: 15, range: 2, moveSpeed: 1.6 },
+    baseStats: { hp: 5200, attack: 88, spirit: 85, crit: 25, defense: 60, omnivamp: 10, range: 2, moveSpeed: 1.6 },
     attackInterval: 1.2,
     ability: {
       id: 'blood_nova',
@@ -290,7 +290,7 @@ export const ENEMIES: EnemyDef[] = [
       castTime: 1.0,
       vfx: 'blood_nova',
       actions: [
-        { do: 'damage', target: 'allEnemies', scale: { attack: 1.0, spirit: 0.8 }, vfx: 'blood_burst' },
+        { do: 'damage', target: 'allEnemies', scale: { attack: 0.9, spirit: 0.7 }, vfx: 'blood_burst' },
         { do: 'status', target: 'allEnemies', status: 'bleed', scale: { spirit: 0.25 }, duration: 4 },
       ],
     },

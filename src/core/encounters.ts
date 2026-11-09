@@ -18,13 +18,13 @@ export interface Encounter {
 
 /** Tribulation Level: drives enemy scaling. */
 export function tribulationLevel(realm: number, nodeIndex: number, tier: number, floor = 0): number {
-  const realmOffset = realm === 1 ? 0 : realm === 2 ? 11 : 22 + floor * 2;
+  const realmOffset = realm === 1 ? 0 : realm === 2 ? 10 : 21 + floor * 2;
   return realmOffset + nodeIndex + Math.floor(tier / 2);
 }
 
 function budgetFor(realm: number, nodeIndex: number, kind: NodeKind | 'single'): number {
-  const base = realm === 1 ? 2.2 : realm === 2 ? 4.5 : 7;
-  const growth = realm === 1 ? 0.75 : realm === 2 ? 1.0 : 1.3;
+  const base = realm === 1 ? 2.2 : realm === 2 ? 4.2 : 7;
+  const growth = realm === 1 ? 0.75 : realm === 2 ? 0.9 : 1.3;
   let b = base + nodeIndex * growth;
   if (kind === 'elite') b *= 1.1;
   if (kind === 'challenge') b *= 1.15;
@@ -88,7 +88,7 @@ export function generateEncounter(realm: number, nodeIndex: number, kind: NodeKi
   if (kind === 'boss') {
     const boss = realm === 1 ? 'flood_dragon' : realm === 2 ? 'blood_moon_sovereign' : rng.pick(['flood_dragon', 'blood_moon_sovereign']);
     defIds.push(boss);
-    const adds = realm === 1 ? ['spirit_wolf', 'spirit_wolf'] : ['demon_soldier', 'blood_bat'];
+    const adds = realm === 1 ? ['spirit_wolf', 'spirit_wolf'] : ['blood_bat', 'blood_bat'];
     defIds.push(...adds);
     label = ENEMY_BY_ID[boss].name;
   } else if (kind === 'single') {
@@ -101,7 +101,7 @@ export function generateEncounter(realm: number, nodeIndex: number, kind: NodeKi
     if (kind === 'elite') {
       const elite = realm === 1 ? 'moss_golem' : realm === 2 ? 'demon_general' : rng.pick(['moss_golem', 'demon_general', 'thunder_ape']);
       defIds.push(elite);
-      budget = Math.max(1.5, budget * 0.55);
+      budget = Math.max(1.5, budget * 0.5);
       label = `Elite: ${ENEMY_BY_ID[elite].name}`;
     }
     const pool = poolFor(realm);

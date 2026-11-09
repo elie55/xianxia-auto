@@ -13,6 +13,7 @@ import {
   buyRelic,
   chooseReward,
   chooseUpgrade,
+  currentRewindCost,
   draftPick,
   equipItem,
   finishBattle,
@@ -152,6 +153,10 @@ function bestHero(s: RunState): string {
 /** Reasonable greedy shopping: fill the party, then rank up, then items, then relics. */
 function shopBot(s: RunState, bot: Rng): void {
   const ctx = teamContext(s);
+  // keep enough Spirit Stones for one Time Reversal, like a careful player would
+  const reserve = s.nodeIndex >= 4 ? currentRewindCost(s) : 0;
+  const stones = s.stones;
+  s.stones = Math.max(0, stones - reserve);
   for (const it of s.inventory.slice()) {
     const h = s.roster.find((x) => x.items.length < heroItemSlots(x, ctx));
     if (h) equipItem(s, it, h.uid);
@@ -190,6 +195,7 @@ function shopBot(s: RunState, bot: Rng): void {
     const h = s.roster.find((x) => x.items.length < heroItemSlots(x, ctx));
     if (h) equipItem(s, it, h.uid);
   }
+  s.stones += reserve;
 }
 
 const outcomes: Outcome[] = [];

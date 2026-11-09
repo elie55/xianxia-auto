@@ -192,12 +192,12 @@ export function buildHeroUnit(h: HeroState, ctx: TeamContext, id: number, pos: H
 export function enemyStats(def: EnemyDef, level: number, enemyHpPct = 0): Stats {
   const s = emptyStats();
   for (const k of STAT_KEYS) if (def.baseStats[k]) s[k] += def.baseStats[k]!;
-  const hpMult = (1 + 0.14 * level) * (1 + enemyHpPct / 100);
-  const dmgMult = 1 + 0.09 * level;
+  const hpMult = (1 + 0.11 * level) * (1 + enemyHpPct / 100);
+  const dmgMult = 1 + 0.075 * level;
   s.hp = Math.round(s.hp * hpMult);
   s.attack = Math.round(s.attack * dmgMult);
   s.spirit = Math.round(s.spirit * dmgMult);
-  s.defense = Math.round(s.defense + 2 * level);
+  s.defense = Math.round(s.defense + 1.5 * level);
   s.crit = s.crit + 0.5 * level;
   return s;
 }
