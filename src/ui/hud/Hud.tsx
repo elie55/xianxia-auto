@@ -299,8 +299,10 @@ function HeroSlot({ s, uid, ctx, drop, dragging, reserve, portrait = 104, sock =
   const acceptsItem = dragging?.payload.kind === 'item' && !!h;
   const size = reserve ? Math.min(portrait, 92) : portrait;
   const chip = reserve ? 20 : sock - 6;
+  void battleTick.value; // a disciple can fall (or be reborn) at any moment of a fight
+  const fallen = !!h && !reserve && heroFallen(s, h.uid);
   return (
-    <div class={`hero-slot ${h ? 'filled' : 'empty'} ${over && (acceptsHero || acceptsItem) ? 'drop-ok' : ''} ${reserve ? 'reserve' : ''}`} data-drop={h ? `hero:${uid}` : drop} data-hero-def={h?.defId}>
+    <div class={`hero-slot ${h ? 'filled' : 'empty'} ${over && (acceptsHero || acceptsItem) ? 'drop-ok' : ''} ${reserve ? 'reserve' : ''} ${fallen ? 'fallen' : ''}`} data-drop={h ? `hero:${uid}` : drop} data-hero-def={h?.defId}>
       {h && def && (
         <>
           <div
@@ -310,6 +312,7 @@ function HeroSlot({ s, uid, ctx, drop, dragging, reserve, portrait = 104, sock =
             {...tip(<HeroSlotTip h={h} s={s} ctx={ctx} />, 'above')}
           >
             <MiniPortrait defId={h.defId} size={size} />
+            {fallen && <FallenMark />}
             <div class="slot-rank">
               <RankGlyph rank={h.rank} size={Math.round(size * 0.3)} />
             </div>
@@ -342,6 +345,41 @@ function HeroSlot({ s, uid, ctx, drop, dragging, reserve, portrait = 104, sock =
 const TIP_STATS = ['attack', 'spirit', 'defense', 'attackSpeed', 'crit', 'range'] as const;
 
 /** Party-bar hero tooltip: HP and Qi bars with values, the stat grid and the ability. Shows live combat values during a battle. */
+/** True while a disciple lies fallen: live during a fight, and on the result screen that follows it. */
+function heroFallen(s: RunState, uid: string): boolean {
+  if (s.phase === 'battle') {
+    const u = getBattleView().unitForHero(uid);
+    return !!u && u.onBoard && !u.alive;
+  }
+  if (s.phase === 'result' || s.phase === 'defeat') {
+    const u = s.lastResult?.units.find((x) => x.heroUid === uid);
+    return !!u && u.onBoard && !u.alive;
+  }
+  return false;
+}
+
+/** Fallen in battle: the portrait cracks like shattered jade, a soul wisp rises, and a vermilion 陨 seal is stamped on it. */
+function FallenMark() {
+  return (
+    <div class="fallen-mark">
+      <div class="fallen-glass">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M57 4 L51 21 L59 30 L47 46 L54 57 L40 73 L45 96" />
+          <path d="M51 21 L33 17 L19 27" />
+          <path d="M47 46 L27 49 L10 61" />
+          <path d="M54 57 L73 62 L90 79" />
+          <path d="M59 30 L79 25 L96 33" />
+          <path d="M40 73 L24 82" />
+        </svg>
+      </div>
+      <div class="fallen-soul" />
+      <div class="fallen-seal" {...tip(<><h4 class="kw-Execute">Fallen</h4><p>This disciple has fallen in battle. They return for the next fight.</p></>, 'above')}>
+        <span class="brush">陨</span>
+      </div>
+    </div>
+  );
+}
+
 export function HeroSlotTip({ h, s, ctx, hint = true }: { h: HeroState; s: RunState; ctx: TeamContext; hint?: boolean }) {
   void battleTick.value; // refreshes a few times per second while a battle runs
   const def = HERO_BY_ID[h.defId];

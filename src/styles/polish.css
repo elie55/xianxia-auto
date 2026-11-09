@@ -2742,3 +2742,138 @@ input[type='range']:hover::-webkit-slider-thumb {
 .tracker-bar i {
   transition: width 0.2s linear;
 }
+
+/* ───────── FALLEN DISCIPLE: shattered jade portrait, rising soul, vermilion 陨 seal ───────── */
+.hero-slot.fallen .mini-portrait {
+  filter: grayscale(1) brightness(0.48) contrast(1.15);
+  transition: filter 0.7s ease-out;
+}
+.hero-slot.fallen .slot-name {
+  color: var(--paper-faint);
+  transition: color 0.7s ease-out;
+}
+.hero-slot.fallen .slot-items {
+  opacity: 0.45;
+}
+.hero-slot.fallen {
+  animation: fallen-flash 1s ease-out;
+}
+@keyframes fallen-flash {
+  0% {
+    box-shadow: inset 0 0 0 2px rgba(255, 90, 70, 0.95), 0 0 28px rgba(255, 60, 40, 0.75);
+  }
+  100% {
+    box-shadow: inset 0 0 0 1px rgba(255, 90, 70, 0), 0 0 0 rgba(255, 60, 40, 0);
+  }
+}
+.fallen-mark {
+  position: absolute;
+  inset: 2px;
+  pointer-events: none;
+}
+.fallen-glass {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.75);
+}
+.fallen-glass svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.fallen-glass path {
+  fill: none;
+  stroke: #f7e6b8;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 160;
+  stroke-dashoffset: 160;
+  filter: drop-shadow(0 0 2px rgba(255, 214, 140, 0.95));
+  animation: crack-draw 0.55s ease-out forwards;
+}
+.fallen-glass path:nth-child(n + 2) {
+  stroke-width: 1.1;
+  animation-delay: 0.12s;
+}
+@keyframes crack-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.fallen-soul {
+  position: absolute;
+  left: 32%;
+  top: 8%;
+  width: 36%;
+  height: 64%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 60%, rgba(214, 236, 255, 0.85), rgba(160, 200, 255, 0.25) 45%, transparent 72%);
+  filter: blur(2px);
+  opacity: 0;
+  animation: soul-rise 1.5s ease-out forwards;
+}
+@keyframes soul-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(18%) scale(0.7);
+  }
+  25% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-85%) scale(1.25);
+  }
+}
+.fallen-seal {
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  width: 46%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  rotate: -9deg;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: radial-gradient(circle at 38% 32%, #ef5244 0%, #b91f22 55%, #7d0f13 100%);
+  border: 2px solid #ffe2d6;
+  box-shadow: 0 0 0 2px #8f1418, 0 5px 12px rgba(0, 0, 0, 0.65), 0 0 18px rgba(255, 70, 50, 0.55), inset 0 0 8px rgba(80, 0, 0, 0.55);
+  pointer-events: auto;
+  animation: seal-stamp 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) 0.25s both;
+}
+.fallen-seal .brush {
+  font-size: calc(var(--portrait, 104px) * 0.27);
+  line-height: 1;
+  color: #fff4ec;
+  text-shadow: 0 1px 0 rgba(90, 0, 0, 0.7), 0 0 6px rgba(255, 200, 180, 0.35);
+}
+@keyframes seal-stamp {
+  0% {
+    opacity: 0;
+    scale: 2.3;
+  }
+  55% {
+    opacity: 1;
+    scale: 0.9;
+  }
+  100% {
+    opacity: 1;
+    scale: 1;
+  }
+}
+/* without animations (QA stills, reduced motion) the cracks are simply drawn */
+.no-anim .fallen-glass path {
+  stroke-dashoffset: 0;
+}
+/* fallen refinements: the face stays recognisable, a thin crimson rim marks the portrait */
+.hero-slot.fallen .mini-portrait {
+  filter: grayscale(1) brightness(0.66) contrast(1.12) sepia(0.12) hue-rotate(170deg);
+}
+.hero-slot.fallen .fallen-glass {
+  box-shadow: inset 0 0 0 2px rgba(196, 44, 40, 0.75), inset 0 0 16px rgba(0, 0, 0, 0.7);
+}
