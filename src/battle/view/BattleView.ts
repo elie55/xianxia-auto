@@ -429,13 +429,14 @@ export class BattleView {
         const a = hexToPixel(u.moving.from);
         const c = hexToPixel(u.moving.to);
         v.x = a.x + (c.x - a.x) * t;
-        v.y = a.y + (c.y - a.y) * t - Math.sin(t * Math.PI) * 10;
+        v.y = a.y + (c.y - a.y) * t - Math.sin(t * Math.PI) * (v.hasWalk ? 3 : 10);
       } else if (b) {
         const p = hexToPixel(u.pos);
         v.x = p.x;
         v.y = p.y;
       }
       v.setFacing(u.facing);
+      v.setMoving(!!(b && u.moving));
       v.zIndex = v.y + (u.boss ? 1 : 0);
       v.update(this.elapsed, 1);
     }

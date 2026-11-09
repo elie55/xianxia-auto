@@ -174,6 +174,18 @@ export class UnitView extends Container {
     this.body.addChild(c);
   }
 
+  /** True when the sprite pack has a walk cycle (then movement uses it instead of the hop). */
+  get hasWalk(): boolean {
+    return !!this.pack?.anims.walk?.length;
+  }
+
+  /** Switches between the idle and walk cycles while the simulation moves the unit. */
+  setMoving(moving: boolean): void {
+    if (this.dead) return;
+    if (moving && this.currentAnim === 'idle' && this.hasWalk) this.playAnim('walk');
+    else if (!moving && this.currentAnim === 'walk') this.playAnim('idle');
+  }
+
   setFacing(f: 1 | -1): void {
     const sx = Math.abs(this.body.scale.x) || 1;
     this.body.scale.x = f * sx;
@@ -275,7 +287,7 @@ export class UnitView extends Container {
   hurtAnim(crit: boolean): void {
     this.flash(crit ? 2.2 : 1.6, crit ? 0.14 : 0.09);
     const dir = this.body.scale.x >= 0 ? 1 : -1;
-    if (this.currentAnim === 'idle') this.playAnim('hurt');
+    if (this.currentAnim === 'idle' || this.currentAnim === 'walk') this.playAnim('hurt');
     gsap.fromTo(this.body, { x: -6 * dir }, { x: 0, duration: 0.18, ease: 'power2.out', overwrite: 'auto' });
   }
 
