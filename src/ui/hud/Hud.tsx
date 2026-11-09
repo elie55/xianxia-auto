@@ -68,7 +68,7 @@ function TopBar({ s }: { s: RunState }) {
   return (
     <div class="topbar" data-tut="topbar">
       <div class="topbar-left">
-        <div class="stones-pill big" {...tip(<><h4 class="gold">Spirit Stones</h4><p>Currency for disciples, Treasures and Dao Insights. Earned after every victory.</p></>)}>
+        <div class="stones-pill big anim-pop" key={s.stones} {...tip(<><h4 class="gold">Spirit Stones</h4><p>Currency for disciples, Treasures and Dao Insights. Earned after every victory.</p></>)}>
           <Icon name="stones" size={22} color="var(--gold-bright)" /> {s.stones}
         </div>
         <div class="realm-label">
