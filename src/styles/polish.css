@@ -1994,3 +1994,54 @@ input[type='range']:hover::-webkit-slider-thumb {
   white-space: nowrap;
   min-width: 190px;
 }
+
+/* ───────── EVENT PANEL: fixed stage between the top bar and the party bar ─────────
+   The text column is a grid row with a bounded height, so it scrolls when a choice needs more room
+   (before, the panel was height-capped and clipped the disciple picker's Confirm button). */
+.event-panel {
+  top: 96px;
+  bottom: 196px;
+  transform: none;
+  min-height: 0;
+  max-height: none;
+  grid-template-rows: minmax(0, 1fr);
+}
+.event-panel.anim-pop {
+  animation-name: event-pop;
+}
+@keyframes event-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+.event-body {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 168, 75, 0.5) transparent;
+}
+.event-body::-webkit-scrollbar {
+  width: 8px;
+}
+.event-body::-webkit-scrollbar-thumb {
+  background: rgba(212, 168, 75, 0.45);
+  border-radius: 4px;
+}
+.hero-picker {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+.hero-picker > .muted {
+  width: 100%;
+}
+.hero-picker > .btn {
+  margin-left: auto;
+  min-width: 160px;
+}

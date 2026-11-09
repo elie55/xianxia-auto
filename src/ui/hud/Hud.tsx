@@ -333,7 +333,7 @@ function HeroSlot({ s, uid, ctx, drop, dragging, reserve, portrait = 104, sock =
 const TIP_STATS = ['attack', 'spirit', 'defense', 'attackSpeed', 'crit', 'range'] as const;
 
 /** Party-bar hero tooltip: HP and Qi bars with values, the stat grid and the ability. Shows live combat values during a battle. */
-function HeroSlotTip({ h, s, ctx }: { h: HeroState; s: RunState; ctx: TeamContext }) {
+export function HeroSlotTip({ h, s, ctx, hint = true }: { h: HeroState; s: RunState; ctx: TeamContext; hint?: boolean }) {
   void battleTick.value; // refreshes a few times per second while a battle runs
   const def = HERO_BY_ID[h.defId];
   const stats = heroStats(h, ctx, s.positions[h.uid] ?? null);
@@ -391,7 +391,7 @@ function HeroSlotTip({ h, s, ctx }: { h: HeroState; s: RunState; ctx: TeamContex
         ))}
       </div>
       <AbilityTip hero={h} />
-      <p class="hint">{live ? 'Live combat values.' : 'Drag to the board, to the reserve, or onto the sell zone in the shop.'}</p>
+      {hint && <p class="hint">{live ? 'Live combat values.' : 'Drag to the board, to the reserve, or onto the sell zone in the shop.'}</p>}
     </>
   );
 }

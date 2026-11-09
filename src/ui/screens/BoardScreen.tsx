@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { act, meta, run, showToast } from '@/app/store';
 import { Battle } from '@/battle/sim/battle';
-import { battleConfig, finishBattle, heroByUid, startBattle, type RunState } from '@/core/run';
+import { battleConfig, finishBattle, heroByUid, startBattle, teamContext, type RunState } from '@/core/run';
 import { getBattleView } from '@/battle/view/BattleView';
-import { Hud, battleSpeed, battleTick, battleTime, handleDrop, hoverTarget } from '@/ui/hud/Hud';
+import { Hud, HeroSlotTip, battleSpeed, battleTick, battleTime, handleDrop, hoverTarget } from '@/ui/hud/Hud';
 import { drag, setDropHandlers, startDrag } from '@/ui/drag';
 import { hideTooltip, showTooltipAtDesign, tip } from '@/ui/components/Tooltip';
 import { UnitTip } from '@/ui/components/UnitTip';
@@ -172,7 +172,7 @@ export function BoardScreen() {
             </div>
             <div class="row" style={{ gap: 12 }}>
               {s.roster.map((h) => (
-                <button key={h.uid} class={`champion-pick ${s.singleChampion === h.uid ? 'on' : ''}`} onClick={() => act((st) => (st.singleChampion = h.uid))}>
+                <button key={h.uid} class={`champion-pick ${s.singleChampion === h.uid ? 'on' : ''}`} onClick={() => act((st) => (st.singleChampion = h.uid))} {...tip(<HeroSlotTip h={h} s={s} ctx={teamContext(s)} hint={false} />, 'below')}>
                   <MiniPortrait defId={h.defId} size={56} />
                   <span>{HERO_BY_ID[h.defId].name}</span>
                 </button>

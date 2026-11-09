@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { act, run } from '@/app/store';
-import { eventContext, finishEvent, pickFromPending, resolveEventChoice } from '@/core/run';
+import { eventContext, finishEvent, pickFromPending, resolveEventChoice, teamContext } from '@/core/run';
 import { EVENT_BY_ID } from '@/content/events';
 import { HERO_BY_ID } from '@/content/heroes';
-import { Hud, RelicTip } from '@/ui/hud/Hud';
+import { Hud, HeroSlotTip, RelicTip } from '@/ui/hud/Hud';
 import { useArena } from './BoardScreen';
 import { Icon } from '@/ui/components/Icon';
 import { RichText } from '@/ui/components/RichText';
@@ -21,6 +21,11 @@ export function EventScreen() {
   const [pendingChoice, setPendingChoice] = useState<string | null>(null);
   const [hero, setHero] = useState<string | null>(null);
   const [artFailed, setArtFailed] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  // the disciple picker opens under the choices: bring it (and its Confirm button) into view
+  useEffect(() => {
+    if (pendingChoice) pickerRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [pendingChoice]);
   useEffect(() => {
     audio.playMusic('event');
   }, []);
@@ -81,13 +86,13 @@ export function EventScreen() {
                   })}
                 </div>
                 {pendingChoice && (
-                  <div class="hero-picker anim-rise">
+                  <div class="hero-picker anim-rise" ref={pickerRef}>
                     <div class="muted" style={{ fontSize: 14 }}>
                       Choose a disciple:
                     </div>
                     <div class="row" style={{ gap: 10, flexWrap: 'wrap' }}>
                       {s.roster.map((h) => (
-                        <button key={h.uid} class={`champion-pick ${hero === h.uid ? 'on' : ''}`} onClick={() => setHero(h.uid)}>
+                        <button key={h.uid} class={`champion-pick ${hero === h.uid ? 'on' : ''}`} onClick={() => setHero(h.uid)} {...tip(<HeroSlotTip h={h} s={s} ctx={teamContext(s)} hint={false} />, 'above')}>
                           <MiniPortrait defId={h.defId} size={52} />
                           <span>{HERO_BY_ID[h.defId].name}</span>
                         </button>
