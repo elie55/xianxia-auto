@@ -18,6 +18,8 @@ export default defineConfig({
     host: '127.0.0.1',
     // Let the AutoSprite web app POST generated sheets into the dev asset inbox (scripts/dev-asset-inbox.ts).
     cors: { origin: ['https://www.autosprite.io', 'http://localhost:5173', 'http://127.0.0.1:5173'], preflightContinue: true },
+    // electron-builder writes locked binaries into release/ while the dev server runs; don't watch build outputs.
+    watch: { ignored: ['**/release/**', '**/dist/**', '**/.autosprite-inbox/**', '**/reference/**'] },
   },
   build: {
     target: 'es2022',
