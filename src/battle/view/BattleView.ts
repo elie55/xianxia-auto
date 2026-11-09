@@ -45,7 +45,7 @@ const STAT_SHORT: Record<string, string> = {
 };
 
 /** Flipbook sheets (4×4 frames on black, played additively) under public/assets/art/fx. */
-const FLIPBOOK_SHEETS = ['fx_qi_cast', 'fx_fire_burst', 'fx_frost_burst', 'fx_lightning_strike', 'fx_heal_bloom', 'fx_shadow_burst', 'fx_slash_arc'];
+const FLIPBOOK_SHEETS = ['fx_qi_cast', 'fx_fire_burst', 'fx_frost_burst', 'fx_lightning_strike', 'fx_heal_bloom', 'fx_shadow_burst', 'fx_slash_arc', 'fx_poison_cloud', 'fx_water_splash', 'fx_death_burst', 'fx_impact_hit', 'fx_blood_burst', 'fx_buff_rise'];
 
 /** Which flipbook plays for an ability VFX key, on top of the procedural effect. */
 const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: number; ground?: boolean; fps?: number; directional?: boolean }> = {
@@ -55,8 +55,8 @@ const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: numbe
   fire_slash: { sheet: 'fx_slash_arc', tint: 0xff9a4a, scale: 1.1, directional: true },
   frost_burst: { sheet: 'fx_frost_burst', scale: 1.2 },
   frost_array: { sheet: 'fx_frost_burst', scale: 1.6, ground: true },
-  water_burst: { sheet: 'fx_frost_burst', tint: 0x7fc8ff, scale: 1.2 },
-  tidal_breath: { sheet: 'fx_frost_burst', tint: 0x6fd0ff, scale: 1.4 },
+  water_burst: { sheet: 'fx_water_splash', scale: 1.2 },
+  tidal_breath: { sheet: 'fx_water_splash', scale: 1.5 },
   lightning: { sheet: 'fx_lightning_strike', scale: 1.2, ground: true, fps: 30 },
   lightning_arc: { sheet: 'fx_lightning_strike', scale: 1.1, ground: true, fps: 30 },
   thunder_call: { sheet: 'fx_lightning_strike', scale: 1.5, ground: true, fps: 30 },
@@ -66,19 +66,19 @@ const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: numbe
   moon_pulse: { sheet: 'fx_heal_bloom', tint: 0xbfe4ff, scale: 1.3, ground: true },
   shadow_slash: { sheet: 'fx_slash_arc', tint: 0xb57cff, scale: 1.1, directional: true },
   shadow_blink: { sheet: 'fx_shadow_burst', scale: 1.1 },
-  blood_nova: { sheet: 'fx_shadow_burst', tint: 0xff3b4d, scale: 1.8, ground: true },
-  blood_burst: { sheet: 'fx_shadow_burst', tint: 0xff3b4d, scale: 1.1 },
-  poison_puff: { sheet: 'fx_shadow_burst', tint: 0x9fe85a, scale: 1.0 },
-  cinnabar_smoke: { sheet: 'fx_shadow_burst', tint: 0xff6b5a, scale: 1.1 },
+  blood_nova: { sheet: 'fx_blood_burst', scale: 1.8, ground: true },
+  blood_burst: { sheet: 'fx_blood_burst', scale: 1.1 },
+  poison_puff: { sheet: 'fx_poison_cloud', tint: 0x9fe85a, scale: 1.1 },
+  cinnabar_smoke: { sheet: 'fx_poison_cloud', tint: 0xff8a6a, scale: 1.2 },
   sword_slash: { sheet: 'fx_slash_arc', scale: 1.1, directional: true },
   claw: { sheet: 'fx_slash_arc', tint: 0xffd27f, scale: 0.9, directional: true },
   tail_sweep: { sheet: 'fx_slash_arc', tint: 0x9fe0ff, scale: 1.3, directional: true },
   spear_sweep: { sheet: 'fx_slash_arc', tint: 0x5ad6a5, scale: 1.2, directional: true },
   flying_sword: { sheet: 'fx_slash_arc', tint: 0xe8f1ff, scale: 1.2, directional: true },
   sword_shard: { sheet: 'fx_slash_arc', tint: 0xe8f1ff, scale: 0.8, directional: true },
-  tiger_roar: { sheet: 'fx_shadow_burst', tint: 0xffd27f, scale: 1.7, ground: true },
-  impact: { sheet: 'fx_shadow_burst', tint: 0xffe2b0, scale: 0.9 },
-  fist_flurry: { sheet: 'fx_shadow_burst', tint: 0xffd27f, scale: 0.8 },
+  tiger_roar: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 1.7, ground: true },
+  impact: { sheet: 'fx_impact_hit', scale: 0.9 },
+  fist_flurry: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 0.7 },
 };
 
 export class BattleView {
@@ -738,6 +738,7 @@ export class BattleView {
           if (e.dot === 'bleed') this.fx.burst(v.x, v.y + v.chestY, STATUS_COLORS.bleed, { count: 3, speed: 50, size: 10, life: 0.4, gravity: 30 });
           if (e.dot === 'tribulation') {
             this.fx.strike(v.x, v.y, 0xfff27a);
+            this.fx.flipbook('fx_lightning_strike', v.x, v.y + 6, { scale: 1.1, anchorY: 0.92, fps: 30 });
             this.screenFlash(0xfff27a, 0.12, 0.25);
             this.shake(3);
           }
@@ -832,6 +833,7 @@ export class BattleView {
         if (!v) break;
         v.dieAnim();
         const col = v.unit.side === 'ally' ? 0x9fd5ff : 0xff6b5a;
+        this.fx.flipbook('fx_death_burst', v.x, v.y + v.chestY, { scale: Math.max(0.9, v.bodyHeight / 170), tint: v.unit.side === 'ally' ? 0xbfe4ff : 0xff8a7a, fps: 22 });
         this.fx.burst(v.x, v.y + v.chestY, v.unit.side === 'ally' ? 0x9fd5ff : 0x8a3a3a, { count: 16, speed: 110, size: 18, life: 0.7, gravity: 30 });
         this.fx.wisp(v.x, v.y + v.chestY, col);
         if (!v.unit.flying) this.fx.dust(v.x, v.y);
@@ -853,6 +855,7 @@ export class BattleView {
         if (!v) break;
         v.reviveAnim();
         this.fx.fireColumn(v.x, v.y, 0xff8a3c, 260, 18);
+        this.fx.flipbook('fx_buff_rise', v.x, v.y + 8, { scale: 1.3, anchorY: 0.95, tint: 0xffd27f, fps: 20 });
         this.fx.motes(v.x, v.y, 0xffd27f, 10, 160);
         this.texts.spawn(v.x, v.y + v.headY - 20, 'REBORN', 'label', { size: 20 });
         break;
@@ -877,6 +880,7 @@ export class BattleView {
           this.texts.spawn(v.x, v.y + v.headY - 24, `SURGE · ${e.name.toUpperCase()}`, 'label', { size: 14 });
           this.fx.ring(v.x, v.y, 0xffb86b, 90, 3, 0.6, hexLayout.squash);
           this.fx.fireColumn(v.x, v.y, 0xffb86b, 140, 8);
+          this.fx.flipbook('fx_buff_rise', v.x, v.y + 8, { scale: Math.max(0.9, v.bodyHeight / 180), anchorY: 0.95, tint: 0xffb86b, fps: 22 });
         } else {
           v.setAura(v.unit.side === 'ally' ? 0x3fbf9f : 0xd2382c, 0.35);
         }
@@ -889,6 +893,7 @@ export class BattleView {
         this.fx.pillar(v.x, v.y, 0xc9a7ff, 240, 0.8);
         this.fx.motes(v.x, v.y, 0xc9a7ff, 14, 220);
         this.fx.glyph(v.x, v.y, 0xc9a7ff, 70, 1.2);
+        this.fx.flipbook('fx_buff_rise', v.x, v.y + 8, { scale: Math.max(1.0, v.bodyHeight / 160), anchorY: 0.95, tint: 0xc9a7ff, fps: 20 });
         this.texts.spawn(v.x, v.y + v.headY - 24, `ENLIGHTENMENT · ${e.name.toUpperCase()}`, 'label', { size: 14 });
         audio.sfx('rankup', { volume: 0.4 });
         break;
