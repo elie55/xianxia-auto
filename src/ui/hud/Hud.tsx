@@ -234,7 +234,7 @@ function RightRail({ s }: { s: RunState }) {
           <span class="tracker-badge">Last fight</span>
         ) : null}
       </div>
-      {rows.length === 0 && <div class="faint" style={{ fontSize: 13 }}>Combat statistics appear here.</div>}
+      {rows.length === 0 && <div class="faint" style={{ fontSize: 14 }}>Combat statistics appear here.</div>}
       {rows.map((r) => (
         <div key={r.defId} class={`tracker-row ${r.alive ? '' : 'dead'}`}>
           <MiniPortrait defId={r.defId} size={34} />
@@ -425,14 +425,14 @@ export function HeroSlotTip({ h, s, ctx, hint = true }: { h: HeroState; s: RunSt
       <div class="tip-bar" style={{ height: 13 }}>
         <i style={{ width: `${hpPct}%`, background: 'linear-gradient(180deg,#7ef29a,#2f9c4b)' }} />
         {shieldPct > 0 && <i style={{ left: `${hpPct}%`, width: `${shieldPct}%`, background: 'linear-gradient(180deg,#e6f3ff,#9fd5ff)' }} />}
-        <span style={{ fontSize: 12 }}>
+        <span style={{ fontSize: 14 }}>
           HP {Math.round(hp)} / {maxHp}
           {shield > 0 ? ` (+${Math.round(shield)} shield)` : ''}
         </span>
       </div>
       <div class="tip-bar" style={{ height: 13 }}>
         <i style={{ width: `${qiPct}%`, background: 'linear-gradient(180deg,#8fd5ff,#2f7fc4)' }} />
-        <span style={{ fontSize: 12 }}>
+        <span style={{ fontSize: 14 }}>
           Qi {Math.round(qi)} / {maxQi}
           {live ? '' : ' to cast'}
         </span>
@@ -441,7 +441,7 @@ export function HeroSlotTip({ h, s, ctx, hint = true }: { h: HeroState; s: RunSt
         {TIP_STATS.map((k) => (
           <div key={k} class="tip-stat" style={{ color: STAT_COLOR[k] }}>
             <Icon name={STAT_ICON[k]} size={13} /> {value(k)}
-            <span class="faint" style={{ fontWeight: 400, fontSize: 12 }}>
+            <span class="faint" style={{ fontWeight: 400, fontSize: 14 }}>
               {STAT_LABEL[k]}
             </span>
           </div>
@@ -449,7 +449,7 @@ export function HeroSlotTip({ h, s, ctx, hint = true }: { h: HeroState; s: RunSt
         {extra.map((k) => (
           <div key={k} class="tip-stat" style={{ color: STAT_COLOR[k] }}>
             <Icon name={STAT_ICON[k]} size={13} /> {fmtStat(k, stats[k])}
-            <span class="faint" style={{ fontWeight: 400, fontSize: 12 }}>
+            <span class="faint" style={{ fontWeight: 400, fontSize: 14 }}>
               {STAT_LABEL[k]}
             </span>
           </div>

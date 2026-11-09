@@ -53,6 +53,15 @@ export function Settings() {
               {fullscreen.value ? 'On' : 'Off'}
             </button>
           </Row>
+          <Row label="Text size">
+            <div class="row">
+              {([1, 1.1, 1.2] as const).map((v) => (
+                <button key={v} class={`btn small ${(m.settings.textScale ?? 1) === v ? 'primary' : 'ghost'}`} onClick={() => set((s) => (s.textScale = v))}>
+                  {Math.round(v * 100)}%
+                </button>
+              ))}
+            </div>
+          </Row>
           <Row label="Default battle speed">
             <div class="row">
               {([1, 2, 3] as const).map((v) => (

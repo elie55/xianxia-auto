@@ -1,4 +1,4 @@
-import { signal } from '@preact/signals';
+import { effect, signal } from '@preact/signals';
 import { meta, updateMeta } from './store';
 
 /** The bridge exposed by electron/preload.cjs; absent when the game runs in a browser. */
@@ -50,4 +50,8 @@ export function installDesktop(): void {
   window.addEventListener('resize', sync);
   document.addEventListener('fullscreenchange', sync);
   if (bridge && meta.peek().settings.fullscreen && !fullscreen.peek()) void toggleFullscreen();
+  // Text size setting: every UI font size is calc(<size> * var(--ts)), with a 14 px floor at 100%
+  effect(() => {
+    document.documentElement.style.setProperty('--ts', String(meta.value.settings.textScale ?? 1));
+  });
 }

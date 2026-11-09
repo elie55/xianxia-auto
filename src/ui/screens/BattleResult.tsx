@@ -46,7 +46,7 @@ export function BattleResult() {
                     </button>
                   </div>
                   {r && (
-                    <div class="faint" style={{ fontSize: 13, textAlign: 'right' }}>
+                    <div class="faint" style={{ fontSize: 14, textAlign: 'right' }}>
                       Combat duration {r.duration.toFixed(1)} s<br />
                       {enemies.length} enemies
                     </div>

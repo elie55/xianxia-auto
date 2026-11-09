@@ -75,7 +75,7 @@ export function RealmCleared() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div class="cleared-stat">
-      <div class="faint" style={{ fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+      <div class="faint" style={{ fontSize: 14, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
         {label}
       </div>
       <div class="display" style={{ fontSize: 24, color: 'var(--gold-bright)' }}>

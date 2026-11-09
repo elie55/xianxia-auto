@@ -25,7 +25,7 @@
   border: 1px dashed rgba(212, 168, 75, 0.4);
   color: var(--paper-dim);
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: calc(14px * var(--ts, 1));
   letter-spacing: 0.14em;
   text-transform: uppercase;
   transition: all var(--dur-fast);
@@ -58,7 +58,7 @@
 }
 .shop-section-title {
   font-family: var(--font-display);
-  font-size: 13px;
+  font-size: calc(14px * var(--ts, 1));
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--gold);
@@ -90,7 +90,7 @@
   color: var(--paper-faint);
   font-family: var(--font-display);
   letter-spacing: 0.2em;
-  font-size: 13px;
+  font-size: calc(14px * var(--ts, 1));
   min-height: 60px;
   cursor: default;
 }
@@ -100,14 +100,14 @@
 }
 .shop-row-name {
   font-weight: 700;
-  font-size: 15px;
+  font-size: calc(15px * var(--ts, 1));
   color: var(--rar);
 }
 .shop-row-stats {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 10px;
-  font-size: 13px;
+  font-size: calc(14px * var(--ts, 1));
   font-weight: 700;
   margin-top: 2px;
 }
@@ -117,7 +117,7 @@
   gap: 3px;
 }
 .shop-row-desc {
-  font-size: 13px;
+  font-size: calc(14px * var(--ts, 1));
   color: var(--paper-dim);
   margin-top: 2px;
   line-height: 1.35;
@@ -132,7 +132,7 @@
   border: 1px solid rgba(212, 168, 75, 0.4);
   color: var(--gold-bright);
   font-weight: 800;
-  font-size: 14px;
+  font-size: calc(14px * var(--ts, 1));
   white-space: nowrap;
 }
 .price-inline.sale {
@@ -156,7 +156,7 @@
   background: rgba(212, 168, 75, 0.1);
 }
 .ts-name {
-  font-size: 13px;
+  font-size: calc(14px * var(--ts, 1));
   text-align: center;
 }
 .shop-right {
@@ -182,7 +182,7 @@
   display: grid;
   place-items: center;
   letter-spacing: 0.3em;
-  font-size: 14px;
+  font-size: calc(14px * var(--ts, 1));
 }
 
 /* ───────────────────────── EVENT ───────────────────────── */
@@ -231,18 +231,18 @@
   overflow: auto;
 }
 .event-kicker {
-  font-size: 12px;
+  font-size: calc(14px * var(--ts, 1));
   letter-spacing: 0.3em;
   color: var(--gold);
 }
 .event-title {
-  font-size: 30px;
+  font-size: calc(30px * var(--ts, 1));
   color: var(--paper);
   margin-top: -6px;
 }
 .event-text {
   margin: 0;
-  font-size: 17px;
+  font-size: calc(17px * var(--ts, 1));
   line-height: 1.6;
   color: var(--paper-dim);
 }
@@ -284,12 +284,12 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 15px;
+  font-size: calc(15px * var(--ts, 1));
   letter-spacing: 0.14em;
   color: var(--gold-bright);
 }
 .choice-desc {
-  font-size: 15px;
+  font-size: calc(15px * var(--ts, 1));
   color: var(--paper-dim);
 }
 .hero-picker {
@@ -325,18 +325,18 @@
 }
 .pick-name {
   font-weight: 700;
-  font-size: 14px;
+  font-size: calc(14px * var(--ts, 1));
   text-align: center;
   color: var(--rar);
 }
 .pick-rar {
-  font-size: 12px;
+  font-size: calc(14px * var(--ts, 1));
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--paper-faint);
 }
 .pick-desc {
-  font-size: 12px;
+  font-size: calc(14px * var(--ts, 1));
   color: var(--paper-dim);
   text-align: center;
   line-height: 1.3;
@@ -394,7 +394,7 @@
   animation: rise-in 0.6s 0.3s var(--ease-out) both;
 }
 .splash-sub {
-  font-size: 17px;
+  font-size: calc(17px * var(--ts, 1));
   letter-spacing: 0.3em;
   text-transform: uppercase;
   color: var(--paper-dim);
@@ -431,7 +431,7 @@
   color: var(--gold);
 }
 .rankup-title {
-  font-size: 34px;
+  font-size: calc(34px * var(--ts, 1));
   color: var(--paper);
   margin-bottom: 6px;
 }
@@ -468,18 +468,18 @@
   background: rgba(0, 0, 0, 0.4);
 }
 .upgrade-name {
-  font-size: 19px;
+  font-size: calc(19px * var(--ts, 1));
   letter-spacing: 0.12em;
   color: var(--gold-bright);
 }
 .upgrade-kind {
-  font-size: 12px;
+  font-size: calc(14px * var(--ts, 1));
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--paper-faint);
 }
 .upgrade-desc {
-  font-size: 16px;
+  font-size: calc(16px * var(--ts, 1));
   line-height: 1.5;
   color: var(--paper);
   margin-top: 8px;
@@ -489,7 +489,7 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 6px 12px;
-  font-size: 13px;
+  font-size: calc(14px * var(--ts, 1));
   font-weight: 700;
   margin-top: 8px;
 }
@@ -501,7 +501,7 @@
 .upgrade-class {
   margin-top: auto;
   padding-top: 10px;
-  font-size: 13px;
+  font-size: calc(14px * var(--ts, 1));
   letter-spacing: 0.1em;
   color: var(--jade-bright);
 }
@@ -547,18 +547,18 @@
   box-shadow: 0 0 24px color-mix(in srgb, var(--rar, var(--gold)) 30%, transparent);
 }
 .reward-name {
-  font-size: 18px;
+  font-size: calc(18px * var(--ts, 1));
   letter-spacing: 0.1em;
   color: var(--rar, var(--gold-bright));
 }
 .reward-rar {
-  font-size: 12px;
+  font-size: calc(14px * var(--ts, 1));
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--paper-faint);
 }
 .reward-desc {
-  font-size: 15px;
+  font-size: calc(15px * var(--ts, 1));
   line-height: 1.5;
   margin-top: 6px;
 }
@@ -603,7 +603,7 @@
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--jade-bright);
-  font-size: 15px;
+  font-size: calc(15px * var(--ts, 1));
 }
 .cleared-stats {
   display: grid;
@@ -669,12 +669,12 @@
   z-index: 1;
 }
 .mvp-name {
-  font-size: 20px;
+  font-size: calc(20px * var(--ts, 1));
   letter-spacing: 0.14em;
   color: var(--paper);
 }
 .mvp-title {
-  font-size: 13px;
+  font-size: calc(14px * var(--ts, 1));
   letter-spacing: 0.3em;
   text-transform: uppercase;
   color: var(--gold-bright);
@@ -682,7 +682,7 @@
 }
 .mvp-stat {
   margin-top: 10px;
-  font-size: 14px;
+  font-size: calc(14px * var(--ts, 1));
   color: var(--paper-dim);
 }
 .mvp-stat b {
@@ -691,7 +691,7 @@
 }
 .mvp-stars {
   margin-top: 8px;
-  font-size: 18px;
+  font-size: calc(18px * var(--ts, 1));
   color: var(--gold-bright);
   letter-spacing: 0.2em;
 }
@@ -720,13 +720,13 @@
   justify-content: space-between;
   padding: 6px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 15px;
+  font-size: calc(15px * var(--ts, 1));
 }
 .summary-hero {
   display: grid;
   grid-template-columns: 1.2fr 1fr 1fr 1fr 0.7fr;
   gap: 10px;
   padding: 6px 0;
-  font-size: 14px;
+  font-size: calc(14px * var(--ts, 1));
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }

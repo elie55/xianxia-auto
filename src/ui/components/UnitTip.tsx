@@ -50,7 +50,7 @@ export function UnitTip({ unit }: { unit: Unit }) {
         {SHOWN.map((k) => (
           <div key={k} class="tip-stat" style={{ color: STAT_COLOR[k] }}>
             <Icon name={STAT_ICON[k]} size={13} /> {k === 'attackSpeed' ? `${u.attacksPerSecond.toFixed(2)}/s` : Math.round(u.stat(k))}
-            <span class="faint" style={{ fontWeight: 400, fontSize: 12 }}>{STAT_LABEL[k]}</span>
+            <span class="faint" style={{ fontWeight: 400, fontSize: 14 }}>{STAT_LABEL[k]}</span>
           </div>
         ))}
       </div>

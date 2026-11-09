@@ -126,7 +126,7 @@ export function RunEnd() {
           <span class="btn-glyph">再</span> New Run
         </button>
       </div>
-      <div class="faint" style={{ position: 'absolute', right: 30, bottom: 24, fontSize: 13 }}>
+      <div class="faint" style={{ position: 'absolute', right: 30, bottom: 24, fontSize: 14 }}>
         Runs {meta.value.runsPlayed} · Wins {meta.value.runsWon}
       </div>
     </div>
