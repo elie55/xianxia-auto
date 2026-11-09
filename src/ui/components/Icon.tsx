@@ -16,7 +16,9 @@ export interface IconProps extends Omit<JSX.HTMLAttributes<HTMLSpanElement>, 'si
  */
 export function Icon({ name, size, color, style, class: cls, ...rest }: IconProps) {
   const s = typeof size === 'number' ? `${size}px` : size;
-  if (PAINTED_ICONS.has(name) && (typeof size !== 'number' || size >= PAINTED_MIN)) {
+  // the Spirit Stone is the currency: its painted crystal stays readable down to 14 px
+  const min = name === 'stones' ? 14 : PAINTED_MIN;
+  if (PAINTED_ICONS.has(name) && (typeof size !== 'number' || size >= min)) {
     return (
       <span
         class={`icon painted ${cls ?? ''}`}

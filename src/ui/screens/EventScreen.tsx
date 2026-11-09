@@ -64,7 +64,7 @@ export function EventScreen() {
                           {c.label}
                           {c.cost ? (
                             <span class="price-inline">
-                              <Icon name="stones" size={12} /> {c.cost}
+                              <Icon name="stones" size={16} /> {c.cost}
                             </span>
                           ) : null}
                         </div>

@@ -86,7 +86,7 @@ export function ChooseHero() {
             audio.sfx('ui_reroll');
           }}
         >
-          <Icon name="ui_reroll" size={18} /> Reroll disciples · <Icon name="stones" size={14} /> 1
+          <Icon name="ui_reroll" size={18} /> Reroll disciples · <Icon name="stones" size={16} /> 1
         </button>
         <button class="btn primary big" data-tut="draft-accept" disabled={!hero || !blessing} onClick={confirm}>
           <span class="btn-glyph">拜</span> Accept into the Sect

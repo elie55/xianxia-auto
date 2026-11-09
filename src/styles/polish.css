@@ -1432,3 +1432,38 @@
   margin-top: -3px;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
 }
+
+/* shop: the Rank Up ribbon floats above the card instead of covering the portrait */
+.shop-card-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.shop-card-wrap .hero-card .owned-tag {
+  display: none;
+}
+.rankup-ribbon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 18px;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #04120f;
+  background: linear-gradient(180deg, #7af0cf, #2fa98a);
+  box-shadow: 0 0 22px rgba(63, 191, 159, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  animation: ribbon-pulse 1.6s ease-in-out infinite;
+}
+.rankup-ribbon.hidden {
+  visibility: hidden;
+  animation: none;
+}
+@keyframes ribbon-pulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(63, 191, 159, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+  50% { box-shadow: 0 0 30px rgba(63, 191, 159, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+}

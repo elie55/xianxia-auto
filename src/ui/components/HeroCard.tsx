@@ -103,7 +103,7 @@ export function HeroCard(p: HeroCardProps) {
         <Portrait id={def.id} accent={def.accent} hanzi={def.hanzi.slice(0, 1)} />
         {p.price !== undefined && (
           <div class={`price-tag ${p.sale ? 'sale' : ''}`}>
-            <Icon name="stones" size={16} /> {p.price}
+            <Icon name="stones" size={20} /> {p.price}
             {p.sale && <span class="sale-label">SALE</span>}
           </div>
         )}

@@ -50,7 +50,7 @@ export function ShopScreen() {
                 });
               }}
             >
-              <Icon name="ui_reroll" size={16} /> Reroll shop · <Icon name="stones" size={13} /> {cost}
+              <Icon name="ui_reroll" size={16} /> Reroll shop · <Icon name="stones" size={16} /> {cost}
             </button>
             <button class={`btn small ${s.shopFrozen ? 'primary' : ''}`} onClick={() => act((st) => (toggleFreeze(st), audio.sfx('ui_click')))} {...tip(<><h4>Freeze</h4><p>Keep the current offers for the next shop.</p></>, 'below')}>
               <Icon name="ui_freeze" size={16} /> {s.shopFrozen ? 'Unfreeze shop' : 'Freeze shop'}
@@ -128,7 +128,7 @@ export function ShopScreen() {
                             <Icon name={`relic_${RELIC_BY_ID[o.relicId].icon}`} size={52} color="var(--gold-bright)" />
                             <span class="ts-name">{RELIC_BY_ID[o.relicId].name}</span>
                             <span class="price-inline">
-                              <Icon name="stones" size={12} /> {o.price}
+                              <Icon name="stones" size={20} /> {o.price}
                             </span>
                           </button>
                         ),
@@ -140,18 +140,26 @@ export function ShopScreen() {
             <div class="shop-right">
               <div class="shop-section-title">Disciples</div>
               <div class="shop-cards" data-tut="shop-cards">
-                {shop.heroes.map((o, i) =>
-                  o ? (
-                    <HeroCard key={o.key} defId={o.defId} rank={o.rank} price={o.price} sale={o.sale} owned={s.roster.some((h) => h.defId === o.defId)} onClick={() => onBuyHero(o.key)} ctx={ctx} />
-                  ) : (
-                    <div key={i} class="hero-card sold-card">
-                      <div class="pennant-border" />
-                      <div class="pennant center">
-                        <span class="faint display">Recruited</span>
+                {shop.heroes.map((o, i) => {
+                  const owned = !!o && s.roster.some((h) => h.defId === o.defId);
+                  return (
+                    <div key={o ? o.key : `sold${i}`} class="shop-card-wrap">
+                      <div class={`rankup-ribbon ${owned ? '' : 'hidden'}`} {...(owned ? tip(<><h4>Rank Up</h4><p>You already own this disciple. Buying the card again raises their rank.</p></>) : {})}>
+                        ▲ Rank Up
                       </div>
+                      {o ? (
+                        <HeroCard defId={o.defId} rank={o.rank} price={o.price} sale={o.sale} owned={owned} onClick={() => onBuyHero(o.key)} ctx={ctx} />
+                      ) : (
+                        <div class="hero-card sold-card">
+                          <div class="pennant-border" />
+                          <div class="pennant center">
+                            <span class="faint display">Recruited</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ),
-                )}
+                  );
+                })}
               </div>
               <div class="shop-footnote faint">Buying a disciple you already own ranks them up · Drag disciples or Treasures onto the sell zone to sell them</div>
             </div>
@@ -183,7 +191,7 @@ function ShopItemRow({ s, offer, onBuy }: { s: RunState; offer: { itemId: string
       </div>
       <div class={`price-inline ${offer.sale ? 'sale' : ''}`}>
         {offer.sale && <span class="sale-label">SALE</span>}
-        <Icon name="stones" size={13} /> {offer.price}
+        <Icon name="stones" size={20} /> {offer.price}
       </div>
     </button>
   );
@@ -205,7 +213,7 @@ function ShopRelicRow({ s, offer, onBuy }: { s: RunState; offer: { relicId: stri
       </div>
       <div class={`price-inline ${offer.sale ? 'sale' : ''}`}>
         {offer.sale && <span class="sale-label">SALE</span>}
-        <Icon name="stones" size={13} /> {offer.price}
+        <Icon name="stones" size={20} /> {offer.price}
       </div>
     </button>
   );

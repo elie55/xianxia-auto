@@ -153,7 +153,7 @@ export function BattleResult() {
                     <div class="rewind-cost">
                       <Icon name="ui_rewind" size={22} color="var(--gold-bright)" />
                       <span>
-                        Time Reversal · <Icon name="stones" size={14} /> {cost}
+                        Time Reversal · <Icon name="stones" size={16} /> {cost}
                       </span>
                     </div>
                     <div class="muted" style={{ fontSize: 14 }}>
@@ -201,7 +201,7 @@ function Line({ label, value, big, icon }: { label: string; value: number; big?:
         {label}
       </span>
       <span class="gold row">
-        <Icon name="stones" size={big ? 20 : 14} /> {value}
+        <Icon name="stones" size={big ? 22 : 16} /> {value}
       </span>
     </div>
   );
