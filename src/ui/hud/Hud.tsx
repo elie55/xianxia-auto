@@ -263,10 +263,19 @@ function BottomBar({ s }: { s: RunState }) {
   const P = Math.max(1, s.party.length);
   const R = Math.max(0, s.reserve.length);
   const labelW = P + R >= 8 ? 64 : 96;
-  const avail = 1920 - 68 - 2 * labelW - 70 - 146 * R - 14 * (P + R);
+  // a reserve block grows a second socket column when its disciple carries more than three Treasures
+  const reserveCols = s.reserve.some((ru) => {
+    const rh = ru ? heroByUid(s, ru) : undefined;
+    return !!rh && heroItemSlots(rh, ctx) > 3;
+  })
+    ? 2
+    : 1;
+  const avail = 1920 - 68 - 2 * labelW - 70 - (146 + 28 * (reserveCols - 1)) * R - 14 * (P + R);
   const slotW = Math.min(244, Math.floor(avail / P));
   const portrait = Math.max(72, Math.min(104, slotW - 136));
-  const sock = Math.max(16, Math.min(34, Math.floor((slotW - portrait - 42) / 3)));
+  // side column = block minus its padding (8 + 8), the portrait ring (+4) and the gap (8); up to three sockets per row
+  const side = slotW - 16 - (portrait + 4) - 8;
+  const sock = Math.max(18, Math.min(36, Math.floor((side - 2 * 4) / 3)));
   const vars = { ['--slot-w' as string]: `${slotW}px`, ['--portrait' as string]: `${portrait}px`, ['--sock' as string]: `${sock}px`, ['--label-w' as string]: `${labelW}px` };
   return (
     <div class="bottombar" data-tut="party" style={vars}>
@@ -320,7 +329,7 @@ function HeroSlot({ s, uid, ctx, drop, dragging, reserve, portrait = 104, sock =
           </div>
           <div class="slot-side">
             {!reserve && <div class="slot-name">{def.name}</div>}
-            <div class="slot-items">
+            <div class="slot-items" style={{ ['--cols' as string]: socketColumns(heroItemSlots(h, ctx), !!reserve) }}>
               {Array.from({ length: heroItemSlots(h, ctx) }).map((_, i) => {
                 const itemId = h.items[i];
                 return (
@@ -345,6 +354,13 @@ function HeroSlot({ s, uid, ctx, drop, dragging, reserve, portrait = 104, sock =
 const TIP_STATS = ['attack', 'spirit', 'defense', 'attackSpeed', 'crit', 'range'] as const;
 
 /** Party-bar hero tooltip: HP and Qi bars with values, the stat grid and the ability. Shows live combat values during a battle. */
+/** Socket grid columns: one row up to three Treasures, then 2×2 for four and 3 + 2 for five (reserve: one or two columns). */
+function socketColumns(n: number, reserve: boolean): number {
+  if (reserve) return n > 3 ? 2 : 1;
+  if (n <= 3) return Math.max(1, n);
+  return n === 4 ? 2 : 3;
+}
+
 /** True while a disciple lies fallen: live during a fight, and on the result screen that follows it. */
 function heroFallen(s: RunState, uid: string): boolean {
   if (s.phase === 'battle') {

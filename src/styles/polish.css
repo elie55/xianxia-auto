@@ -272,6 +272,11 @@
 }
 .shop-left {
   gap: 10px;
+  /* on hover a row slides right and its frame is drawn 4px outside its box: leave room on both sides, and never
+     scroll sideways (the horizontal scrollbar showed as a gold band under the list) */
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 6px 10px 6px 6px;
 }
 .shop-row {
   padding: 10px 12px;
@@ -1397,7 +1402,7 @@
   box-shadow: none;
 }
 .shop-row:hover {
-  transform: translateX(3px) scale(1.01);
+  transform: translateX(3px);
   border-color: var(--gold-bright);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 0 24px rgba(212, 168, 75, 0.18);
 }
@@ -2876,4 +2881,39 @@ input[type='range']:hover::-webkit-slider-thumb {
 }
 .hero-slot.fallen .fallen-glass {
   box-shadow: inset 0 0 0 2px rgba(196, 44, 40, 0.75), inset 0 0 16px rgba(0, 0, 0, 0.7);
+}
+
+/* ───────── TREASURE SOCKETS: full-size sockets in a grid that always fits the block ─────────
+   One row for up to three, 2 × 2 for four, 3 + 2 for five; Hud.tsx sizes --sock from the block's real side width. */
+.hero-slot {
+  padding: 8px;
+  gap: 8px;
+}
+.hero-slot .slot-items {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), var(--sock, 34px));
+  grid-auto-rows: var(--sock, 34px);
+  gap: 4px;
+  height: auto;
+  justify-content: start;
+}
+.hero-slot .slot-item {
+  flex: none;
+  width: var(--sock, 34px);
+  height: var(--sock, 34px);
+}
+.hero-slot .slot-side {
+  gap: 6px;
+}
+.hero-slot.reserve {
+  gap: 6px;
+}
+.hero-slot.reserve .slot-items {
+  grid-template-columns: repeat(var(--cols, 1), 24px);
+  grid-auto-rows: 24px;
+  flex-direction: unset;
+}
+.hero-slot.reserve .slot-item {
+  width: 24px;
+  height: 24px;
 }
