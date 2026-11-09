@@ -154,6 +154,8 @@ export interface RunState {
   lastBreakdown: StonesBreakdown | null;
   phase: Phase;
   rewindCost: number;
+  /** Set by a Time Reversal: leaving the shop returns to the lost fight instead of moving on to the next node. */
+  retryNode?: boolean;
   heroCounter: number;
   victory: boolean;
   endlessScore: number;
@@ -807,6 +809,14 @@ export function proceedFromShop(s: RunState): void {
 // ───────────────────────── node flow ─────────────────────────
 
 export function advanceNode(s: RunState): void {
+  // After a Time Reversal the lost fight is fought again: back to the same node's board with the same enemies (and
+  // the same challenge or trial). Moving on here used to count the lost fight as won, and a lost boss cleared the realm.
+  if (s.retryNode) {
+    s.retryNode = false;
+    if (s.currentEncounter) s.phase = 'board';
+    else enterNode(s);
+    return;
+  }
   const node = currentNode(s);
   if (node.kind === 'boss' && s.lastResult?.winner === 'ally' && s.currentEncounter?.kind === 'boss') {
     // boss was just beaten → realm cleared
@@ -1264,6 +1274,7 @@ export function rewind(s: RunState): boolean {
   s.rewindCost += 20;
   s.stats.rewinds++;
   s.lastResult = null;
+  s.retryNode = true;
   log(s, 'Time reversed with a talisman.');
   openShop(s);
   return true;

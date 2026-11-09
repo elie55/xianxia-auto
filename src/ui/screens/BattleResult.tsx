@@ -155,7 +155,7 @@ export function BattleResult() {
                 {!won && (
                   <>
                     <p class="muted" style={{ fontSize: 15 }}>
-                      Your disciples lie broken on the battlefield. A Time Reversal Talisman can unwind the fight — at a price that grows each time.
+                      Your disciples lie broken on the battlefield. A Time Reversal Talisman can unwind the fight — at a price that grows each time. You return to the shop to change your sect, then face this battle again.
                     </p>
                     <div class="rewind-cost">
                       <Icon name="ui_rewind" size={22} color="var(--gold-bright)" />

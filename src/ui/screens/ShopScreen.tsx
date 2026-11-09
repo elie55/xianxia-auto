@@ -109,7 +109,7 @@ export function ShopScreen() {
                 act((st) => proceedFromShop(st));
               }}
             >
-              Proceed <Icon name="ui_proceed" size={14} />
+              {s.retryNode ? 'Fight again' : 'Proceed'} <Icon name="ui_proceed" size={14} />
             </button>
           </div>
           <div class="shop-body">

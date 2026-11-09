@@ -8,6 +8,7 @@ import {
   chooseReward,
   chooseUpgrade,
   draftPick,
+  enterNode,
   equipItem,
   finishBattle,
   finishEvent,
@@ -165,5 +166,54 @@ describe('run state machine', () => {
     expect(s.phase).toBe('board');
     expect(s.currentEncounter).not.toBeNull();
     expect(s.nodeIndex).toBe(0);
+  });
+
+  /** Plays the opening up to the first fight's board. */
+  function toFirstBoard(seed: number): RunState {
+    resetItemQuests();
+    const s = newRun(0, seed);
+    draftPick(s, s.draft!.heroes[0], s.draft!.blessings[0]);
+    if (s.phase === 'rankUp') chooseUpgrade(s, s.rankUpChoices!.options[0].id);
+    resolveEventChoice(s, 'stones');
+    finishEvent(s);
+    expect(s.phase).toBe('board');
+    return s;
+  }
+
+  /** Loses the current fight, reverses time and leaves the shop. */
+  function loseAndReverse(s: RunState): void {
+    startBattle(s);
+    const res = new Battle(battleConfig(s)!).run();
+    res.winner = 'enemy';
+    finishBattle(s, res);
+    expect(s.phase).toBe('defeat');
+    s.stones = 500;
+    expect(rewind(s)).toBe(true);
+    expect(s.phase).toBe('shop');
+    proceedFromShop(s);
+    if (s.phase === 'rankUp') chooseUpgrade(s, s.rankUpChoices!.options[0].id);
+  }
+
+  it('a Time Reversal replays the lost fight instead of moving on', () => {
+    const s = toFirstBoard(99);
+    const node = s.nodeIndex;
+    const enemies = s.currentEncounter!.enemies.map((e) => e.defId).join(',');
+    loseAndReverse(s);
+    expect(s.phase).toBe('board');
+    expect(s.nodeIndex).toBe(node);
+    expect(s.currentEncounter!.enemies.map((e) => e.defId).join(',')).toBe(enemies);
+    expect(s.stats.wins).toBe(0);
+    expect(s.retryNode).toBeFalsy();
+  });
+
+  it('a Time Reversal after losing to the boss does not clear the realm', () => {
+    const s = toFirstBoard(77);
+    s.nodeIndex = s.timeline.findIndex((n) => n.kind === 'boss');
+    enterNode(s);
+    expect(s.currentEncounter!.kind).toBe('boss');
+    loseAndReverse(s);
+    expect(s.phase).toBe('board');
+    expect(s.nodeIndex).toBe(s.timeline.findIndex((n) => n.kind === 'boss'));
+    expect(s.currentEncounter!.kind).toBe('boss');
   });
 });
