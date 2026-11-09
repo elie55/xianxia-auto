@@ -1,19 +1,5 @@
 {
   "animations": {
-    "attack": {
-      "sheet": "attack.png",
-      "frames": 25,
-      "cols": 5,
-      "frameW": 256,
-      "frameH": 256,
-      "fps": 10.7,
-      "pivotX": 0.4973,
-      "pivotY": 0.8477,
-      "charH": 173,
-      "loop": false,
-      "hitFrame": 11,
-      "charW": 209
-    },
     "idle": {
       "sheet": "idle.png",
       "frames": 25,
@@ -26,19 +12,6 @@
       "charH": 173,
       "loop": true,
       "charW": 209
-    },
-    "walk": {
-      "sheet": "walk.png",
-      "frames": 25,
-      "cols": 5,
-      "frameW": 256,
-      "frameH": 256,
-      "fps": 10.7,
-      "pivotX": 0.4973,
-      "pivotY": 0.8164,
-      "charH": 160,
-      "loop": true,
-      "charW": 193
     }
   }
 }

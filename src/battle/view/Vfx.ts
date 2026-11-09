@@ -9,26 +9,27 @@ import gsap from 'gsap';
 export class VfxLayer extends Container {
   /** Battle speed multiplier applied to flipbook playback (gsap effects use the global timeline instead). */
   timeScale = 1;
-  private sheets = new Map<string, Texture[]>();
+  /** Flipbook frames, shared by every effects layer (front and behind units). */
+  private static sheets = new Map<string, Texture[]>();
 
   /** Loads 4×4 flipbook sheets from /assets/art/fx/<name>.jpg (black background, played additively). Missing sheets are skipped. */
   async loadFlipbooks(names: string[], cols = 4, rows = 4): Promise<void> {
     await Promise.all(
       names.map(async (name) => {
-        if (this.sheets.has(name)) return;
+        if (VfxLayer.sheets.has(name)) return;
         const tex = await Assets.load<Texture>(`./assets/art/fx/${name}.jpg`).catch(() => null);
         if (!tex) return;
         const fw = tex.width / cols;
         const fh = tex.height / rows;
         const frames: Texture[] = [];
         for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) frames.push(new Texture({ source: tex.source, frame: new Rectangle(c * fw, r * fh, fw, fh) }));
-        this.sheets.set(name, frames);
+        VfxLayer.sheets.set(name, frames);
       }),
     );
   }
 
   hasFlipbook(name: string): boolean {
-    return this.sheets.has(name);
+    return VfxLayer.sheets.has(name);
   }
 
   /**
@@ -36,7 +37,7 @@ export class VfxLayer extends Container {
    * `anchorY` 1 pins the bottom of the frame to y (for strikes and pillars). Returns false when the sheet is missing.
    */
   flipbook(name: string, x: number, y: number, opts: { scale?: number; fps?: number; tint?: number; rotation?: number; anchorY?: number; alpha?: number; flipX?: boolean; delay?: number } = {}): boolean {
-    const frames = this.sheets.get(name);
+    const frames = VfxLayer.sheets.get(name);
     if (!frames) return false;
     const start = () => {
       const s = new AnimatedSprite(frames);
@@ -407,7 +408,7 @@ export class VfxLayer extends Container {
   }
 
   /** Shield dome: a translucent arc that flares and fades over the unit. */
-  dome(x: number, y: number, color = 0xbfe4ff, rx = 60, ry = 90): void {
+  dome(x: number, y: number, color = 0xbfe4ff, rx = 60, ry = 90, fill = 0.06): void {
     const g = new Graphics();
     g.x = x;
     g.y = y;
@@ -417,13 +418,30 @@ export class VfxLayer extends Container {
     const st = { a: 0.55, k: 0.9 };
     const draw = () => {
       g.clear();
-      g.ellipse(0, -ry * 0.55, rx * st.k, ry * 0.75 * st.k).fill({ color, alpha: st.a * 0.06 });
+      g.ellipse(0, -ry * 0.55, rx * st.k, ry * 0.75 * st.k).fill({ color, alpha: st.a * fill });
       g.ellipse(0, -ry * 0.55, rx * st.k, ry * 0.75 * st.k).stroke({ color, width: 2, alpha: st.a * 0.7 });
       g.ellipse(0, -ry * 0.55, rx * st.k * 0.86, ry * 0.75 * st.k * 0.86).stroke({ color: 0xffffff, width: 1, alpha: st.a * 0.25 });
     };
     draw();
     gsap.to(st, { k: 1.05, duration: 0.22, ease: 'back.out(2)', onUpdate: draw });
     gsap.to(st, { a: 0, duration: 0.4, delay: 0.18, ease: 'power1.in', onUpdate: draw, onComplete: () => g.destroy() });
+  }
+
+  /** Thin shimmering outline around a body: reads as a barrier without covering the character. */
+  rim(x: number, y: number, color = 0xbfe4ff, rx = 60, ry = 90): void {
+    const g = new Graphics();
+    g.x = x;
+    g.y = y;
+    g.blendMode = 'add';
+    this.addChild(g);
+    const st = { a: 0.5, k: 0.92 };
+    const draw = () => {
+      g.clear();
+      g.ellipse(0, -ry * 0.55, rx * st.k, ry * 0.75 * st.k).stroke({ color, width: 1.6, alpha: st.a });
+    };
+    draw();
+    gsap.to(st, { k: 1.06, duration: 0.24, ease: 'back.out(2)', onUpdate: draw });
+    gsap.to(st, { a: 0, duration: 0.35, delay: 0.2, ease: 'power1.in', onUpdate: draw, onComplete: () => g.destroy() });
   }
 
   /** Glowing soul wisp that drifts upward (death). */

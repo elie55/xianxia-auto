@@ -339,13 +339,24 @@ export class UnitView extends Container {
       gsap.fromTo(this.body, { x: 0 }, { x: (ranged ? 4 : 10) * dir, duration: hitDelay, ease: 'power2.in', yoyo: true, repeat: 1, overwrite: 'auto' });
       return;
     }
+    // no attack clip (or one that was dropped because it redrew the creature): wind up, then lunge on the hit beat
+    const k = Math.max(1, this.baseScale);
+    const wind = Math.max(0.06, hitDelay * 0.45);
+    const strike = Math.max(0.05, hitDelay - wind);
     const tl = gsap.timeline();
+    gsap.killTweensOf(this.body, 'x,rotation');
     if (ranged) {
-      tl.to(this.body, { x: -10 * dir, duration: 0.08, ease: 'power2.out' }).to(this.body, { x: 0, duration: 0.25, ease: 'power2.out' });
-      tl.to(this.body.scale, { y: 1.06, duration: 0.08, yoyo: true, repeat: 1 }, 0);
+      tl.to(this.body, { x: -12 * dir * k, rotation: -0.03 * dir, duration: wind, ease: 'power2.out' })
+        .to(this.body, { x: 6 * dir * k, rotation: 0.02 * dir, duration: strike, ease: 'power3.in' })
+        .to(this.body, { x: 0, rotation: 0, duration: 0.28, ease: 'power2.out' });
+      tl.to(this.body.scale, { y: 1.05, duration: wind, ease: 'power2.out' }, 0).to(this.body.scale, { y: 1, duration: 0.3, ease: 'back.out(2)' }, wind + strike);
     } else {
-      tl.to(this.body, { x: 26 * dir, duration: 0.09, ease: 'power3.out' }).to(this.body, { x: 0, duration: 0.3, ease: 'power2.out' });
-      tl.to(this.body.scale, { y: 0.94, duration: 0.07, yoyo: true, repeat: 1 }, 0);
+      tl.to(this.body, { x: -10 * dir * k, rotation: -0.04 * dir, duration: wind, ease: 'power2.out' })
+        .to(this.body, { x: 36 * dir * k, rotation: 0.07 * dir, duration: strike, ease: 'power3.in' })
+        .to(this.body, { x: 0, rotation: 0, duration: 0.34, ease: 'power2.out' });
+      tl.to(this.body.scale, { y: 1.04, duration: wind }, 0)
+        .to(this.body.scale, { y: 0.93, duration: strike }, wind)
+        .to(this.body.scale, { y: 1, duration: 0.3, ease: 'back.out(2)' }, wind + strike);
     }
   }
 

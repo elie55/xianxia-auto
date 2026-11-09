@@ -48,7 +48,7 @@ const STAT_SHORT: Record<string, string> = {
 const FLIPBOOK_SHEETS = ['fx_qi_cast', 'fx_fire_burst', 'fx_frost_burst', 'fx_lightning_strike', 'fx_heal_bloom', 'fx_shadow_burst', 'fx_slash_arc', 'fx_poison_cloud', 'fx_water_splash', 'fx_death_burst', 'fx_impact_hit', 'fx_blood_burst', 'fx_buff_rise'];
 
 /** Which flipbook plays for an ability VFX key, on top of the procedural effect. */
-const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: number; ground?: boolean; fps?: number; directional?: boolean }> = {
+const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: number; ground?: boolean; fps?: number; directional?: boolean; behind?: boolean }> = {
   lotus_fire: { sheet: 'fx_fire_burst', scale: 1.3 },
   lotus_bloom: { sheet: 'fx_fire_burst', scale: 1.2 },
   phoenix_strike: { sheet: 'fx_fire_burst', scale: 1.5 },
@@ -61,9 +61,9 @@ const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: numbe
   lightning_arc: { sheet: 'fx_lightning_strike', scale: 1.1, ground: true, fps: 30 },
   thunder_call: { sheet: 'fx_lightning_strike', scale: 1.5, ground: true, fps: 30 },
   sun_arrow: { sheet: 'fx_lightning_strike', tint: 0xffd27f, scale: 1.1, ground: true, fps: 30 },
-  heal_bloom: { sheet: 'fx_heal_bloom', scale: 1.2, ground: true },
-  sutra: { sheet: 'fx_heal_bloom', tint: 0xf3cf78, scale: 1.3, ground: true },
-  moon_pulse: { sheet: 'fx_heal_bloom', tint: 0xbfe4ff, scale: 1.3, ground: true },
+  heal_bloom: { sheet: 'fx_heal_bloom', scale: 1.2, ground: true, behind: true },
+  sutra: { sheet: 'fx_heal_bloom', tint: 0xf3cf78, scale: 1.3, ground: true, behind: true },
+  moon_pulse: { sheet: 'fx_heal_bloom', tint: 0xbfe4ff, scale: 1.3, ground: true, behind: true },
   shadow_slash: { sheet: 'fx_slash_arc', tint: 0xb57cff, scale: 1.1, directional: true },
   shadow_blink: { sheet: 'fx_shadow_burst', scale: 1.1 },
   blood_nova: { sheet: 'fx_blood_burst', scale: 1.8, ground: true },
@@ -102,6 +102,8 @@ export class BattleView {
   private highlightLayer = new Graphics();
   private unitLayer = new Container();
   private fx = new VfxLayer();
+  /** Effects drawn behind the units (self-buffs, shields, cast glyphs) so they frame the character instead of hiding it. */
+  private fxBack = new VfxLayer();
   private texts = new FloatingTextLayer();
   private overlay = new Graphics();
   private flashOverlay = new Graphics();
@@ -136,6 +138,7 @@ export class BattleView {
     this.arenaLayer.addChild(this.hexLayer);
     this.arenaLayer.addChild(this.highlightLayer);
     this.unitLayer.sortableChildren = true;
+    this.world.addChild(this.fxBack);
     this.world.addChild(this.unitLayer);
     this.world.addChild(this.fx);
     this.world.addChild(this.texts);
@@ -191,7 +194,7 @@ export class BattleView {
     const h = HEX_SIZE * 1.5 * cfg.squash * (BOARD_ROWS - 1);
     this.boardOrigin.x = DESIGN_W / 2 - w / 2;
     this.boardOrigin.y = cfg.centerY - h / 2;
-    for (const layer of [this.arenaLayer, this.unitLayer, this.fx, this.texts]) layer.position.set(this.boardOrigin.x, this.boardOrigin.y);
+    for (const layer of [this.arenaLayer, this.fxBack, this.unitLayer, this.fx, this.texts]) layer.position.set(this.boardOrigin.x, this.boardOrigin.y);
     for (const v of this.views.values()) {
       if (!v.unit.pos) continue;
       const p = hexToPixel(v.unit.pos);
@@ -507,6 +510,7 @@ export class BattleView {
     this.views.clear();
     this.unitLayer.removeChildren();
     this.fx.removeChildren();
+    this.fxBack.removeChildren();
     this.texts.removeChildren();
   }
 
@@ -525,6 +529,7 @@ export class BattleView {
     this.drawHexes(false);
     gsap.globalTimeline.timeScale(speed);
     this.fx.timeScale = speed;
+    this.fxBack.timeScale = speed;
     for (const u of battle.units) this.addView(u, false);
     for (const v of this.views.values()) v.spawnAnim(Math.random() * 0.2);
   }
@@ -533,6 +538,7 @@ export class BattleView {
     this.speed = s;
     gsap.globalTimeline.timeScale(this.mode === 'battle' ? s : 1);
     this.fx.timeScale = this.mode === 'battle' ? s : 1;
+    this.fxBack.timeScale = this.fx.timeScale;
   }
 
   setPaused(p: boolean): void {
@@ -544,6 +550,7 @@ export class BattleView {
     this.mode = 'idle';
     gsap.globalTimeline.timeScale(1);
     this.fx.timeScale = 1;
+    this.fxBack.timeScale = 1;
     this.overlay.alpha = 0;
     this.flashOverlay.alpha = 0;
     if (this.tribulationLabel) {
@@ -711,11 +718,11 @@ export class BattleView {
         // skill unleash: a beat of freeze-frame, a tinted screen flash, a rising qi pillar and a glyph under the caster
         this.hitStop(v.unit.boss ? 110 : 80);
         this.screenFlash(accent, v.unit.boss ? 0.22 : 0.14, 0.32);
-        v.tintFlash(0xffffff, 0.25);
-        this.fx.ring(v.x, v.y, accent, 96, 4, 0.7, hexLayout.squash);
-        this.fx.glyph(v.x, v.y, accent, 78, 0.9);
-        if (!this.fx.flipbook('fx_qi_cast', v.x, v.y + 12, { scale: Math.max(0.9, v.bodyHeight / 190), anchorY: 0.92, tint: accent, fps: 26 })) this.fx.pillar(v.x, v.y, accent, 200, 0.5);
-        this.fx.flash(v.x, v.y + v.chestY, accent, 180, 0.4);
+        v.flash(1.6, 0.16);
+        this.fxBack.ring(v.x, v.y, accent, 96, 4, 0.7, hexLayout.squash);
+        this.fxBack.glyph(v.x, v.y, accent, 78, 0.9);
+        if (!this.fxBack.flipbook('fx_qi_cast', v.x, v.y + 12, { scale: Math.max(1.0, v.bodyHeight / 175), anchorY: 0.92, tint: accent, fps: 26 })) this.fxBack.pillar(v.x, v.y, accent, 200, 0.5);
+        this.fx.flash(v.x, v.y + v.chestY, accent, 110, 0.3);
         this.castBanner(v.x, v.y + v.headY - 36, e.name, accent);
         if (v.unit.boss) {
           this.shake(8);
@@ -773,7 +780,9 @@ export class BattleView {
         const v = this.viewOf(e.id);
         if (!v) break;
         if (showNumbers) this.texts.spawn(v.x, v.y + v.headY, `+${e.amount}`, 'shield', { size: 20 });
-        this.fx.dome(v.x, v.y, 0xbfe4ff, v.halfWidth + 16, v.bodyHeight);
+        this.fxBack.dome(v.x, v.y, 0xbfe4ff, v.halfWidth + 18, v.bodyHeight, 0.16);
+        this.fx.rim(v.x, v.y, 0xbfe4ff, v.halfWidth + 18, v.bodyHeight);
+        v.tintFlash(0xd6ecff, 0.3);
         audio.sfx('shield', { volume: 0.35, throttleMs: 300 });
         break;
       }
@@ -854,8 +863,8 @@ export class BattleView {
         const v = this.viewOf(e.id);
         if (!v) break;
         v.reviveAnim();
-        this.fx.fireColumn(v.x, v.y, 0xff8a3c, 260, 18);
-        this.fx.flipbook('fx_buff_rise', v.x, v.y + 8, { scale: 1.3, anchorY: 0.95, tint: 0xffd27f, fps: 20 });
+        this.fxBack.fireColumn(v.x, v.y, 0xff8a3c, 260, 18);
+        this.fxBack.flipbook('fx_buff_rise', v.x, v.y + 8, { scale: 1.3, anchorY: 0.95, tint: 0xffd27f, fps: 20 });
         this.fx.motes(v.x, v.y, 0xffd27f, 10, 160);
         this.texts.spawn(v.x, v.y + v.headY - 20, 'REBORN', 'label', { size: 20 });
         break;
@@ -879,8 +888,8 @@ export class BattleView {
           v.setAura(0xffb86b, 0.7);
           this.texts.spawn(v.x, v.y + v.headY - 24, `SURGE · ${e.name.toUpperCase()}`, 'label', { size: 14 });
           this.fx.ring(v.x, v.y, 0xffb86b, 90, 3, 0.6, hexLayout.squash);
-          this.fx.fireColumn(v.x, v.y, 0xffb86b, 140, 8);
-          this.fx.flipbook('fx_buff_rise', v.x, v.y + 8, { scale: Math.max(0.9, v.bodyHeight / 180), anchorY: 0.95, tint: 0xffb86b, fps: 22 });
+          this.fxBack.fireColumn(v.x, v.y, 0xffb86b, 140, 8);
+          this.fxBack.flipbook('fx_buff_rise', v.x, v.y + 8, { scale: Math.max(0.9, v.bodyHeight / 180), anchorY: 0.95, tint: 0xffb86b, fps: 22 });
         } else {
           v.setAura(v.unit.side === 'ally' ? 0x3fbf9f : 0xd2382c, 0.35);
         }
@@ -890,10 +899,10 @@ export class BattleView {
         const v = this.viewOf(e.id);
         if (!v) break;
         v.setAura(0xc9a7ff, 0.7);
-        this.fx.pillar(v.x, v.y, 0xc9a7ff, 240, 0.8);
+        this.fxBack.pillar(v.x, v.y, 0xc9a7ff, 240, 0.8);
         this.fx.motes(v.x, v.y, 0xc9a7ff, 14, 220);
-        this.fx.glyph(v.x, v.y, 0xc9a7ff, 70, 1.2);
-        this.fx.flipbook('fx_buff_rise', v.x, v.y + 8, { scale: Math.max(1.0, v.bodyHeight / 160), anchorY: 0.95, tint: 0xc9a7ff, fps: 20 });
+        this.fxBack.glyph(v.x, v.y, 0xc9a7ff, 70, 1.2);
+        this.fxBack.flipbook('fx_buff_rise', v.x, v.y + 8, { scale: Math.max(1.0, v.bodyHeight / 160), anchorY: 0.95, tint: 0xc9a7ff, fps: 20 });
         this.texts.spawn(v.x, v.y + v.headY - 24, `ENLIGHTENMENT · ${e.name.toUpperCase()}`, 'label', { size: 14 });
         audio.sfx('rankup', { volume: 0.4 });
         break;
@@ -969,7 +978,7 @@ export class BattleView {
     const fb = FLIPBOOK_FOR[key];
     if (fb) {
       const size = at ? Math.max(0.8, at.bodyHeight / 180) : 1;
-      this.fx.flipbook(fb.sheet, p.x, fb.ground ? p.y + 6 : p.y + chest, { scale: (fb.scale ?? 1) * size, tint: fb.tint, anchorY: fb.ground ? 0.92 : 0.5, fps: fb.fps ?? 24, flipX: facing < 0 && !!fb.directional });
+      (fb.behind ? this.fxBack : this.fx).flipbook(fb.sheet, p.x, fb.ground ? p.y + 6 : p.y + chest, { scale: (fb.scale ?? 1) * size, tint: fb.tint, anchorY: fb.ground ? 0.92 : 0.5, fps: fb.fps ?? 24, flipX: facing < 0 && !!fb.directional });
     }
     switch (key) {
       case 'lightning':
@@ -1021,15 +1030,16 @@ export class BattleView {
         break;
       case 'heal_bloom':
       case 'sutra':
-        this.fx.pillar(p.x, p.y, 0x8dff9a, 180, 0.6);
+        this.fxBack.pillar(p.x, p.y, 0x8dff9a, 180, 0.6);
         this.fx.motes(p.x, p.y, 0x8dff9a, 12, 160);
-        if (key === 'sutra') this.fx.glyph(p.x, p.y, 0xf3cf78, 60, 0.8);
+        if (key === 'sutra') this.fxBack.glyph(p.x, p.y, 0xf3cf78, 60, 0.8);
         break;
       case 'shield_pop':
       case 'stone_aura':
       case 'obsidian':
-        this.fx.dome(p.x, p.y, key === 'obsidian' ? 0x9a8ad0 : 0xbfe4ff, (at?.halfWidth ?? 40) + 18, at?.bodyHeight ?? 150);
-        this.fx.ring(p.x, p.y, key === 'obsidian' ? 0x9a8ad0 : 0xbfe4ff, 80, 4, 0.5, hexLayout.squash);
+        this.fxBack.dome(p.x, p.y, key === 'obsidian' ? 0x9a8ad0 : 0xbfe4ff, (at?.halfWidth ?? 40) + 18, at?.bodyHeight ?? 150, 0.16);
+        this.fx.rim(p.x, p.y, key === 'obsidian' ? 0x9a8ad0 : 0xbfe4ff, (at?.halfWidth ?? 40) + 18, at?.bodyHeight ?? 150);
+        this.fxBack.ring(p.x, p.y, key === 'obsidian' ? 0x9a8ad0 : 0xbfe4ff, 80, 4, 0.5, hexLayout.squash);
         break;
       case 'lotus_fire':
       case 'lotus_bloom':
