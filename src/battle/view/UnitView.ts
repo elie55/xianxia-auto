@@ -182,7 +182,7 @@ export class UnitView extends Container {
   /** Switches between the idle and walk cycles while the simulation moves the unit. */
   setMoving(moving: boolean): void {
     if (this.dead) return;
-    if (moving && this.currentAnim === 'idle' && this.hasWalk) this.playAnim('walk');
+    if (moving && this.currentAnim === 'idle' && this.hasWalk) this.playAnim('walk', { fps: 22 });
     else if (!moving && this.currentAnim === 'walk') this.playAnim('idle');
   }
 
