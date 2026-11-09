@@ -12,7 +12,11 @@ const DIST = path.join(__dirname, '..', 'dist');
 const DEV_URL = process.env.VITE_DEV_SERVER_URL;
 
 function createWindow() {
+  const iconPath = process.env.VITE_DEV_SERVER_URL
+    ? path.join(__dirname, '..', 'public', 'assets', 'art', 'icons', 'app_icon.png')
+    : path.join(__dirname, '..', 'dist', 'assets', 'art', 'icons', 'app_icon.png');
   const win = new BrowserWindow({
+    icon: iconPath,
     width: 1600,
     height: 900,
     minWidth: 960,
