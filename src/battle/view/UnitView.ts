@@ -291,6 +291,9 @@ export class UnitView extends Container {
     return Math.max(44, this.visualW * 1.05) / this.shadow.texture.width;
   }
 
+  /** Battle view: the hex position this frame, and the eased sideways "personal space" offset added to it. */
+  baseX = 0;
+  sepX = 0;
   /** HP fraction shown by the cream "damage trail" that lingers after a hit, then drains to the real value. */
   private trailHp = 1;
   private lastBarTime = 0;
@@ -448,7 +451,8 @@ export class UnitView extends Container {
       tl.to(this.body.scale, { y: 1.05, duration: wind, ease: 'power2.out' }, 0).to(this.body.scale, { y: 1, duration: 0.3, ease: 'back.out(2)' }, wind + strike);
     } else {
       tl.to(this.body, { x: -10 * dir * k, rotation: -0.04 * dir, duration: wind, ease: 'power2.out' })
-        .to(this.body, { x: 36 * dir * k, rotation: 0.07 * dir, duration: strike, ease: 'power3.in' })
+        // a short lunge: the strike reads without the attacker stepping into its target's body
+        .to(this.body, { x: 24 * dir * k, rotation: 0.07 * dir, duration: strike, ease: 'power3.in' })
         .to(this.body, { x: 0, rotation: 0, duration: 0.34, ease: 'power2.out' });
       tl.to(this.body.scale, { y: 1.04, duration: wind }, 0)
         .to(this.body.scale, { y: 0.93, duration: strike }, wind)

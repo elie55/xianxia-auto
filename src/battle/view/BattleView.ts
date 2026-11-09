@@ -641,6 +641,7 @@ export class BattleView {
       }
     }
 
+    const fighting: UnitView[] = [];
     for (const v of this.views.values()) {
       const u = v.unit;
       if (!u.onBoard || !u.pos) {
@@ -652,17 +653,53 @@ export class BattleView {
         const t = Math.min(1, Math.max(0, (b.time - u.moving.start) / (u.moving.end - u.moving.start)));
         const a = hexToPixel(u.moving.from);
         const c = hexToPixel(u.moving.to);
-        v.x = a.x + (c.x - a.x) * t;
+        v.baseX = a.x + (c.x - a.x) * t;
         v.y = a.y + (c.y - a.y) * t - Math.sin(t * Math.PI) * (v.hasWalk || u.flying ? 3 : 10);
+        fighting.push(v);
       } else if (b) {
         const p = hexToPixel(u.pos);
-        v.x = p.x;
+        v.baseX = p.x;
         v.y = p.y;
+        fighting.push(v);
+      } else {
+        v.sepX = 0;
       }
       v.setFacing(u.facing);
       v.setMoving(!!(b && u.moving));
       v.zIndex = v.y + (u.boss ? 1 : 0) + (v === this.lifted ? 10000 : 0);
       v.update(this.elapsed, 1);
+    }
+    if (b) this.separate(fighting, dt);
+  }
+
+  /**
+   * Personal space, view only: fighters at the same or an adjacent depth whose bodies overlap ease apart sideways
+   * (up to 28 px), so the melee line stays readable. The simulation still holds exactly one unit per hex.
+   */
+  private separate(views: UnitView[], dt: number): void {
+    const n = views.length;
+    const target = new Array<number>(n).fill(0);
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        const a = views[i];
+        const c = views[j];
+        if (Math.abs(a.y - c.y) > 64) continue;
+        const dx = c.baseX - a.baseX;
+        const minDx = (a.halfWidth + c.halfWidth) * 0.9;
+        if (Math.abs(dx) >= minDx) continue;
+        const push = (minDx - Math.abs(dx)) / 2;
+        // overlapping exactly: allies give way to the left, enemies to the right
+        const dir = Math.abs(dx) > 0.5 ? Math.sign(dx) : a.unit.side === 'ally' ? 1 : -1;
+        target[i] -= dir * push;
+        target[j] += dir * push;
+      }
+    }
+    const k = Math.min(1, dt * 8);
+    for (let i = 0; i < n; i++) {
+      const v = views[i];
+      const goal = Math.max(-28, Math.min(28, target[i]));
+      v.sepX += (goal - v.sepX) * k;
+      v.x = v.baseX + v.sepX;
     }
   }
 
