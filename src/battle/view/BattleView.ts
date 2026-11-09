@@ -109,7 +109,7 @@ export class BattleView {
     const w = HEX_W * (BOARD_COLS - 1) + HEX_W / 2;
     const h = HEX_SIZE * 1.5 * HEX_SQUASH * (BOARD_ROWS - 1);
     this.boardOrigin.x = DESIGN_W / 2 - w / 2;
-    this.boardOrigin.y = 655 - h / 2;
+    this.boardOrigin.y = 715 - h / 2;
     this.arenaLayer.position.set(this.boardOrigin.x, this.boardOrigin.y);
     this.unitLayer.position.set(this.boardOrigin.x, this.boardOrigin.y);
     this.fx.position.set(this.boardOrigin.x, this.boardOrigin.y);

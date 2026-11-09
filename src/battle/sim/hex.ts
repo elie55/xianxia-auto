@@ -4,12 +4,12 @@ import type { Hex } from '@/core/types';
  * Axial hex coordinates (pointy-top). The board is a parallelogram-free rectangle
  * expressed in "odd-r" offset rows internally for bounds, converted to axial for math.
  */
-export const BOARD_COLS = 9;
+export const BOARD_COLS = 10;
 export const BOARD_ROWS = 5;
 
 /** Columns [0, ALLY_MAX_COL] are the ally placement zone; [ENEMY_MIN_COL, BOARD_COLS-1] the enemy zone. */
 export const ALLY_MAX_COL = 3;
-export const ENEMY_MIN_COL = 5;
+export const ENEMY_MIN_COL = 6;
 
 export function hexKey(h: Hex): string {
   return `${h.q},${h.r}`;
@@ -130,8 +130,8 @@ export function hexRound(q: number, r: number): Hex {
 /**
  * Pixel layout for rendering. Pointy-top hexes with a vertical squash to fake perspective.
  */
-export const HEX_SIZE = 58; // outer radius in design pixels
-export const HEX_SQUASH = 0.66;
+export const HEX_SIZE = 62; // outer radius in design pixels
+export const HEX_SQUASH = 0.72;
 export const HEX_W = Math.sqrt(3) * HEX_SIZE;
 export const HEX_H_STEP = 1.5 * HEX_SIZE * HEX_SQUASH;
 
