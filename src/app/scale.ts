@@ -31,6 +31,14 @@ export function installScaling(uiRoot: HTMLElement): void {
     const v = compute();
     viewport.value = v;
     uiRoot.style.transform = `translate(${v.offsetX}px, ${v.offsetY}px) scale(${v.scale})`;
+    // the bands a wide or tall window leaves outside the 16:9 frame, in design pixels: painted screens and
+    // full-screen dimmers extend into them (polish.css, WINDOW BLEED)
+    const bleedX = v.offsetX / v.scale;
+    const bleedY = v.offsetY / v.scale;
+    uiRoot.style.setProperty('--bleed-x', `${bleedX.toFixed(2)}px`);
+    uiRoot.style.setProperty('--bleed-y', `${bleedY.toFixed(2)}px`);
+    uiRoot.classList.toggle('bleed-x', bleedX > 1);
+    uiRoot.classList.toggle('bleed-y', bleedY > 1);
   };
   apply();
   window.addEventListener('resize', apply);

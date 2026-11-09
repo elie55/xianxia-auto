@@ -17,6 +17,8 @@ export function App() {
   useTutorialDriver();
   return (
     <>
+      {/* fills the window around the 16:9 frame with the current screen's own painting (polish.css, WINDOW BLEED) */}
+      <div class="screen-bleed" aria-hidden="true" />
       <ScreenGuard key={scr}>
         {scr === 'menu' && <MainMenu />}
         {scr === 'newRun' && <NewRun />}

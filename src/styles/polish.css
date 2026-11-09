@@ -2917,3 +2917,81 @@ input[type='range']:hover::-webkit-slider-thumb {
   width: 24px;
   height: 24px;
 }
+
+/* ───────── WINDOW BLEED: wide and tall windows continue the current screen's own painting ─────────
+   The interface is a 16:9 frame scaled to fit the window. A wider or taller window leaves bands outside it, and on
+   every screen those bands showed the battle canvas behind it: the current realm's arena. Painted screens now fill
+   the bands with a softened copy of their own painting and fade the frame's edges into it, and the overlays that dim
+   a whole screen reach the window edges too. Battle screens keep the arena's own extension (BattleView).
+   scale.ts sets --bleed-x / --bleed-y (band sizes in design pixels) and the .bleed-x / .bleed-y classes. */
+#ui-root > .screen-bleed {
+  display: none;
+  position: absolute;
+  /* the whole window, plus a margin so the blur leaves no soft rim at the window edge */
+  inset: calc(-1 * var(--bleed-y, 0px) - 60px) calc(-1 * var(--bleed-x, 0px) - 60px);
+  background: var(--bleed-art, none) center / cover no-repeat, #070e0f;
+  filter: blur(16px) brightness(var(--bleed-dim, 0.6)) saturate(1.1);
+  pointer-events: none;
+  transition: filter 0.3s ease-out;
+}
+#ui-root:has(> .screen > :is(.menu-bg, .newrun-bg, .draft-bg, .rankup-bg, .runend-bg, .cleared-bg)) > .screen-bleed {
+  display: block;
+}
+/* each copy carries its screen's own shading, so the bands match the frame's tone */
+#ui-root:has(> .screen > .menu-bg) > .screen-bleed {
+  --bleed-dim: 0.52;
+  --bleed-art: linear-gradient(0deg, rgba(4, 7, 12, 0.94) 0%, rgba(4, 7, 12, 0.62) 22%, rgba(4, 7, 12, 0) 44%), url('/assets/art/bg/menu_keyart2.jpg');
+}
+#ui-root:has(> .screen > .newrun-bg) > .screen-bleed {
+  --bleed-dim: 0.6;
+  --bleed-art: linear-gradient(180deg, rgba(7, 14, 15, 0.55) 0%, rgba(7, 14, 15, 0.35) 40%, rgba(7, 14, 15, 0.82) 100%), url('/assets/art/bg/ui_hall.jpg');
+}
+#ui-root:has(> .screen > .draft-bg) > .screen-bleed {
+  --bleed-dim: 0.66;
+  --bleed-art: linear-gradient(180deg, rgba(7, 14, 15, 0.45) 0%, rgba(7, 14, 15, 0.25) 35%, rgba(7, 14, 15, 0.85) 100%), url('/assets/art/bg/ui_draft.jpg');
+}
+#ui-root:has(> .screen > .rankup-bg) > .screen-bleed {
+  --bleed-dim: 0.66;
+  --bleed-art: linear-gradient(180deg, rgba(7, 14, 15, 0.5) 0%, rgba(7, 14, 15, 0.3) 45%, rgba(7, 14, 15, 0.85) 100%), url('/assets/art/bg/ui_breakthrough.jpg');
+}
+/* the breakthrough splash dims the whole screen, bands included */
+#ui-root:has(> .screen > .rankup-splash) > .screen-bleed {
+  --bleed-dim: 0.27;
+}
+#ui-root:has(> .runend-screen.won) > .screen-bleed {
+  --bleed-dim: 0.62;
+  --bleed-art: linear-gradient(180deg, rgba(7, 14, 15, 0.45) 0%, rgba(7, 14, 15, 0.3) 40%, rgba(7, 14, 15, 0.9) 100%), url('/assets/art/bg/ui_victory.jpg');
+}
+#ui-root:has(> .runend-screen.lost) > .screen-bleed {
+  --bleed-dim: 0.62;
+  --bleed-art: linear-gradient(180deg, rgba(7, 14, 15, 0.5) 0%, rgba(7, 14, 15, 0.35) 40%, rgba(7, 14, 15, 0.9) 100%), url('/assets/art/bg/ui_defeat.jpg');
+}
+/* Rift Sealed shades its painting almost to black toward the edges */
+#ui-root:has(> .cleared-screen) > .screen-bleed {
+  --bleed-dim: 1;
+}
+#ui-root:has(> .cleared-screen.realm-1) > .screen-bleed {
+  --bleed-art: linear-gradient(rgba(7, 14, 15, 0.94), rgba(7, 14, 15, 0.94)), url('/assets/art/bg/realm1_bamboo.jpg');
+}
+#ui-root:has(> .cleared-screen.realm-2) > .screen-bleed {
+  --bleed-art: linear-gradient(rgba(7, 14, 15, 0.94), rgba(7, 14, 15, 0.94)), url('/assets/art/bg/realm2_abyss.jpg');
+}
+#ui-root:has(> .cleared-screen.realm-3) > .screen-bleed {
+  --bleed-art: linear-gradient(rgba(7, 14, 15, 0.94), rgba(7, 14, 15, 0.94)), url('/assets/art/bg/realm3_ladder.jpg');
+}
+/* the crisp painting inside the frame fades into the copy instead of ending on a hard edge */
+#ui-root.bleed-x > .screen > :is(.menu-bg, .newrun-bg, .draft-bg, .rankup-bg, .runend-bg, .cleared-bg) {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 150px, #000 calc(100% - 150px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 150px, #000 calc(100% - 150px), transparent);
+}
+#ui-root.bleed-y > .screen > :is(.menu-bg, .newrun-bg, .draft-bg, .rankup-bg, .runend-bg, .cleared-bg) {
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 110px, #000 calc(100% - 110px), transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 110px, #000 calc(100% - 110px), transparent);
+}
+/* full-screen dimmers and veils cover the whole window, not just the frame (their content stays centred) */
+#ui-root .modal-backdrop,
+#ui-root .tut-dim,
+#ui-root > .loading-veil,
+#ui-root > .crash-screen {
+  inset: calc(-1 * var(--bleed-y, 0px)) calc(-1 * var(--bleed-x, 0px));
+}
