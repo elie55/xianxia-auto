@@ -1,4 +1,5 @@
 import { meta, screen, updateMeta } from '@/app/store';
+import { fullscreen, toggleFullscreen } from '@/app/desktop';
 import { audio } from '@/audio/AudioManager';
 import { resetTutorial } from '@/ui/tutorial/Tutorial';
 
@@ -42,6 +43,14 @@ export function Settings() {
               onChange={() => audio.sfx('ui_click')}
             />
             <span class="muted">{Math.round(m.settings.sfx * 100)}%</span>
+          </Row>
+          <Row label="Fullscreen">
+            <kbd class="keycap" title="Toggles fullscreen anywhere in the game">
+              F11
+            </kbd>
+            <button class={`btn small ${fullscreen.value ? 'primary' : 'ghost'}`} onClick={() => void toggleFullscreen()}>
+              {fullscreen.value ? 'On' : 'Off'}
+            </button>
           </Row>
           <Row label="Default battle speed">
             <div class="row">

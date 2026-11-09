@@ -3007,3 +3007,30 @@ input[type='range']:hover::-webkit-slider-thumb {
   border-image-width: 11px 46px;
   padding: 0 4px;
 }
+
+/* keycaps: hotkey hints in Settings and in tooltips — a small lacquer key with a gold rim */
+.keycap {
+  display: inline-grid;
+  place-items: center;
+  min-width: 32px;
+  height: 28px;
+  padding: 0 8px;
+  margin-right: 10px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #f7e6b8;
+  background: linear-gradient(180deg, #24403c, #0e1e1d);
+  border: 1px solid rgba(212, 168, 75, 0.75);
+  border-bottom-width: 3px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.tooltip .keycap {
+  min-width: 24px;
+  height: 22px;
+  margin: 0 0 0 6px;
+  font-size: 13px;
+  vertical-align: 1px;
+}

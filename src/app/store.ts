@@ -10,7 +10,7 @@ export interface MetaSave {
   bestEndless: number;
   bestTierCleared: number;
   leaderboard: { name: string; score: number; tier: number; date: number }[];
-  settings: { music: number; sfx: number; autoBattle: boolean; battleSpeed: 1 | 2 | 3; screenShake: boolean; showDamage: boolean };
+  settings: { music: number; sfx: number; autoBattle: boolean; battleSpeed: 1 | 2 | 3; screenShake: boolean; showDamage: boolean; fullscreen?: boolean };
   seenTutorial: boolean;
   /** Tutorial chapters already shown (by id). */
   tutorialSeen: string[];

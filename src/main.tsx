@@ -6,12 +6,14 @@ import './styles/polish.css';
 import { render } from 'preact';
 import { App } from '@/app/App';
 import { installScaling } from '@/app/scale';
+import { installDesktop } from '@/app/desktop';
 import { applyDebugQuery } from '@/app/debug';
 import { startPreload } from '@/app/preload';
 import { installUiSounds } from '@/ui/flourish';
 
 const uiRoot = document.getElementById('ui-root')!;
 installScaling(uiRoot);
+installDesktop();
 const qa = new URLSearchParams(location.search);
 // QA URLs (?demo, ?screen, &noanim) skip the loading veil; assets still load in the background
 startPreload(qa.has('demo') || qa.has('screen') || qa.has('noanim'));

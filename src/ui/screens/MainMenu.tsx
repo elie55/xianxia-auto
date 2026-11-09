@@ -2,8 +2,8 @@ import { hasSavedRun, loadRun, meta, screen, setRun, showToast } from '@/app/sto
 import { resetItemQuests } from '@/core/run';
 import { audio } from '@/audio/AudioManager';
 import { useEffect, useRef } from 'preact/hooks';
+import { isDesktop, quitGame } from '@/app/desktop';
 
-const isElectron = typeof navigator !== 'undefined' && /Electron/i.test(navigator.userAgent);
 
 /** Falling cherry petals: position, timing, drift and spin per petal (deterministic so it never reshuffles). */
 const PETALS = Array.from({ length: 22 }, (_, i) => ({
@@ -118,8 +118,8 @@ export function MainMenu() {
           <button class="btn small" onClick={() => go('credits')}>
             <span class="btn-glyph">谢</span> Credits
           </button>
-          {isElectron && (
-            <button class="btn small danger" onClick={() => window.close()}>
+          {isDesktop && (
+            <button class="btn small danger" onClick={quitGame}>
               <span class="btn-glyph">出</span> Quit
             </button>
           )}

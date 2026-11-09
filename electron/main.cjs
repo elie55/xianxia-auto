@@ -1,5 +1,5 @@
 // Electron main process for Nine Heavens (Windows desktop build).
-const { app, BrowserWindow, protocol, net, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, Menu, protocol, net, ipcMain, shell } = require('electron');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
@@ -49,6 +49,8 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // No application menu: Alt no longer pops up a File/Edit/View bar, and the game owns its keys (F11, Esc…)
+  Menu.setApplicationMenu(null);
   protocol.handle('app', (request) => {
     const { pathname } = new URL(request.url);
     const rel = decodeURIComponent(pathname).replace(/^\/+/, '') || 'index.html';
