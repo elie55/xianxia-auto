@@ -1114,12 +1114,15 @@
   padding-top: 26px;
 }
 
-/* ───────── PARTY BAR v2: full width, taller, big hero blocks ───────── */
+/* ───────── PARTY BAR v3: shorter plaque, wide horizontal hero blocks ─────────
+   Slot geometry comes from CSS variables set by Hud.tsx (--slot-w, --portrait, --sock, --label-w)
+   so the blocks only shrink when Sect Expansions crowd the bar. */
 .bottombar {
-  height: 262px;
-  gap: 26px;
-  padding-bottom: 22px;
-  background: linear-gradient(0deg, rgba(7, 14, 15, 0.98) 0%, rgba(7, 14, 15, 0.75) 55%, transparent 100%);
+  height: 180px;
+  gap: 16px;
+  padding: 10px 34px 0;
+  align-items: center;
+  background: linear-gradient(0deg, rgba(7, 14, 15, 0.98) 0%, rgba(7, 14, 15, 0.78) 55%, transparent 100%);
 }
 .bottombar::before {
   left: 18px;
@@ -1127,7 +1130,7 @@
   width: auto;
   transform: none;
   bottom: 12px;
-  height: 218px;
+  height: 146px;
   background: linear-gradient(180deg, rgba(16, 32, 34, 0.7), rgba(5, 10, 11, 0.92));
 }
 .bottombar::after {
@@ -1136,84 +1139,125 @@
   width: auto;
   transform: none;
   bottom: -4px;
-  height: 250px;
-  border-width: 34px;
-  border-image-width: 34px;
+  height: 174px;
+  border-width: 28px;
+  border-image-width: 28px;
 }
 .bb-label {
-  font-size: 17px;
+  font-size: 15px;
   letter-spacing: 0.3em;
-  padding-bottom: 58px;
-  width: 150px;
+  padding-bottom: 0;
+  width: var(--label-w, 96px);
+  flex: none;
 }
 .bb-label .faint {
-  font-size: 13px;
+  font-size: 12px;
   margin-top: 4px;
 }
 .bb-divider {
-  height: 160px;
+  height: 104px;
 }
 .slot-row {
-  gap: 18px;
+  gap: 14px;
+  align-items: center;
 }
 .hero-slot {
-  width: 158px;
-  padding: 10px 8px 8px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: var(--slot-w, 240px);
+  height: 124px;
+  padding: 8px 10px;
+}
+.hero-slot.reserve {
+  width: auto;
   gap: 6px;
 }
-.slot-items {
-  height: 40px;
-  gap: 6px;
+.hero-slot.empty,
+.hero-slot.reserve.empty {
+  justify-content: center;
 }
-.slot-item {
-  width: 40px;
-  height: 40px;
-  border-radius: 7px;
+.hero-slot.reserve.empty {
+  width: 118px;
 }
 .slot-portrait {
-  width: 118px;
-  height: 118px;
+  flex: none;
 }
 .slot-portrait .mini-portrait {
-  width: 112px !important;
-  height: 112px !important;
   border-width: 3px;
 }
 .slot-portrait:hover .mini-portrait {
   transform: translateY(-4px) scale(1.05);
 }
+.slot-side {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 9px;
+}
+.slot-name {
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.15;
+}
+.slot-items {
+  height: var(--sock, 34px);
+  gap: 6px;
+  justify-content: flex-start;
+}
+.slot-item {
+  width: var(--sock, 34px);
+  height: var(--sock, 34px);
+  border-radius: 7px;
+}
+.hero-slot.reserve .slot-side {
+  flex: none;
+}
+.hero-slot.reserve .slot-items {
+  flex-direction: column;
+  height: auto;
+  gap: 4px;
+}
+.hero-slot.reserve .slot-item {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+}
 .slot-rank {
   right: -2px;
   bottom: -2px;
 }
-.slot-rank .rank-glyph {
-  width: 34px !important;
-  height: 34px !important;
-  font-size: 17px !important;
-}
 .slot-med {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   left: -2px;
   bottom: -2px;
 }
-.slot-name {
-  font-size: 15px;
-  letter-spacing: 0.12em;
-}
 .hero-slot .slot-portrait.empty {
-  width: 112px;
-  height: 112px;
+  width: var(--portrait, 104px);
+  height: var(--portrait, 104px);
   border-width: 2px;
 }
+.hero-slot.reserve .slot-portrait.empty {
+  width: 92px;
+  height: 92px;
+}
 
-/* room for the taller bar */
+/* room for the bar */
 .board-actions {
-  bottom: 292px;
+  bottom: 206px;
 }
 .shop-panel {
   top: 100px;
-  bottom: 276px;
+  bottom: 196px;
   padding: 16px 28px 16px;
 }
 .shop-cards .hero-card {
@@ -1221,10 +1265,10 @@
   height: 400px;
 }
 .event-panel {
-  top: 46%;
+  top: 48%;
   transform: translateY(-50%);
   min-height: 460px;
-  max-height: 600px;
+  max-height: 640px;
 }
 .event-panel.anim-pop {
   animation-name: pop-in-centred2;
@@ -1240,10 +1284,10 @@
   }
 }
 .result-wrap {
-  margin-top: -90px;
+  margin-top: -50px;
 }
 .reward-wrap {
-  margin-top: -80px;
+  margin-top: -40px;
 }
 .leftrail,
 .rightrail {

@@ -250,20 +250,29 @@ export function fmt(n: number): string {
 function BottomBar({ s }: { s: RunState }) {
   const ctx = teamContext(s);
   const dragging = drag.value;
+  // Slot geometry for the 1920-wide bar: hero blocks shrink (down to 72 px portraits) only when Sect Expansions crowd it.
+  const P = Math.max(1, s.party.length);
+  const R = Math.max(0, s.reserve.length);
+  const labelW = P + R >= 8 ? 64 : 96;
+  const avail = 1920 - 68 - 2 * labelW - 70 - 146 * R - 14 * (P + R);
+  const slotW = Math.min(244, Math.floor(avail / P));
+  const portrait = Math.max(72, Math.min(104, slotW - 136));
+  const sock = Math.max(16, Math.min(34, Math.floor((slotW - portrait - 42) / 3)));
+  const vars = { ['--slot-w' as string]: `${slotW}px`, ['--portrait' as string]: `${portrait}px`, ['--sock' as string]: `${sock}px`, ['--label-w' as string]: `${labelW}px` };
   return (
-    <div class="bottombar" data-tut="party">
+    <div class="bottombar" data-tut="party" style={vars}>
       <div class="bb-label display" {...tip(<><h4>Party</h4><p>Disciples who fight. Drag a portrait onto the board to place them, or onto another slot to swap.</p><p class="muted">Sect Expansion Insights raise the party size.</p></>, 'above')}>
         Party <span class="faint">{s.party.filter(Boolean).length}/{s.partySize}</span>
       </div>
       <div class="slot-row">
         {s.party.map((uid, i) => (
-          <HeroSlot key={`p${i}`} s={s} uid={uid} ctx={ctx} drop={`party:${i}`} dragging={dragging} />
+          <HeroSlot key={`p${i}`} s={s} uid={uid} ctx={ctx} drop={`party:${i}`} dragging={dragging} portrait={portrait} sock={sock} />
         ))}
       </div>
       <div class="bb-divider" />
       <div class="slot-row">
         {s.reserve.map((uid, i) => (
-          <HeroSlot key={`r${i}`} s={s} uid={uid} ctx={ctx} drop={`reserve:${i}`} dragging={dragging} reserve />
+          <HeroSlot key={`r${i}`} s={s} uid={uid} ctx={ctx} drop={`reserve:${i}`} dragging={dragging} reserve portrait={portrait} sock={sock} />
         ))}
       </div>
       <div class="bb-label display" {...tip(<><h4>Reserve</h4><p>Disciples who sit out the fight. Only [Meditation] effects work from here. Keep copies for rank-ups or swap them in later.</p></>, 'above')}>
@@ -273,38 +282,43 @@ function BottomBar({ s }: { s: RunState }) {
   );
 }
 
-function HeroSlot({ s, uid, ctx, drop, dragging, reserve }: { s: RunState; uid: string | null; ctx: ReturnType<typeof teamContext>; drop: string; dragging: ReturnType<typeof drag.peek>; reserve?: boolean }) {
+function HeroSlot({ s, uid, ctx, drop, dragging, reserve, portrait = 104, sock = 34 }: { s: RunState; uid: string | null; ctx: ReturnType<typeof teamContext>; drop: string; dragging: ReturnType<typeof drag.peek>; reserve?: boolean; portrait?: number; sock?: number }) {
   const h = uid ? heroByUid(s, uid) : undefined;
   const def = h ? HERO_BY_ID[h.defId] : undefined;
   const over = dragging?.over === drop || (dragging?.over === `hero:${uid}` && !!uid);
   const acceptsHero = dragging?.payload.kind === 'hero';
   const acceptsItem = dragging?.payload.kind === 'item' && !!h;
+  const size = reserve ? Math.min(portrait, 92) : portrait;
+  const chip = reserve ? 20 : sock - 6;
   return (
     <div class={`hero-slot ${h ? 'filled' : 'empty'} ${over && (acceptsHero || acceptsItem) ? 'drop-ok' : ''} ${reserve ? 'reserve' : ''}`} data-drop={h ? `hero:${uid}` : drop}>
       {h && def && (
         <>
-          <div class="slot-items">
-            {Array.from({ length: heroItemSlots(h, ctx) }).map((_, i) => {
-              const itemId = h.items[i];
-              return (
-                <div key={i} class="slot-item">
-                  {itemId && <ItemChip itemId={itemId} size={30} draggable onDragStart={(e) => startDrag({ kind: 'item', itemId, fromHero: h.uid }, e)} />}
-                </div>
-              );
-            })}
-          </div>
           <div
             class="slot-portrait"
+            style={{ width: size + 4, height: size + 4 }}
             onPointerDown={(e) => startDrag({ kind: 'hero', uid: h.uid }, e)}
             {...tip(<HeroSlotTip h={h} />, 'above')}
           >
-            <MiniPortrait defId={h.defId} size={112} />
+            <MiniPortrait defId={h.defId} size={size} />
             <div class="slot-rank">
-              <RankGlyph rank={h.rank} size={34} />
+              <RankGlyph rank={h.rank} size={Math.round(size * 0.3)} />
             </div>
             {reserve && <div class="slot-med" {...tip(<><h4 class="kw-Meditation">Reserve</h4><p>Only [Meditation] effects work from here.</p></>)}><Icon name="kw_meditation" size={12} /></div>}
           </div>
-          <div class="slot-name">{def.name}</div>
+          <div class="slot-side">
+            {!reserve && <div class="slot-name">{def.name}</div>}
+            <div class="slot-items">
+              {Array.from({ length: heroItemSlots(h, ctx) }).map((_, i) => {
+                const itemId = h.items[i];
+                return (
+                  <div key={i} class="slot-item">
+                    {itemId && <ItemChip itemId={itemId} size={chip} draggable onDragStart={(e) => startDrag({ kind: 'item', itemId, fromHero: h.uid }, e)} />}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </>
       )}
       {!h && (

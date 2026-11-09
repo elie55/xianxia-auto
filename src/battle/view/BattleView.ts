@@ -105,15 +105,7 @@ export class BattleView {
     this.flashOverlay.alpha = 0;
     this.flashOverlay.blendMode = 'add';
 
-    // board origin: center the board horizontally, place vertically in the middle band
-    const w = HEX_W * (BOARD_COLS - 1) + HEX_W / 2;
-    const h = HEX_SIZE * 1.5 * HEX_SQUASH * (BOARD_ROWS - 1);
-    this.boardOrigin.x = DESIGN_W / 2 - w / 2;
-    this.boardOrigin.y = 672 - h / 2;
-    this.arenaLayer.position.set(this.boardOrigin.x, this.boardOrigin.y);
-    this.unitLayer.position.set(this.boardOrigin.x, this.boardOrigin.y);
-    this.fx.position.set(this.boardOrigin.x, this.boardOrigin.y);
-    this.texts.position.set(this.boardOrigin.x, this.boardOrigin.y);
+    this.layoutBoard();
 
     this.ready = true;
     this.isReady.value = true;
@@ -139,10 +131,24 @@ export class BattleView {
     if (c) c.style.visibility = v ? 'visible' : 'hidden';
   }
 
+  /** Vertical centre of the hex board per arena painting: each realm's floor sits at a different height. */
+  private static readonly BOARD_CENTER_Y: Record<number, number> = { 1: 684, 2: 704, 3: 724 };
+
+  /** Centres the board horizontally and drops it onto the current arena's floor. */
+  private layoutBoard(): void {
+    const w = HEX_W * (BOARD_COLS - 1) + HEX_W / 2;
+    const h = HEX_SIZE * 1.5 * HEX_SQUASH * (BOARD_ROWS - 1);
+    const cy = BattleView.BOARD_CENTER_Y[this.realm] ?? 690;
+    this.boardOrigin.x = DESIGN_W / 2 - w / 2;
+    this.boardOrigin.y = cy - h / 2;
+    for (const layer of [this.arenaLayer, this.unitLayer, this.fx, this.texts]) layer.position.set(this.boardOrigin.x, this.boardOrigin.y);
+  }
+
   // ───────────────────────── arena ─────────────────────────
 
   async setRealm(realm: number): Promise<void> {
     this.realm = realm;
+    this.layoutBoard();
     this.drawBackground(viewport.value);
     this.drawGround();
     const key = realm === 1 ? 'realm1_bamboo' : realm === 2 ? 'realm2_abyss' : 'realm3_ladder';

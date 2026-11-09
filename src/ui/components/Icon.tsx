@@ -1,6 +1,9 @@
 import type { JSX } from 'preact';
 import { PAINTED_ICONS } from './paintedIcons';
 
+/** Below this size a painted icon turns to mush; the crisp tinted glyph is used instead. */
+const PAINTED_MIN = 20;
+
 export interface IconProps extends Omit<JSX.HTMLAttributes<HTMLSpanElement>, 'size'> {
   name: string;
   size?: number | string;
@@ -13,7 +16,7 @@ export interface IconProps extends Omit<JSX.HTMLAttributes<HTMLSpanElement>, 'si
  */
 export function Icon({ name, size, color, style, class: cls, ...rest }: IconProps) {
   const s = typeof size === 'number' ? `${size}px` : size;
-  if (PAINTED_ICONS.has(name)) {
+  if (PAINTED_ICONS.has(name) && (typeof size !== 'number' || size >= PAINTED_MIN)) {
     return (
       <span
         class={`icon painted ${cls ?? ''}`}

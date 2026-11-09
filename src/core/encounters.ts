@@ -1,7 +1,7 @@
 import type { EnemyDef, Hex, NodeKind } from '@/core/types';
 import type { Rng } from '@/core/rng';
 import { ENEMIES, ENEMY_BY_ID } from '@/content/enemies';
-import { BOARD_ROWS, ENEMY_MIN_COL, BOARD_COLS, offsetToAxial } from '@/battle/sim/hex';
+import { BOARD_ROWS, ENEMY_MIN_COL, BOARD_COLS, offsetToAxial, axialToOffset } from '@/battle/sim/hex';
 
 export interface EncounterUnit {
   defId: string;
@@ -72,6 +72,19 @@ export function placeEnemies(defIds: string[], rng: Rng): EncounterUnit[] {
           placed = true;
           break;
         }
+      }
+    }
+  }
+  // Centre the formation inside the enemy zone: a small wave otherwise huddles at the zone's front edge
+  // and the arena looks lopsided next to a full ally formation.
+  if (out.length) {
+    const cols = out.map((u) => axialToOffset(u.pos).col);
+    const slack = BOARD_COLS - 1 - Math.max(...cols) - (Math.min(...cols) - ENEMY_MIN_COL);
+    const shift = Math.floor(slack / 2);
+    if (shift > 0) {
+      for (const u of out) {
+        const o = axialToOffset(u.pos);
+        u.pos = offsetToAxial(o.col + shift, o.row);
       }
     }
   }

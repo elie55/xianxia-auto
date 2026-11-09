@@ -19,7 +19,7 @@ npm run electron:dev   # desktop shell against the dev server
 npm run electron:build # Windows installer + portable exe in release/
 ```
 
-Developer shortcuts (dev server): `?demo` puts a ready 5-disciple party on the board; `?demo=boss|draft|battle|single|result|defeat|shop|rankup|reward|challenge|cleared|end` opens that scene; `?demo=li_jian,shan_tie` picks the party; `?demo=event:spirit_spring` opens an event; `?screen=compendium|settings|credits|newRun` jumps to a menu screen. Add `&noanim` to freeze entrance animations (deterministic screenshots) and `&notut` to suppress the tutorial.
+Developer shortcuts (dev server): `?demo` puts a ready 5-disciple party on the board; `?demo=boss|draft|battle|single|result|defeat|shop|rankup|reward|challenge|cleared|end` opens that scene; `?demo=li_jian,shan_tie` picks the party; `?demo=event:spirit_spring` opens an event; `?screen=compendium|settings|credits|newRun` jumps to a menu screen. Add `&noanim` to freeze entrance animations (deterministic screenshots) and `&notut` to suppress the tutorial. `&realm=1|2|3` shows that realm's arena painting.
 
 ### Android
 
@@ -56,6 +56,9 @@ Every disciple and enemy has a sprite pack in `public/assets/art/sprites/<id>/pa
 - `scripts/import-autosprite-combined.mjs` / `import-autosprite-zips.mjs` / `import-autosprite-inbox.mjs` — batch importers
   for the different ways AutoSprite exports can land on disk.
 - `scripts/dev-asset-inbox.ts` — dev-only Vite endpoint that accepts sheet uploads (`POST /__inbox`).
+- `scripts/ground-anchors.mjs` — measures feet and pivots from pixel alpha so every clip stands on its hex.
+- `scripts/fix-anim-scale.mjs` — normalises each clip's zoom to the idle clip (AutoSprite renders clips at different zooms).
+- `scripts/split-icon-sheet.mjs` — splits a generated 4×4 icon sheet into painted icons under `public/assets/icons/painted` and registers them.
 
 ## Credits
 

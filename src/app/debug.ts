@@ -39,6 +39,7 @@ import { run } from './store';
  *   ?demo=reward       → Dao Insight reward pick
  *   ?demo=challenge    → challenge offers
  *   ?demo=cleared      → realm cleared
+ *   &realm=1|2|3       → arena painting of that realm (with any board scene)
  *   ?demo=end          → run end (victory)
  */
 export function applyDebugQuery(): boolean {
@@ -89,6 +90,8 @@ export function applyDebugQuery(): boolean {
     enterNode(s);
     applyScene(s, value);
   }
+  const realm = Number(params.get('realm'));
+  if (realm === 1 || realm === 2 || realm === 3) s.realm = realm;
   setRun(s);
   screen.value = 'run';
   return true;
