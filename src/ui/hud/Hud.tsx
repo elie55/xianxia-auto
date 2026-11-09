@@ -158,7 +158,7 @@ function LeftRail({ s }: { s: RunState }) {
           const itemId = s.inventory[i];
           return (
             <div key={i} class="inv-slot">
-              {itemId && <ItemChip itemId={itemId} size={40} draggable onDragStart={(e) => startDrag({ kind: 'item', itemId }, e)} class="clickable" />}
+              {itemId && <ItemChip itemId={itemId} size={36} draggable onDragStart={(e) => startDrag({ kind: 'item', itemId }, e)} class="clickable" />}
             </div>
           );
         })}

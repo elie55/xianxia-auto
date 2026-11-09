@@ -2619,3 +2619,17 @@ input[type='range']:hover::-webkit-slider-thumb {
   opacity: 1;
   background: linear-gradient(90deg, rgba(5, 10, 11, 0) 0%, rgba(5, 10, 11, 0.74) 16%, rgba(5, 10, 11, 0.74) 84%, rgba(5, 10, 11, 0) 100%);
 }
+
+/* left rail: the four Treasure sockets fit inside the painted frame and sit centred */
+.leftrail .inventory {
+  grid-template-columns: repeat(4, 40px);
+  gap: 4px;
+  padding: 3px;
+  width: max-content;
+  margin: 0 auto;
+  justify-content: center;
+}
+.leftrail .inv-slot {
+  width: 40px;
+  height: 40px;
+}
