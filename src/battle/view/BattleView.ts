@@ -334,16 +334,31 @@ export class BattleView {
   private drawHexes(highlightZone = this.mode === 'placement'): void {
     const g = this.hexLayer;
     g.clear();
+    this.hexLayer.alpha = 1;
+    const painted = !!this.bgSprite;
     for (const h of allHexes()) {
       const { col } = axialToOffset(h);
       const p = hexToPixel(h);
       const ally = col <= ALLY_MAX_COL;
       const enemy = col >= ENEMY_MIN_COL;
-      const fill = ally ? 0x3fbf9f : enemy ? 0xd2382c : 0xd4a84b;
-      const painted = !!this.bgSprite;
-      const alpha = highlightZone ? (ally ? (painted ? 0.1 : 0.16) : enemy ? 0.05 : 0.02) : painted ? 0.02 : 0.05;
-      this.hexPath(g, p.x, p.y, HEX_SIZE - 3).fill({ color: fill, alpha });
-      this.hexPath(g, p.x, p.y, HEX_SIZE - 3).stroke({ color: fill, width: 1.2, alpha: highlightZone ? (ally ? 0.5 : 0.22) : 0.1 });
+      const r = HEX_SIZE - 3;
+      if (highlightZone && ally) {
+        // deployment zone: lit jade tiles that read on every painting — a dark under-rim separates the bright
+        // rim from sunlit floors, the soft fill marks the tile, and the zone breathes (frame())
+        this.hexPath(g, p.x, p.y, r).fill({ color: 0x23b08c, alpha: 0.24 });
+        this.hexPath(g, p.x, p.y, r).stroke({ color: 0x02120d, width: 5, alpha: 0.5 });
+        this.hexPath(g, p.x, p.y, r).stroke({ color: 0x9af7da, width: 2.4, alpha: 0.95 });
+      } else if (highlightZone && enemy) {
+        // the enemy half: a faint crimson outline, so the two camps are obvious
+        this.hexPath(g, p.x, p.y, r).fill({ color: 0xd2382c, alpha: 0.08 });
+        this.hexPath(g, p.x, p.y, r).stroke({ color: 0x02120d, width: 4, alpha: 0.25 });
+        this.hexPath(g, p.x, p.y, r).stroke({ color: 0xff8a7a, width: 1.6, alpha: 0.45 });
+      } else {
+        // during a fight (and the neutral middle) the grid stays a whisper
+        const fill = ally ? 0x3fbf9f : enemy ? 0xd2382c : 0xd4a84b;
+        this.hexPath(g, p.x, p.y, r).fill({ color: fill, alpha: highlightZone ? 0.03 : painted ? 0.02 : 0.05 });
+        this.hexPath(g, p.x, p.y, r).stroke({ color: fill, width: 1.2, alpha: highlightZone ? 0.18 : 0.1 });
+      }
     }
   }
 
@@ -589,6 +604,8 @@ export class BattleView {
   private frame(deltaMS: number): void {
     const dt = Math.min(0.1, deltaMS / 1000);
     this.elapsed += dt;
+    // the deployment zone breathes softly while you place disciples
+    if (this.mode === 'placement') this.hexLayer.alpha = 0.8 + 0.2 * Math.sin(this.elapsed * 2.4);
     // camera shake
     if (this.shakeAmt > 0.2) {
       const v = viewport.value;
