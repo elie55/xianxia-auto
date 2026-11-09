@@ -1,9 +1,28 @@
-import { AnimatedSprite, ColorMatrixFilter, Container, Graphics, Sprite, Text, TextStyle, Texture } from 'pixi.js';
+import { AnimatedSprite, Assets, ColorMatrixFilter, Container, Graphics, Sprite, Text, TextStyle, Texture } from 'pixi.js';
 import gsap from 'gsap';
 import type { Unit } from '@/battle/sim/unit';
 import { STATUS_COLORS } from './Vfx';
 import { loadSpritePack, type SpriteAnimDef, type SpritePack } from './SpritePack';
 import { loadUnitTexture } from './textures';
+
+/** Status medallion art: painted icons in assets/art/ui/status when present, else the tinted keyword glyph. */
+const STATUS_GLYPH: Record<string, string> = { burn: 'kw_burn', poison: 'kw_poison', frost: 'kw_frost', bleed: 'kw_bleed', taunt: 'kw_taunt', stun: 'kw_lightning' };
+const statusTex = new Map<string, { tex: Texture; painted: boolean }>();
+const statusLoading = new Set<string>();
+/** Bumped whenever a status texture arrives, so every unit rebuilds its badges once. */
+let statusEpoch = 0;
+function statusTexture(kind: string): void {
+  if (statusTex.has(kind) || statusLoading.has(kind)) return;
+  statusLoading.add(kind);
+  void (async () => {
+    const painted = await Assets.load<Texture>(`./assets/art/ui/status/${kind}.webp`).catch(() => null);
+    const tex = painted ?? (STATUS_GLYPH[kind] ? await Assets.load<Texture>(`./assets/icons/${STATUS_GLYPH[kind]}.svg`).catch(() => null) : null);
+    if (tex) {
+      statusTex.set(kind, { tex, painted: !!painted });
+      statusEpoch++;
+    }
+  })();
+}
 
 /** On-screen height (design px) of a scale-1 character. */
 const UNIT_HEIGHT = 180;
@@ -63,7 +82,7 @@ export class UnitView extends Container {
     this.unit = unit;
     this.baseScale = unit.visualScale;
     this.visualW = 60 * this.baseScale;
-    this.barWidth = unit.boss ? 160 : unit.elite ? 100 : 74;
+    this.barWidth = unit.boss ? 168 : unit.elite ? 104 : 80;
 
     this.shadow.anchor.set(0.5, 0.5);
     this.shadow.y = 2;
@@ -88,7 +107,8 @@ export class UnitView extends Container {
     this.bars.addChild(this.hpBar);
     this.bars.addChild(this.qiBar);
     this.bars.addChild(this.statusRow);
-    this.statusRow.y = -22;
+    // above the rank pips
+    this.statusRow.y = -32;
 
     if (unit.boss || unit.elite) {
       this.nameLabel = new Text({
@@ -105,7 +125,7 @@ export class UnitView extends Container {
         }),
       });
       this.nameLabel.anchor.set(0.5, 1);
-      this.nameLabel.y = -30;
+      this.nameLabel.y = -46; // above the status medallions
       this.bars.addChild(this.nameLabel);
     }
     this.refreshBars();
@@ -264,61 +284,128 @@ export class UnitView extends Container {
       this.body.y = Math.sin(time * 2.2 * idleSpeed + this.bob) * (this.hasRealArt ? 1.5 : 2);
     }
     this.aura.alpha = this.auraAlpha + Math.sin(time * 3 + this.bob) * 0.1;
-    this.refreshBars();
+    this.refreshBars(time);
   }
 
   private get shadowBaseScale(): number {
     return Math.max(44, this.visualW * 1.05) / this.shadow.texture.width;
   }
 
-  refreshBars(): void {
+  /** HP fraction shown by the cream "damage trail" that lingers after a hit, then drains to the real value. */
+  private trailHp = 1;
+  private lastBarTime = 0;
+  private statusSig = '';
+
+  /**
+   * Overhead bars: a lacquer plate with a gold rim holding the HP bar (tick every 250 HP, cream damage trail, shield
+   * appended as a pale segment) and the Qi bar (glows when full), rank pips for disciples, and status medallions.
+   */
+  refreshBars(time = 0): void {
     const u = this.unit;
     const w = this.barWidth;
-    const h = u.boss ? 12 : 8;
-    const hp = Math.max(0, u.hp / u.maxHp);
-    const shield = u.maxHp > 0 ? Math.min(1, u.shield / u.maxHp) : 0;
+    const h = u.boss ? 12 : 9;
+    const qh = u.boss ? 5 : 4;
+    const hasQi = u.maxQi > 0;
+    const dt = this.lastBarTime ? Math.min(0.1, Math.max(0, time - this.lastBarTime)) : 0;
+    this.lastBarTime = time;
+    const hp = Math.max(0, Math.min(1, u.hp / u.maxHp));
+    this.trailHp = this.trailHp < hp ? hp : Math.max(hp, this.trailHp - dt * 0.55);
+    const shield = u.maxHp > 0 ? Math.max(0, u.shield / u.maxHp) : 0;
+    const squeeze = hp + shield > 1 ? 1 / (hp + shield) : 1;
+    const hpW = w * hp * squeeze;
+    const shieldW = w * shield * squeeze;
+    const trailW = w * this.trailHp * squeeze;
+    const left = -w / 2;
+
     const g = this.hpBar;
     g.clear();
-    g.roundRect(-w / 2 - 1, -h - 1, w + 2, h + 2, 2).fill({ color: 0x000000, alpha: 0.75 });
-    g.rect(-w / 2, -h, w * hp, h).fill({ color: u.side === 'ally' ? 0x4fd36a : 0xd7382c });
-    if (hp > 0) g.rect(-w / 2, -h, w * hp, h * 0.4).fill({ color: 0xffffff, alpha: 0.18 });
-    if (shield > 0) g.rect(-w / 2, -h, w * Math.min(1, shield), h).fill({ color: 0xbfe4ff, alpha: 0.85 });
-    if (u.boss) {
-      const segs = Math.floor(u.maxHp / 1000);
-      for (let i = 1; i < segs; i++) {
-        const x = -w / 2 + (w * i) / segs;
-        g.rect(x, -h, 1, h).fill({ color: 0x000000, alpha: 0.5 });
+    const plateH = h + (hasQi ? qh + 3 : 0) + 6;
+    g.roundRect(left - 3, -h - 3, w + 6, plateH, 4).fill({ color: 0x071012, alpha: 0.9 });
+    g.roundRect(left - 3, -h - 3, w + 6, plateH, 4).stroke({ color: u.side === 'ally' ? 0xd4b060 : 0xc8805c, width: 1.3, alpha: 0.9 });
+    g.rect(left, -h, w, h).fill({ color: 0x15201f });
+    if (trailW > hpW) g.rect(left + hpW, -h, trailW - hpW, h).fill({ color: 0xffe2a6, alpha: 0.85 });
+    if (hpW > 0) {
+      g.rect(left, -h, hpW, h).fill({ color: u.side === 'ally' ? 0x4fd36a : 0xe0412f });
+      g.rect(left, -h, hpW, Math.max(2, h * 0.38)).fill({ color: 0xffffff, alpha: 0.22 });
+    }
+    if (shieldW > 0) {
+      // shield: silver-blue with a bright edge, clearly apart from the cream damage trail
+      g.rect(left + hpW, -h, shieldW, h).fill({ color: 0x9fd2ff });
+      g.rect(left + hpW, -h, shieldW, Math.max(2, h * 0.38)).fill({ color: 0xffffff, alpha: 0.55 });
+      g.rect(left + hpW, -h, 1.5, h).fill({ color: 0xffffff, alpha: 0.9 });
+    }
+    // a tick every 250 HP (a stronger one every 1000), coarser on big pools so ticks stay at least 4 px apart
+    let step = 250;
+    while ((u.maxHp / step) * 4 > w) step *= 2;
+    for (let v = step; v < u.maxHp; v += step) {
+      const x = left + (w * v * squeeze) / u.maxHp;
+      if (x >= left + w) break;
+      const major = v % 1000 === 0;
+      g.rect(x, -h, major ? 1.5 : 1, major ? h : h * 0.55).fill({ color: 0x000000, alpha: major ? 0.6 : 0.42 });
+    }
+    // cultivation rank pips above the plate for disciples (one per realm reached)
+    if (u.side === 'ally' && u.heroUid) {
+      for (let i = 0; i <= Math.min(3, u.rank); i++) {
+        const cx = left + 3 + i * 8;
+        const cy = -h - 8;
+        g.poly([cx, cy - 3.5, cx + 3.5, cy, cx, cy + 3.5, cx - 3.5, cy]).fill({ color: 0xf3cf78 }).stroke({ color: 0x2a1c05, width: 1 });
       }
     }
+
     const q = this.qiBar;
     q.clear();
-    if (u.maxQi > 0) {
-      const qh = 4;
-      q.roundRect(-w / 2 - 1, 2, w + 2, qh + 2, 1).fill({ color: 0x000000, alpha: 0.7 });
+    if (hasQi) {
       const qf = Math.min(1, u.qi / u.maxQi);
-      q.rect(-w / 2, 3, w * qf, qh).fill({ color: qf >= 1 ? 0x9fe0ff : 0x5ab8ff });
-    }
-    this.statusRow.removeChildren();
-    const chips: { color: number; text: string }[] = [];
-    if (u.burns.length) chips.push({ color: STATUS_COLORS.burn, text: `${Math.round(u.burns.reduce((a, b) => a + b.dps, 0))}` });
-    if (u.poison > 0) chips.push({ color: STATUS_COLORS.poison, text: `${Math.ceil(u.poison)}` });
-    if (u.frost > 0) chips.push({ color: STATUS_COLORS.frost, text: `${Math.round(u.frost)}` });
-    if (u.bleeds.length) chips.push({ color: STATUS_COLORS.bleed, text: '' });
-    if (u.tauntTargetId !== null) chips.push({ color: STATUS_COLORS.taunt, text: '!' });
-    let x = -((chips.length - 1) * 24) / 2;
-    for (const ch of chips) {
-      const c = new Graphics();
-      c.roundRect(-11, -9, 22, 18, 4).fill({ color: 0x000000, alpha: 0.7 });
-      c.roundRect(-11, -9, 22, 18, 4).stroke({ color: ch.color, width: 1.5 });
-      c.x = x;
-      this.statusRow.addChild(c);
-      if (ch.text) {
-        const t = new Text({ text: ch.text, style: new TextStyle({ fontFamily: 'Noto Sans', fontWeight: '800', fontSize: 11, fill: ch.color }) });
-        t.anchor.set(0.5);
-        t.x = x;
-        this.statusRow.addChild(t);
+      q.rect(left, 1, w, qh).fill({ color: 0x0c1a24 });
+      if (qf >= 1) q.roundRect(left - 2, -1, w + 4, qh + 4, 3).fill({ color: 0x8fdcff, alpha: 0.35 + 0.3 * Math.sin(time * 9) });
+      if (qf > 0) {
+        q.rect(left, 1, w * qf, qh).fill({ color: qf >= 1 ? 0xc4efff : 0x4aa8f0 });
+        q.rect(left, 1, w * qf, Math.max(1, qh * 0.4)).fill({ color: 0xffffff, alpha: 0.25 });
       }
-      x += 24;
+    }
+    this.refreshStatus();
+  }
+
+  /** Status medallions with stack counts; rebuilt only when a status or its stacks change. */
+  private refreshStatus(): void {
+    const u = this.unit;
+    const list: { kind: string; count: string }[] = [];
+    if (u.burns.length) list.push({ kind: 'burn', count: `${Math.round(u.burns.reduce((a, b) => a + b.dps, 0))}` });
+    if (u.poison > 0) list.push({ kind: 'poison', count: `${Math.ceil(u.poison)}` });
+    if (u.frost > 0) list.push({ kind: 'frost', count: `${Math.round(u.frost)}` });
+    if (u.bleeds.length) list.push({ kind: 'bleed', count: u.bleeds.length > 1 ? `${u.bleeds.length}` : '' });
+    if (u.isStunned) list.push({ kind: 'stun', count: '' });
+    if (u.tauntTargetId !== null) list.push({ kind: 'taunt', count: '' });
+    for (const s of list) statusTexture(s.kind);
+    const sig = `${statusEpoch}|${list.map((s) => `${s.kind}${s.count}`).join(',')}`;
+    if (sig === this.statusSig) return;
+    this.statusSig = sig;
+    for (const c of this.statusRow.removeChildren()) c.destroy({ children: true });
+    let x = -((list.length - 1) * 26) / 2;
+    for (const s of list) {
+      const color = STATUS_COLORS[s.kind] ?? 0xffffff;
+      const badge = new Container();
+      badge.x = x;
+      const tex = statusTex.get(s.kind);
+      const ring = new Graphics();
+      if (!tex?.painted) ring.circle(0, 0, 11).fill({ color: 0x071012, alpha: 0.9 }).stroke({ color, width: 1.6 });
+      badge.addChild(ring);
+      if (tex) {
+        const icon = new Sprite(tex.tex);
+        icon.anchor.set(0.5);
+        const size = tex.painted ? 26 : 15;
+        icon.scale.set(size / Math.max(tex.tex.width, tex.tex.height));
+        if (!tex.painted) icon.tint = color;
+        badge.addChild(icon);
+      }
+      if (s.count) {
+        const t = new Text({ text: s.count, style: new TextStyle({ fontFamily: 'Noto Sans', fontWeight: '800', fontSize: 12, fill: '#ffffff', stroke: { color: '#050a0b', width: 3.5, join: 'round' } }) });
+        t.anchor.set(0.5);
+        t.position.set(8, 7);
+        badge.addChild(t);
+      }
+      this.statusRow.addChild(badge);
+      x += 26;
     }
   }
 

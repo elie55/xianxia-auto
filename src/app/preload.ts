@@ -29,6 +29,7 @@ const ART = [
   'art/ui/button_gold_9.png',
   'art/ui/button_red_9.png',
   'art/ui/fallen_skull.webp',
+  ...['burn', 'poison', 'frost', 'bleed', 'taunt', 'stun'].map((k) => `art/ui/status/${k}.webp`),
 ];
 
 function image(url: string): Promise<void> {
