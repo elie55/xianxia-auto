@@ -1,4 +1,5 @@
 import type { JSX } from 'preact';
+import { PAINTED_ICONS } from './paintedIcons';
 
 export interface IconProps extends Omit<JSX.HTMLAttributes<HTMLSpanElement>, 'size'> {
   name: string;
@@ -6,9 +7,21 @@ export interface IconProps extends Omit<JSX.HTMLAttributes<HTMLSpanElement>, 'si
   color?: string;
 }
 
-/** Mask-tinted SVG icon from /assets/icons/<name>.svg (game-icons.net, CC BY 3.0). */
+/**
+ * Icon: a painted PNG from /assets/icons/painted/<name>.png when one exists (generated art),
+ * otherwise a mask-tinted SVG from /assets/icons/<name>.svg (game-icons.net, CC BY 3.0).
+ */
 export function Icon({ name, size, color, style, class: cls, ...rest }: IconProps) {
   const s = typeof size === 'number' ? `${size}px` : size;
+  if (PAINTED_ICONS.has(name)) {
+    return (
+      <span
+        class={`icon painted ${cls ?? ''}`}
+        style={{ backgroundImage: `url(./assets/icons/painted/${name}.png)`, width: s, height: s, ...(typeof style === 'object' && style ? (style as Record<string, string>) : {}) }}
+        {...rest}
+      />
+    );
+  }
   return (
     <span
       class={`icon ${cls ?? ''}`}

@@ -6,6 +6,8 @@
    ───────────────────────────────────────────────────────────── */
 
 :root {
+  /* painted frame (ChatGPT-generated, transparent interior) sliced as a 9-slice border image */
+  --frame-art: url('/assets/art/ui/frame_ornate.png');
   /* ornate frame: gold double hairline with knotted corners (SVG, sliced as a border-image) */
   --frame-svg: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23f3cf78'/><stop offset='0.5' stop-color='%23c9992f'/><stop offset='1' stop-color='%23f3cf78'/></linearGradient></defs><g fill='none' stroke='url(%23g)' stroke-linecap='round' stroke-linejoin='round'><rect x='4.5' y='4.5' width='111' height='111' stroke-width='1.4' opacity='0.95'/><rect x='9.5' y='9.5' width='101' height='101' stroke-width='0.7' opacity='0.45'/><path d='M4.5 30 L4.5 4.5 L30 4.5' stroke-width='2.6'/><path d='M90 4.5 L115.5 4.5 L115.5 30' stroke-width='2.6'/><path d='M115.5 90 L115.5 115.5 L90 115.5' stroke-width='2.6'/><path d='M30 115.5 L4.5 115.5 L4.5 90' stroke-width='2.6'/><path d='M14 14 l10 0 M14 14 l0 10' stroke-width='1.6' opacity='0.9'/><path d='M106 14 l-10 0 M106 14 l0 10' stroke-width='1.6' opacity='0.9'/><path d='M106 106 l-10 0 M106 106 l0 -10' stroke-width='1.6' opacity='0.9'/><path d='M14 106 l10 0 M14 106 l0 -10' stroke-width='1.6' opacity='0.9'/><path d='M30 4.5 q4 6 10 0 M90 4.5 q-4 6 -10 0 M30 115.5 q4 -6 10 0 M90 115.5 q-4 -6 -10 0 M4.5 30 q6 4 0 10 M4.5 90 q6 -4 0 -10 M115.5 30 q-6 4 0 10 M115.5 90 q-6 -4 0 -10' stroke-width='1.2' opacity='0.8'/></g><g fill='%23f3cf78'><path d='M4.5 4.5 m0 -4 l4 4 l-4 4 l-4 -4z'/><path d='M115.5 4.5 m0 -4 l4 4 l-4 4 l-4 -4z'/><path d='M115.5 115.5 m0 -4 l4 4 l-4 4 l-4 -4z'/><path d='M4.5 115.5 m0 -4 l4 4 l-4 4 l-4 -4z'/></g></svg>");
 }
@@ -19,15 +21,15 @@
   /* replaces the two-corner accent with a full ornamental frame */
   content: '';
   position: absolute;
-  inset: -5px;
+  inset: -14px;
   width: auto;
   height: auto;
-  border: 18px solid transparent;
-  border-image: var(--frame-svg) 30 / 18px stretch;
+  border: 40px solid transparent;
+  border-image: var(--frame-art) 232 / 40px round;
   border-radius: 0;
-  opacity: 0.95;
+  opacity: 1;
   pointer-events: none;
-  filter: drop-shadow(0 0 6px rgba(243, 207, 120, 0.18));
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5));
 }
 .panel:not(.plain)::after {
   content: '';
@@ -67,11 +69,12 @@
 .rightrail::before {
   content: '';
   position: absolute;
-  inset: -4px;
-  border: 14px solid transparent;
-  border-image: var(--frame-svg) 30 / 14px stretch;
-  opacity: 0.75;
+  inset: -10px;
+  border: 26px solid transparent;
+  border-image: var(--frame-art) 232 / 26px round;
+  opacity: 1;
   pointer-events: none;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
 }
 .rightrail.panel.plain::before {
   display: block;
@@ -310,10 +313,10 @@
 .tooltip::before {
   content: '';
   position: absolute;
-  inset: -4px;
-  border: 14px solid transparent;
-  border-image: var(--frame-svg) 30 / 14px stretch;
-  opacity: 0.8;
+  inset: -9px;
+  border: 24px solid transparent;
+  border-image: var(--frame-art) 232 / 24px round;
+  opacity: 1;
   pointer-events: none;
 }
 .tooltip h4 {
@@ -794,13 +797,13 @@
   content: '';
   position: absolute;
   left: 50%;
-  bottom: 4px;
-  width: 1268px;
-  height: 190px;
+  bottom: -2px;
+  width: 1284px;
+  height: 202px;
   transform: translateX(-50%);
-  border: 16px solid transparent;
-  border-image: var(--frame-svg) 30 / 16px stretch;
-  opacity: 0.7;
+  border: 30px solid transparent;
+  border-image: var(--frame-art) 232 / 30px round;
+  opacity: 1;
   pointer-events: none;
 }
 .bottombar > * {
@@ -876,4 +879,154 @@
 }
 .champion-panel {
   top: 190px;
+}
+
+/* framed cards need breathing room so their painted frames never touch */
+.result-columns {
+  gap: 48px;
+}
+.reward-row {
+  gap: 48px;
+}
+.upgrade-row {
+  gap: 44px;
+}
+.codex-grid {
+  gap: 34px 36px;
+  padding: 12px 10px;
+}
+.codex-cards {
+  gap: 40px 30px;
+}
+.mvp-row {
+  gap: 80px;
+}
+.shop-panel {
+  left: 262px;
+  right: 262px;
+}
+.event-panel {
+  left: 310px;
+  right: 310px;
+}
+
+/* ───────── painted buttons (9-slice plaques generated for the game) ───────── */
+.btn.primary,
+.btn.gold,
+.btn.danger {
+  background: none;
+  border: 0;
+  border-style: solid;
+  border-width: 9px 48px;
+  border-image: url('/assets/art/ui/button_jade_9.png') 60 300 fill / 9px 48px stretch;
+  border-radius: 0;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+  padding: 0 14px;
+  min-height: 56px;
+  color: #f8fff9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7), 0 0 12px rgba(0, 0, 0, 0.5);
+}
+.btn.gold {
+  border-image-source: url('/assets/art/ui/button_gold_9.png');
+  color: #fff6dc;
+}
+.btn.danger {
+  border-image-source: url('/assets/art/ui/button_red_9.png');
+}
+.btn.primary::before,
+.btn.gold::before {
+  display: none;
+}
+.btn.primary::after,
+.btn.gold::after,
+.btn.danger::after {
+  inset: 6px 30px;
+}
+.btn.primary:hover:not(:disabled),
+.btn.gold:hover:not(:disabled),
+.btn.danger:hover:not(:disabled) {
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.55), 0 0 26px rgba(111, 227, 196, 0.35);
+  filter: brightness(1.15) saturate(1.05);
+}
+.btn.gold:hover:not(:disabled) {
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.55), 0 0 26px rgba(243, 207, 120, 0.4);
+}
+.btn.primary.big,
+.btn.gold.big,
+.btn.danger.big {
+  border-width: 11px 60px;
+  border-image-width: 11px 60px;
+  min-height: 68px;
+  padding: 0 10px;
+}
+.btn.primary.small,
+.btn.gold.small,
+.btn.danger.small {
+  border-width: 7px 36px;
+  border-image-width: 7px 36px;
+  min-height: 40px;
+  padding: 0 4px;
+}
+/* the hero buttons keep the full plaque with its centre diamonds */
+.fight-btn,
+.newrun-footer .btn.gold,
+.draft-footer .btn.primary,
+.runend-footer .btn.primary,
+.cleared-body .btn {
+  border-image-source: url('/assets/art/ui/button_jade.png');
+  border-image-slice: 60 300 fill;
+}
+.newrun-footer .btn.gold {
+  border-image-source: url('/assets/art/ui/button_gold.png');
+}
+
+/* ───────── painted screen backgrounds replace the flat teal gradients ───────── */
+.newrun-bg,
+.draft-bg,
+.rankup-bg,
+.runend-bg {
+  background-color: #070e0f;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+.newrun-bg {
+  background-image: linear-gradient(180deg, rgba(7, 14, 15, 0.55) 0%, rgba(7, 14, 15, 0.35) 40%, rgba(7, 14, 15, 0.82) 100%), url('/assets/art/bg/ui_hall.jpg');
+}
+.newrun-bg::after {
+  background: radial-gradient(1200px 700px at 50% 60%, transparent 40%, rgba(7, 14, 15, 0.55) 100%);
+}
+.draft-bg {
+  background-image: linear-gradient(180deg, rgba(7, 14, 15, 0.45) 0%, rgba(7, 14, 15, 0.25) 35%, rgba(7, 14, 15, 0.85) 100%), url('/assets/art/bg/ui_draft.jpg');
+}
+.rankup-bg {
+  background-image: linear-gradient(180deg, rgba(7, 14, 15, 0.5) 0%, rgba(7, 14, 15, 0.3) 45%, rgba(7, 14, 15, 0.85) 100%), url('/assets/art/bg/ui_breakthrough.jpg');
+}
+.runend-screen.won .runend-bg {
+  background-image: linear-gradient(180deg, rgba(7, 14, 15, 0.45) 0%, rgba(7, 14, 15, 0.3) 40%, rgba(7, 14, 15, 0.9) 100%), url('/assets/art/bg/ui_victory.jpg');
+}
+.runend-screen.lost .runend-bg {
+  background-image: linear-gradient(180deg, rgba(7, 14, 15, 0.5) 0%, rgba(7, 14, 15, 0.35) 40%, rgba(7, 14, 15, 0.9) 100%), url('/assets/art/bg/ui_defeat.jpg');
+}
+.cleared-bg {
+  background-image: var(--realm-art, url('/assets/art/bg/ui_victory.jpg'));
+}
+/* the pause / settings panels sit on the painting: keep them crisp */
+.settings-panel,
+.newrun-mods,
+.newrun-board,
+.codex-class,
+.codex-enemy {
+  background: linear-gradient(180deg, rgba(14, 28, 30, 0.9) 0%, rgba(7, 14, 15, 0.94) 100%);
+}
+
+/* painted icons: full-colour PNGs instead of tinted masks */
+.icon.painted {
+  background-color: transparent;
+  -webkit-mask: none;
+  mask: none;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
 }
