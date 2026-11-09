@@ -43,6 +43,43 @@ const STAT_SHORT: Record<string, string> = {
   moveSpeed: 'MOVE',
 };
 
+/** Flipbook sheets (4×4 frames on black, played additively) under public/assets/art/fx. */
+const FLIPBOOK_SHEETS = ['fx_qi_cast', 'fx_fire_burst', 'fx_frost_burst', 'fx_lightning_strike', 'fx_heal_bloom', 'fx_shadow_burst', 'fx_slash_arc'];
+
+/** Which flipbook plays for an ability VFX key, on top of the procedural effect. */
+const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: number; ground?: boolean; fps?: number; directional?: boolean }> = {
+  lotus_fire: { sheet: 'fx_fire_burst', scale: 1.3 },
+  lotus_bloom: { sheet: 'fx_fire_burst', scale: 1.2 },
+  phoenix_strike: { sheet: 'fx_fire_burst', scale: 1.5 },
+  fire_slash: { sheet: 'fx_slash_arc', tint: 0xff9a4a, scale: 1.1, directional: true },
+  frost_burst: { sheet: 'fx_frost_burst', scale: 1.2 },
+  frost_array: { sheet: 'fx_frost_burst', scale: 1.6, ground: true },
+  water_burst: { sheet: 'fx_frost_burst', tint: 0x7fc8ff, scale: 1.2 },
+  tidal_breath: { sheet: 'fx_frost_burst', tint: 0x6fd0ff, scale: 1.4 },
+  lightning: { sheet: 'fx_lightning_strike', scale: 1.2, ground: true, fps: 30 },
+  lightning_arc: { sheet: 'fx_lightning_strike', scale: 1.1, ground: true, fps: 30 },
+  thunder_call: { sheet: 'fx_lightning_strike', scale: 1.5, ground: true, fps: 30 },
+  sun_arrow: { sheet: 'fx_lightning_strike', tint: 0xffd27f, scale: 1.1, ground: true, fps: 30 },
+  heal_bloom: { sheet: 'fx_heal_bloom', scale: 1.2, ground: true },
+  sutra: { sheet: 'fx_heal_bloom', tint: 0xf3cf78, scale: 1.3, ground: true },
+  moon_pulse: { sheet: 'fx_heal_bloom', tint: 0xbfe4ff, scale: 1.3, ground: true },
+  shadow_slash: { sheet: 'fx_slash_arc', tint: 0xb57cff, scale: 1.1, directional: true },
+  shadow_blink: { sheet: 'fx_shadow_burst', scale: 1.1 },
+  blood_nova: { sheet: 'fx_shadow_burst', tint: 0xff3b4d, scale: 1.8, ground: true },
+  blood_burst: { sheet: 'fx_shadow_burst', tint: 0xff3b4d, scale: 1.1 },
+  poison_puff: { sheet: 'fx_shadow_burst', tint: 0x9fe85a, scale: 1.0 },
+  cinnabar_smoke: { sheet: 'fx_shadow_burst', tint: 0xff6b5a, scale: 1.1 },
+  sword_slash: { sheet: 'fx_slash_arc', scale: 1.1, directional: true },
+  claw: { sheet: 'fx_slash_arc', tint: 0xffd27f, scale: 0.9, directional: true },
+  tail_sweep: { sheet: 'fx_slash_arc', tint: 0x9fe0ff, scale: 1.3, directional: true },
+  spear_sweep: { sheet: 'fx_slash_arc', tint: 0x5ad6a5, scale: 1.2, directional: true },
+  flying_sword: { sheet: 'fx_slash_arc', tint: 0xe8f1ff, scale: 1.2, directional: true },
+  sword_shard: { sheet: 'fx_slash_arc', tint: 0xe8f1ff, scale: 0.8, directional: true },
+  tiger_roar: { sheet: 'fx_shadow_burst', tint: 0xffd27f, scale: 1.7, ground: true },
+  impact: { sheet: 'fx_shadow_burst', tint: 0xffe2b0, scale: 0.9 },
+  fist_flurry: { sheet: 'fx_shadow_burst', tint: 0xffd27f, scale: 0.8 },
+};
+
 export class BattleView {
   readonly app = new Application();
   private ready = false;
@@ -117,6 +154,7 @@ export class BattleView {
     await document.fonts.load('800 32px "Noto Sans"').catch(() => undefined);
     await document.fonts.load('700 20px Cinzel').catch(() => undefined);
     await document.fonts.load('400 26px "Ma Shan Zheng"').catch(() => undefined);
+    void this.fx.loadFlipbooks(FLIPBOOK_SHEETS);
   }
 
   private applyViewport(v: Viewport): void {
@@ -142,6 +180,32 @@ export class BattleView {
     this.boardOrigin.x = DESIGN_W / 2 - w / 2;
     this.boardOrigin.y = cy - h / 2;
     for (const layer of [this.arenaLayer, this.unitLayer, this.fx, this.texts]) layer.position.set(this.boardOrigin.x, this.boardOrigin.y);
+  }
+
+  /** Skill banner: the ability name sweeps in above the caster in the class colour, then drifts up and fades. */
+  private castBanner(x: number, y: number, name: string, color: number): void {
+    const label = new Text({
+      text: name.toUpperCase(),
+      style: new TextStyle({
+        fontFamily: 'Cinzel, serif',
+        fontWeight: '800',
+        fontSize: 30,
+        letterSpacing: 5,
+        fill: color,
+        stroke: { color: 0x05090a, width: 7, join: 'round' },
+        dropShadow: { color: 0x000000, alpha: 0.9, blur: 8, distance: 3, angle: Math.PI / 2 },
+      }),
+    });
+    label.anchor.set(0.5);
+    label.position.set(x, y);
+    label.alpha = 0;
+    label.scale.set(1.7);
+    this.texts.addChild(label);
+    const tl = gsap.timeline({ onComplete: () => label.destroy() });
+    tl.to(label, { alpha: 1, duration: 0.14, ease: 'power2.out' }, 0)
+      .to(label.scale, { x: 1, y: 1, duration: 0.22, ease: 'back.out(2.5)' }, 0)
+      .to(label, { y: y - 34, duration: 1.1, ease: 'power1.out' }, 0.25)
+      .to(label, { alpha: 0, duration: 0.4, ease: 'power1.in' }, 0.95);
   }
 
   // ───────────────────────── arena ─────────────────────────
@@ -431,6 +495,7 @@ export class BattleView {
     this.hitStopMs = 0;
     this.drawHexes(false);
     gsap.globalTimeline.timeScale(speed);
+    this.fx.timeScale = speed;
     for (const u of battle.units) this.addView(u, false);
     for (const v of this.views.values()) v.spawnAnim(Math.random() * 0.2);
   }
@@ -438,6 +503,7 @@ export class BattleView {
   setSpeed(s: number): void {
     this.speed = s;
     gsap.globalTimeline.timeScale(this.mode === 'battle' ? s : 1);
+    this.fx.timeScale = this.mode === 'battle' ? s : 1;
   }
 
   setPaused(p: boolean): void {
@@ -448,6 +514,7 @@ export class BattleView {
     this.battle = null;
     this.mode = 'idle';
     gsap.globalTimeline.timeScale(1);
+    this.fx.timeScale = 1;
     this.overlay.alpha = 0;
     this.flashOverlay.alpha = 0;
     if (this.tribulationLabel) {
@@ -612,9 +679,15 @@ export class BattleView {
         if (!v) break;
         v.castAnim();
         const accent = v.unit.accent ? parseColor(v.unit.accent) : v.unit.side === 'ally' ? 0x6fe3c4 : 0xff6b5a;
-        this.fx.ring(v.x, v.y, v.unit.side === 'ally' ? 0x6fe3c4 : 0xff6b5a, 80, 3, 0.6, HEX_SQUASH);
-        this.fx.flash(v.x, v.y + v.chestY, accent, 160, 0.4);
-        if (v.unit.classes.includes('array') || v.unit.classes.includes('talisman') || v.unit.classes.includes('alchemist')) this.fx.glyph(v.x, v.y, accent, 62, 0.8);
+        // skill unleash: a beat of freeze-frame, a tinted screen flash, a rising qi pillar and a glyph under the caster
+        this.hitStop(v.unit.boss ? 110 : 80);
+        this.screenFlash(accent, v.unit.boss ? 0.22 : 0.14, 0.32);
+        v.tintFlash(0xffffff, 0.25);
+        this.fx.ring(v.x, v.y, accent, 96, 4, 0.7, HEX_SQUASH);
+        this.fx.glyph(v.x, v.y, accent, 78, 0.9);
+        if (!this.fx.flipbook('fx_qi_cast', v.x, v.y + 12, { scale: Math.max(0.9, v.bodyHeight / 190), anchorY: 0.92, tint: accent, fps: 26 })) this.fx.pillar(v.x, v.y, accent, 200, 0.5);
+        this.fx.flash(v.x, v.y + v.chestY, accent, 180, 0.4);
+        this.castBanner(v.x, v.y + v.headY - 36, e.name, accent);
         if (v.unit.boss) {
           this.shake(8);
           this.hitStop(70);
@@ -623,7 +696,6 @@ export class BattleView {
           audio.sfx('boss_roar', { volume: 0.6 });
         }
         audio.sfx('cast', { volume: 0.5 });
-        this.texts.spawn(v.x, v.y + v.headY - 20, e.name.toUpperCase(), 'label', { size: 15 });
         break;
       }
       case 'damage': {
@@ -834,8 +906,15 @@ export class BattleView {
         audio.sfx('stones', { volume: 0.5 });
         break;
       }
-      case 'qi':
+      case 'qi': {
+        const v = this.viewOf(e.id);
+        if (v && e.maxQi > 0 && e.qi >= e.maxQi) {
+          const accent = v.unit.accent ? parseColor(v.unit.accent) : 0x8fd5ff;
+          v.pulseAura(accent, 0.7, 0.45);
+          this.fx.motes(v.x, v.y, 0x8fd5ff, 5, 110);
+        }
         break;
+      }
       case 'end': {
         audio.sfx(e.winner === 'ally' ? 'victory' : 'defeat', { volume: 0.7 });
         if (e.winner === 'ally') this.screenFlash(0xf3cf78, 0.18, 0.9);
@@ -853,6 +932,11 @@ export class BattleView {
     const chest = at ? at.chestY : -70;
     const facing = src ? (src.unit.facing as 1 | -1) : 1;
     const from = src ? { x: src.x, y: src.y + src.chestY } : { x: p.x - facing * 160, y: p.y + chest };
+    const fb = FLIPBOOK_FOR[key];
+    if (fb) {
+      const size = at ? Math.max(0.8, at.bodyHeight / 180) : 1;
+      this.fx.flipbook(fb.sheet, p.x, fb.ground ? p.y + 6 : p.y + chest, { scale: (fb.scale ?? 1) * size, tint: fb.tint, anchorY: fb.ground ? 0.92 : 0.5, fps: fb.fps ?? 24, flipX: facing < 0 && !!fb.directional });
+    }
     switch (key) {
       case 'lightning':
       case 'lightning_arc':

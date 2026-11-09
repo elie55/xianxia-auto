@@ -4,6 +4,7 @@ import { useState } from 'preact/hooks';
 import type { Rank } from '@/core/types';
 import { RANK_NAMES } from '@/core/types';
 import { HERO_BY_ID } from '@/content/heroes';
+import type { HeroDef, Keyword } from '@/core/types';
 import { CLASSES } from '@/content/classes';
 import { heroAbility, heroClasses, heroDaoPath, heroInsights, heroStats, type HeroState, type TeamContext } from '@/core/builder';
 import { Icon, KEYWORD_ICON, STAT_COLOR, STAT_ICON, STAT_LABEL } from './Icon';
@@ -115,7 +116,7 @@ export function HeroCard(p: HeroCardProps) {
         </div>
         <div class="side-badges right">
           {def.tags.slice(0, 3).map((t) => (
-            <div key={t} class={`tag kw-${t}`} {...tip(<><h4 class={`kw-${t}`}>{t}</h4><p>{KEYWORD_DESC[t]}</p></>)}>
+            <div key={t} class={`tag kw-${t}`} {...tip(<><h4 class={`kw-${t}`}>{t}</h4><p>{KEYWORD_DESC[t]}</p>{tagSource(def, t) && <p class="muted">{tagSource(def, t)}</p>}</>)}>
               <Icon name={KEYWORD_ICON[t] ?? 'ui_info'} size={12} /> {t}
             </div>
           ))}
@@ -153,6 +154,13 @@ export function HeroCard(p: HeroCardProps) {
       {p.footer && <div class="card-footer">{p.footer}</div>}
     </div>
   );
+}
+
+/** Explains a card tag the hero does not have at base rank: which Dao Path brings it. */
+function tagSource(def: HeroDef, t: Keyword): string | null {
+  if (def.ability.keywords?.includes(t)) return null;
+  const path = def.daoPaths.find((p) => p.keywords?.includes(t));
+  return path ? `Unlocked by the ${path.name} Dao Path at Foundation rank.` : null;
 }
 
 export function fmtStat(k: string, v: number): string {

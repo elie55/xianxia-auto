@@ -1,4 +1,4 @@
-import { Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { AnimatedSprite, Assets, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
 import gsap from 'gsap';
 
 /**
@@ -7,6 +7,57 @@ import gsap from 'gsap';
  * Everything is additive-blended and short-lived; particle counts are capped so a busy fight stays smooth.
  */
 export class VfxLayer extends Container {
+  /** Battle speed multiplier applied to flipbook playback (gsap effects use the global timeline instead). */
+  timeScale = 1;
+  private sheets = new Map<string, Texture[]>();
+
+  /** Loads 4×4 flipbook sheets from /assets/art/fx/<name>.jpg (black background, played additively). Missing sheets are skipped. */
+  async loadFlipbooks(names: string[], cols = 4, rows = 4): Promise<void> {
+    await Promise.all(
+      names.map(async (name) => {
+        if (this.sheets.has(name)) return;
+        const tex = await Assets.load<Texture>(`./assets/art/fx/${name}.jpg`).catch(() => null);
+        if (!tex) return;
+        const fw = tex.width / cols;
+        const fh = tex.height / rows;
+        const frames: Texture[] = [];
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) frames.push(new Texture({ source: tex.source, frame: new Rectangle(c * fw, r * fh, fw, fh) }));
+        this.sheets.set(name, frames);
+      }),
+    );
+  }
+
+  hasFlipbook(name: string): boolean {
+    return this.sheets.has(name);
+  }
+
+  /**
+   * Plays a flipbook once at (x, y). `scale` 1 shows a frame at its native size (256 px for a 1024 sheet);
+   * `anchorY` 1 pins the bottom of the frame to y (for strikes and pillars). Returns false when the sheet is missing.
+   */
+  flipbook(name: string, x: number, y: number, opts: { scale?: number; fps?: number; tint?: number; rotation?: number; anchorY?: number; alpha?: number; flipX?: boolean; delay?: number } = {}): boolean {
+    const frames = this.sheets.get(name);
+    if (!frames) return false;
+    const start = () => {
+      const s = new AnimatedSprite(frames);
+      s.blendMode = 'add';
+      s.anchor.set(0.5, opts.anchorY ?? 0.5);
+      s.position.set(x, y);
+      s.scale.set((opts.flipX ? -1 : 1) * (opts.scale ?? 1), opts.scale ?? 1);
+      s.rotation = opts.rotation ?? 0;
+      s.tint = opts.tint ?? 0xffffff;
+      s.alpha = opts.alpha ?? 1;
+      s.loop = false;
+      s.animationSpeed = ((opts.fps ?? 24) / 60) * this.timeScale;
+      s.onComplete = () => s.destroy();
+      this.addChild(s);
+      s.play();
+    };
+    if (opts.delay) gsap.delayedCall(opts.delay, start);
+    else start();
+    return true;
+  }
+
   private softTex: Texture | null = null;
   private shardTex: Texture | null = null;
   /** Rough budget: skip decorative particles when the layer is already crowded. */
