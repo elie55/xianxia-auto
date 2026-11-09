@@ -453,6 +453,8 @@ How to read it:
 
 ## Top 10 to do first
 
+**Status (2026-11-10):** all ten are done in the current build. B1 was a false alarm: the Quit plaque already existed in the desktop build (the audit ran in a browser, where it is hidden); it now goes through the Electron bridge. D1 is improved in the view (overlapping fighters ease apart, shorter lunge); spreading rows further apart would need deeper painted floors.
+
 1. **C1:** make the placement hexes clearly visible during deployment (S).
 2. **G3:** stop "Reverse Time" from wrapping onto two lines (S).
 3. **A6:** move the keyword chips off the portraits into a trait strip (S).
