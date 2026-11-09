@@ -113,7 +113,7 @@ export function EventScreen() {
                     {s.pendingPick.kind === 'item' &&
                       s.pendingPick.items?.map((it) => (
                         <button key={it.id} class={`pick-card rar-${it.rarity}`} onClick={() => act((st) => (pickFromPending(st, it.id), audio.sfx('ui_buy')))} {...tip(<ItemTip itemId={it.id} />)}>
-                          <ItemChip itemId={it.id} size={48} />
+                          <ItemChip itemId={it.id} size={112} />
                           <span class="pick-name">{it.name}</span>
                           <span class="pick-rar">{it.rarity}</span>
                         </button>
@@ -122,7 +122,7 @@ export function EventScreen() {
                       s.pendingPick.relics?.map((r) => (
                         <button key={r.id} class={`pick-card rar-${r.rarity}`} onClick={() => act((st) => (pickFromPending(st, r.id), audio.sfx('ui_buy')))} {...tip(<RelicTip relicId={r.id} />)}>
                           <div class={`relic-chip rar-${r.rarity}`}>
-                            <Icon name={`relic_${RELIC_BY_ID[r.id].icon}`} size={22} />
+                            <Icon name={`relic_${RELIC_BY_ID[r.id].icon}`} size={78} />
                           </div>
                           <span class="pick-name">{r.name}</span>
                           <span class="pick-desc">

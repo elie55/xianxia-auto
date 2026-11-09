@@ -368,7 +368,8 @@ export function autoPlace(s: RunState, uid: string): void {
   const range = HERO_BY_ID[h.defId].baseStats.range ?? 1;
   const taken = new Set(Object.entries(s.positions).filter(([u]) => s.party.includes(u) && u !== uid).map(([, p]) => hexKey(p)));
   const centerRow = Math.floor(BOARD_ROWS / 2);
-  const rows = [centerRow, centerRow - 1, centerRow + 1, centerRow - 2, centerRow + 2].filter((r) => r >= 0 && r < BOARD_ROWS);
+  // centre row first, then the far rows: a loose formation reads better than a tight stack of tall sprites
+  const rows = [...new Set([centerRow, 0, BOARD_ROWS - 1, centerRow - 1, centerRow + 1])].filter((r) => r >= 0 && r < BOARD_ROWS);
   const preferredCols = range >= 3 ? [0, 1, 2, 3] : range === 2 ? [2, 1, 3, 0] : [3, 2, 1, 0];
   for (const col of preferredCols) {
     for (const row of rows) {

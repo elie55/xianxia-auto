@@ -1,7 +1,7 @@
 import type { EnemyDef, Hex, NodeKind } from '@/core/types';
 import type { Rng } from '@/core/rng';
 import { ENEMIES, ENEMY_BY_ID } from '@/content/enemies';
-import { BOARD_ROWS, ENEMY_MIN_COL, BOARD_COLS, offsetToAxial, axialToOffset } from '@/battle/sim/hex';
+import { BOARD_ROWS, ENEMY_MIN_COL, BOARD_COLS, offsetToAxial, axialToOffset, hexToPixel } from '@/battle/sim/hex';
 
 export interface EncounterUnit {
   defId: string;
@@ -35,45 +35,46 @@ function poolFor(realm: number): EnemyDef[] {
   return ENEMIES.filter((e) => !e.boss && !e.elite && (e.realm === realm || e.realm === 'any' || (realm >= 3 && e.realm !== 1)));
 }
 
-/** Places enemies in the enemy zone: melee toward the front (left side of their zone), ranged behind. */
+/**
+ * Places enemies in the enemy zone: melee toward the front (left side of their zone), ranged behind, bosses in the middle.
+ * Within its allowed columns each unit takes the hex farthest from the units already placed (vertical gaps count
+ * extra because the sprites are tall), so a wave spreads into a loose formation instead of a cramped clump.
+ * The whole formation is then centred inside the zone.
+ */
 export function placeEnemies(defIds: string[], rng: Rng): EncounterUnit[] {
   const out: EncounterUnit[] = [];
   const used = new Set<string>();
   const centerRow = Math.floor(BOARD_ROWS / 2);
-  const rowOrder = [centerRow, centerRow - 1, centerRow + 1, centerRow - 2, centerRow + 2].filter((r) => r >= 0 && r < BOARD_ROWS);
+  const rowOrder = [...new Set([centerRow, 0, BOARD_ROWS - 1, centerRow - 1, centerRow + 1])].filter((r) => r >= 0 && r < BOARD_ROWS);
   const frontCols = [ENEMY_MIN_COL, ENEMY_MIN_COL + 1];
   const backCols = [ENEMY_MIN_COL + 2, Math.min(BOARD_COLS - 1, ENEMY_MIN_COL + 3)];
+  const allCols = Array.from({ length: BOARD_COLS - ENEMY_MIN_COL }, (_, i) => ENEMY_MIN_COL + i);
+  const placed: { x: number; y: number }[] = [];
   const sorted = defIds
     .map((id) => ENEMY_BY_ID[id])
     .sort((a, b) => (b.boss ? 1 : 0) - (a.boss ? 1 : 0) || (a.baseStats.range ?? 1) - (b.baseStats.range ?? 1));
+  const pick = (cols: number[]): { col: number; row: number } | null => {
+    let best: { col: number; row: number; score: number } | null = null;
+    cols.forEach((col, ci) => {
+      rowOrder.forEach((row, ri) => {
+        if (used.has(`${col},${row}`)) return;
+        const p = hexToPixel(offsetToAxial(col, row));
+        const gap = placed.length ? Math.min(...placed.map((q) => Math.hypot(p.x - q.x, (p.y - q.y) * 1.3))) : 0;
+        const score = gap - ri * 10 - ci * 6;
+        if (!best || score > best.score) best = { col, row, score };
+      });
+    });
+    return best;
+  };
   for (const def of sorted) {
     const ranged = (def.baseStats.range ?? 1) >= 3;
     const cols = def.boss ? [ENEMY_MIN_COL + 1, ENEMY_MIN_COL + 2] : ranged ? backCols : frontCols;
-    let placed = false;
-    for (const row of rowOrder) {
-      for (const col of cols) {
-        const key = `${col},${row}`;
-        if (used.has(key)) continue;
-        used.add(key);
-        out.push({ defId: def.id, pos: offsetToAxial(col, row) });
-        placed = true;
-        break;
-      }
-      if (placed) break;
-    }
-    if (!placed) {
-      // any free hex in zone
-      for (let col = ENEMY_MIN_COL; col < BOARD_COLS && !placed; col++) {
-        for (let row = 0; row < BOARD_ROWS; row++) {
-          const key = `${col},${row}`;
-          if (used.has(key)) continue;
-          used.add(key);
-          out.push({ defId: def.id, pos: offsetToAxial(col, row) });
-          placed = true;
-          break;
-        }
-      }
-    }
+    const spot = pick(cols) ?? pick(allCols);
+    if (!spot) continue;
+    used.add(`${spot.col},${spot.row}`);
+    const pos = offsetToAxial(spot.col, spot.row);
+    placed.push(hexToPixel(pos));
+    out.push({ defId: def.id, pos });
   }
   // Centre the formation inside the enemy zone: a small wave otherwise huddles at the zone's front edge
   // and the arena looks lopsided next to a full ally formation.
