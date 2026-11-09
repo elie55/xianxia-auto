@@ -138,6 +138,8 @@ export interface RunState {
   reserveSize: number;
   stats: RunStats;
   pendingRankUps: string[];
+  /** Where to continue once all pending rank-up choices are made. */
+  rankUpResume: 'event' | 'shop' | 'advance' | 'afterResult' | 'finishEvent' | 'board';
   rankUpChoices: { uid: string; options: UpgradeDef[] } | null;
   pendingReward: RelicDef[] | null;
   pendingPick: PendingPick | null;
@@ -157,6 +159,7 @@ export interface RunState {
   endlessScore: number;
   log: string[];
   heroTotals: Record<string, HeroTotals>;
+  resultWasSingle?: boolean;
 }
 
 const CHALLENGES: ChallengeOffer[] = [
@@ -267,6 +270,7 @@ export function newRun(tier: number, seed: number): RunState {
     reserveSize: 1,
     stats: { fights: 0, wins: 0, damage: 0, stonesEarned: 0, startedAt: Date.now(), rewinds: 0, bestHit: 0, elapsedMs: 0 },
     pendingRankUps: [],
+    rankUpResume: 'board',
     rankUpChoices: null,
     pendingReward: null,
     pendingPick: null,
@@ -324,8 +328,11 @@ export function draftPick(s: RunState, heroDefId: string, blessingId: string): v
   if (h.rank >= 1) queueRankUp(s, h.uid);
   // Starter kit event
   s.currentEvent = { eventId: 'starter_kit', outcome: null, chosen: null };
-  s.phase = s.pendingRankUps.length ? 'rankUp' : 'event';
-  if (s.phase === 'rankUp') prepareRankUp(s);
+  if (s.pendingRankUps.length) {
+    s.rankUpResume = 'event';
+    prepareRankUp(s);
+    s.phase = 'rankUp';
+  } else s.phase = 'event';
   log(s, `${HERO_BY_ID[heroDefId].name} joins the sect.`);
 }
 
@@ -539,6 +546,12 @@ export function rankUpHero(s: RunState, uid: string): boolean {
   return true;
 }
 
+export function beginRankUps(s: RunState, resume: RunState['rankUpResume']): void {
+  s.rankUpResume = resume;
+  prepareRankUp(s);
+  s.phase = 'rankUp';
+}
+
 export function prepareRankUp(s: RunState): void {
   const uid = s.pendingRankUps[0];
   if (!uid) {
@@ -581,7 +594,35 @@ export function chooseUpgrade(s: RunState, upgradeId: string): void {
   if (s.pendingRankUps.length) prepareRankUp(s);
   else {
     s.rankUpChoices = null;
-    s.phase = s.currentEvent ? 'event' : s.shop ? 'shop' : 'board';
+    resumeAfterRankUp(s);
+  }
+}
+
+function resumeAfterRankUp(s: RunState): void {
+  const r = s.rankUpResume;
+  s.rankUpResume = 'board';
+  switch (r) {
+    case 'event':
+      s.phase = s.currentEvent ? 'event' : 'board';
+      if (s.phase === 'board' && !s.currentEncounter) advanceNode(s);
+      return;
+    case 'shop':
+      s.phase = s.shop ? 'shop' : 'board';
+      return;
+    case 'advance':
+      advanceNode(s);
+      return;
+    case 'afterResult':
+      afterResultContinue(s);
+      return;
+    case 'finishEvent':
+      finishEvent(s);
+      return;
+    default:
+      if (s.currentEvent) s.phase = 'event';
+      else if (s.shop) s.phase = 'shop';
+      else if (s.currentEncounter) s.phase = 'board';
+      else advanceNode(s);
   }
 }
 
@@ -617,12 +658,15 @@ export function rollShop(s: RunState, keepFrozen = false): void {
   const prev = keepFrozen && s.shop ? s.shop : null;
 
   const heroes: (ShopHero | null)[] = [];
+  const offered = new Set<string>((prev?.heroes ?? []).filter(Boolean).map((h) => h!.defId));
   for (let i = 0; i < 3; i++) {
     if (prev?.heroes[i]) {
       heroes.push(prev.heroes[i]);
       continue;
     }
-    const def = rng.pick(HEROES);
+    let def = rng.pick(HEROES);
+    for (let tries = 0; offered.has(def.id) && tries < 8; tries++) def = rng.pick(HEROES);
+    offered.add(def.id);
     const rank = rng.weighted([0, 1, 2, 3] as Rank[], rankWeights(s));
     const sale = rng.chance(12);
     heroes.push({ key: `sh${s.stats.fights}-${i}-${rng.int(0, 9999)}`, defId: def.id, rank, price: price(s, HERO_PRICE_BY_RANK[rank], sale), sale });
@@ -751,6 +795,7 @@ export function buyRelic(s: RunState, key: string): { ok: boolean; reason?: stri
 export function proceedFromShop(s: RunState): void {
   if (!s.shopFrozen) s.shop = null;
   if (s.pendingRankUps.length) {
+    s.rankUpResume = 'advance';
     prepareRankUp(s);
     s.phase = 'rankUp';
     return;
@@ -908,6 +953,7 @@ export function finishEvent(s: RunState): void {
   s.currentEvent = null;
   s.pendingPick = null;
   if (s.pendingRankUps.length) {
+    s.rankUpResume = 'finishEvent';
     prepareRankUp(s);
     s.phase = 'rankUp';
     return;
@@ -1000,6 +1046,7 @@ export function finishBattle(s: RunState, result: BattleResult): void {
   s.stats.fights++;
   for (const u of result.units) {
     if (u.side !== 'ally' || !u.heroUid) continue;
+    s.heroTotals ??= {};
     const t = (s.heroTotals[u.heroUid] ??= { dealt: 0, taken: 0, healed: 0, kills: 0, crits: 0, bestHit: 0, fights: 0 });
     t.dealt += u.tracker.damageDealt;
     t.taken += u.tracker.damageTaken;
@@ -1145,11 +1192,20 @@ export function proceedFromResult(s: RunState): void {
   }
   s.fightReward = null;
   s.singleChampion = null;
+  s.resultWasSingle = wasSingle;
   if (s.pendingRankUps.length) {
+    s.rankUpResume = 'afterResult';
     prepareRankUp(s);
     s.phase = 'rankUp';
     return;
   }
+  afterResultContinue(s);
+}
+
+export function afterResultContinue(s: RunState): void {
+  const node = currentNode(s);
+  const wasSingle = !!s.resultWasSingle;
+  s.resultWasSingle = false;
   // elite / challenge rewards
   if (node.kind === 'elite' || (s.activeChallenge && s.activeChallenge.id !== 'haste')) {
     const rng = rngOf(s);

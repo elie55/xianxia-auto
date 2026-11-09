@@ -40,7 +40,7 @@ export function EventScreen() {
       <Hud showTracker={false}>
         <div class="event-panel panel anim-pop">
           <div class="event-art">
-            {!artFailed && <img src={`./assets/art/events/${ev.art}.png`} alt="" onError={() => setArtFailed(true)} />}
+            {!artFailed && <img src={`./assets/art/events/${ev.art}.jpg`} alt="" onError={() => setArtFailed(true)} />}
             {artFailed && (
               <div class="event-art-fallback">
                 <span class="brush">{ev.hanzi ?? '缘'}</span>

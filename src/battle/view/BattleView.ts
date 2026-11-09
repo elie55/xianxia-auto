@@ -1,5 +1,6 @@
 import { Application, Container, Graphics, Sprite, Text, TextStyle, Texture, Assets } from 'pixi.js';
 import gsap from 'gsap';
+import { signal } from '@preact/signals';
 import type { Hex } from '@/core/types';
 import { Battle, TICK, type BattleResult } from '@/battle/sim/battle';
 import { Unit, type UnitInit } from '@/battle/sim/unit';
@@ -45,6 +46,12 @@ const STAT_SHORT: Record<string, string> = {
 export class BattleView {
   readonly app = new Application();
   private ready = false;
+  /** Becomes true once the Pixi application is initialised and mounted. */
+  readonly isReady = signal(false);
+
+  get canvasEl(): HTMLCanvasElement | null {
+    return this.ready ? (this.app.canvas as HTMLCanvasElement) : null;
+  }
   private bgLayer = new Container();
   private bgSprite: Sprite | null = null;
   private bgGradient = new Graphics();
@@ -104,6 +111,7 @@ export class BattleView {
     this.texts.position.set(this.boardOrigin.x, this.boardOrigin.y);
 
     this.ready = true;
+    this.isReady.value = true;
     this.applyViewport(viewport.value);
     viewport.subscribe((v) => this.applyViewport(v));
     this.drawGround();
@@ -121,7 +129,8 @@ export class BattleView {
   }
 
   setVisible(v: boolean): void {
-    if (this.app.canvas) this.app.canvas.style.visibility = v ? 'visible' : 'hidden';
+    const c = this.canvasEl;
+    if (c) c.style.visibility = v ? 'visible' : 'hidden';
   }
 
   // ───────────────────────── arena ─────────────────────────
@@ -131,7 +140,7 @@ export class BattleView {
     this.drawBackground(viewport.value);
     this.drawGround();
     const key = realm === 1 ? 'realm1_bamboo' : realm === 2 ? 'realm2_abyss' : 'realm3_ladder';
-    const tex = await Assets.load<Texture>(`./assets/art/bg/${key}.png`).catch(() => null);
+    const tex = await Assets.load<Texture>(`./assets/art/bg/${key}.jpg`).catch(() => null);
     if (this.bgSprite) {
       this.bgSprite.destroy();
       this.bgSprite = null;

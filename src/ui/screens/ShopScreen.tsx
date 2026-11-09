@@ -1,6 +1,6 @@
 import { useEffect } from 'preact/hooks';
 import { act, run, showToast } from '@/app/store';
-import { buyHero, buyItem, buyRelic, prepareRankUp, proceedFromShop, rerollCost, shopReroll, toggleFreeze, type RunState } from '@/core/run';
+import { beginRankUps, buyHero, buyItem, buyRelic, proceedFromShop, rerollCost, shopReroll, toggleFreeze, type RunState } from '@/core/run';
 import { ITEM_BY_ID } from '@/content/items';
 import { RELIC_BY_ID } from '@/content/relics';
 import { HeroCard, ItemChip, ItemTip } from '@/ui/components/HeroCard';
@@ -32,10 +32,7 @@ export function ShopScreen() {
         return;
       }
       audio.sfx('ui_buy');
-      if (r.rankedUp) {
-        prepareRankUp(st);
-        st.phase = 'rankUp';
-      }
+      if (r.rankedUp) beginRankUps(st, 'shop');
     });
   };
   return (

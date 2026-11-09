@@ -90,6 +90,13 @@ export function loadRun(): RunState | null {
     if (!raw) return null;
     const s = JSON.parse(raw) as RunState;
     if (s.version !== 1) return null;
+    // forward-compatible defaults for fields added after a save was written
+    s.heroTotals ??= {};
+    s.log ??= [];
+    s.inventory ??= [];
+    s.relics ??= [];
+    s.pendingRankUps ??= [];
+    s.rankUpResume ??= 'board';
     return s;
   } catch {
     return null;

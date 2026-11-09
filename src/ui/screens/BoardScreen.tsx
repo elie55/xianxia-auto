@@ -88,9 +88,10 @@ export function BoardScreen() {
   }, [s.phase]);
 
   // drag heroes directly from the canvas
+  const ready = view.isReady.value;
   useEffect(() => {
-    if (isBattle) return;
-    const canvas = view.app.canvas as HTMLCanvasElement | undefined;
+    if (isBattle || !ready) return;
+    const canvas = view.canvasEl;
     if (!canvas) return;
     const down = (e: PointerEvent) => {
       const d = toDesign(e.clientX, e.clientY);
@@ -99,7 +100,7 @@ export function BoardScreen() {
     };
     canvas.addEventListener('pointerdown', down);
     return () => canvas.removeEventListener('pointerdown', down);
-  }, [isBattle, view.app.canvas]);
+  }, [isBattle, ready]);
 
   const enc = s.currentEncounter;
   return (

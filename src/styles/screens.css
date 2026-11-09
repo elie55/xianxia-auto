@@ -10,7 +10,7 @@
 .menu-keyart {
   position: absolute;
   inset: 0;
-  background: url('/assets/art/bg/menu_keyart.png') center right / cover no-repeat;
+  background: url('/assets/art/bg/menu_keyart.jpg') center right / cover no-repeat;
   opacity: 0.95;
 }
 .menu-mist {

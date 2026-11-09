@@ -1,0 +1,27 @@
+{
+  "appId": "com.elie55.nineheavens",
+  "productName": "Nine Heavens",
+  "copyright": "Copyright © 2026 elie55",
+  "directories": {
+    "output": "release",
+    "buildResources": "build"
+  },
+  "files": ["dist/**/*", "electron/**/*", "package.json"],
+  "asar": true,
+  "win": {
+    "target": [
+      { "target": "nsis", "arch": ["x64"] },
+      { "target": "portable", "arch": ["x64"] }
+    ],
+    "artifactName": "${productName}-${version}-${arch}.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "shortcutName": "Nine Heavens"
+  },
+  "portable": {
+    "artifactName": "${productName}-${version}-portable.exe"
+  }
+}
