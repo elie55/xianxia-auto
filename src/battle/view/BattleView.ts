@@ -104,7 +104,7 @@ export class BattleView {
     const w = HEX_W * (BOARD_COLS - 1) + HEX_W / 2;
     const h = HEX_SIZE * 1.5 * HEX_SQUASH * (BOARD_ROWS - 1);
     this.boardOrigin.x = DESIGN_W / 2 - w / 2;
-    this.boardOrigin.y = 545 - h / 2;
+    this.boardOrigin.y = 655 - h / 2;
     this.arenaLayer.position.set(this.boardOrigin.x, this.boardOrigin.y);
     this.unitLayer.position.set(this.boardOrigin.x, this.boardOrigin.y);
     this.fx.position.set(this.boardOrigin.x, this.boardOrigin.y);
@@ -126,6 +126,7 @@ export class BattleView {
     this.world.scale.set(v.scale);
     this.world.position.set(v.offsetX, v.offsetY);
     this.drawBackground(v);
+    this.drawVignette(v);
   }
 
   setVisible(v: boolean): void {
@@ -151,6 +152,27 @@ export class BattleView {
       this.bgLayer.addChild(s);
       this.fitBackground(viewport.value);
     }
+    this.drawVignette(viewport.value);
+    this.drawGround();
+    this.drawHexes(this.mode === 'placement');
+  }
+
+  private vignette = new Graphics();
+
+  /** Dark gradient bands at the top and bottom so the HUD stays readable over paintings. */
+  private drawVignette(v: Viewport): void {
+    const g = this.vignette;
+    if (!g.parent) this.bgLayer.addChild(g);
+    g.clear();
+    const steps = 12;
+    const topH = v.height * 0.2;
+    const botH = v.height * 0.3;
+    for (let i = 0; i < steps; i++) {
+      const t = i / steps;
+      g.rect(0, (topH * i) / steps, v.width, topH / steps + 1).fill({ color: 0x050b0c, alpha: 0.6 * (1 - t) });
+      g.rect(0, v.height - botH + (botH * i) / steps, v.width, botH / steps + 1).fill({ color: 0x050b0c, alpha: 0.7 * t });
+    }
+    g.rect(0, 0, v.width, v.height).fill({ color: 0x0a1a1c, alpha: 0.12 });
   }
 
   private fitBackground(v: Viewport): void {
@@ -185,10 +207,11 @@ export class BattleView {
     const cx = w / 2;
     const cy = h / 2;
     const col = this.realm === 1 ? 0x1d4a3d : this.realm === 2 ? 0x4a1d24 : 0x1f2c55;
-    g.ellipse(cx, cy + 10, w * 0.78, h * 1.35).fill({ color: 0x000000, alpha: 0.35 });
-    g.ellipse(cx, cy, w * 0.72, h * 1.2).fill({ color: col, alpha: 0.75 });
-    g.ellipse(cx, cy, w * 0.72, h * 1.2).stroke({ color: 0xd4a84b, width: 2, alpha: 0.35 });
-    g.ellipse(cx, cy, w * 0.66, h * 1.08).stroke({ color: 0xd4a84b, width: 1, alpha: 0.2 });
+    const painted = !!this.bgSprite;
+    g.ellipse(cx, cy + 10, w * 0.78, h * 1.35).fill({ color: 0x000000, alpha: painted ? 0.22 : 0.35 });
+    g.ellipse(cx, cy, w * 0.72, h * 1.2).fill({ color: painted ? 0x000000 : col, alpha: painted ? 0.18 : 0.75 });
+    g.ellipse(cx, cy, w * 0.72, h * 1.2).stroke({ color: 0xd4a84b, width: 2, alpha: painted ? 0.28 : 0.35 });
+    g.ellipse(cx, cy, w * 0.66, h * 1.08).stroke({ color: 0xd4a84b, width: 1, alpha: 0.18 });
   }
 
   private drawHexes(highlightZone = this.mode === 'placement'): void {
@@ -200,9 +223,10 @@ export class BattleView {
       const ally = col <= ALLY_MAX_COL;
       const enemy = col >= ENEMY_MIN_COL;
       const fill = ally ? 0x3fbf9f : enemy ? 0xd2382c : 0xd4a84b;
-      const alpha = highlightZone ? (ally ? 0.16 : enemy ? 0.08 : 0.04) : 0.05;
+      const painted = !!this.bgSprite;
+      const alpha = highlightZone ? (ally ? (painted ? 0.1 : 0.16) : enemy ? 0.05 : 0.02) : painted ? 0.02 : 0.05;
       this.hexPath(g, p.x, p.y, HEX_SIZE - 3).fill({ color: fill, alpha });
-      this.hexPath(g, p.x, p.y, HEX_SIZE - 3).stroke({ color: fill, width: 1.2, alpha: highlightZone ? (ally ? 0.55 : 0.25) : 0.14 });
+      this.hexPath(g, p.x, p.y, HEX_SIZE - 3).stroke({ color: fill, width: 1.2, alpha: highlightZone ? (ally ? 0.5 : 0.22) : 0.1 });
     }
   }
 
