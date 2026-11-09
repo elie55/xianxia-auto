@@ -93,7 +93,16 @@ export class UnitView extends Container {
     if (unit.boss || unit.elite) {
       this.nameLabel = new Text({
         text: unit.name.toUpperCase(),
-        style: new TextStyle({ fontFamily: 'Cinzel', fontWeight: '700', fontSize: unit.boss ? 18 : 14, fill: unit.boss ? '#ff6b5a' : '#f3cf78', letterSpacing: 2, stroke: { color: '#000000', width: 4 } }),
+        // light gold on a heavy dark outline and shadow: readable over every painting (dark red vanished on the abyss)
+        style: new TextStyle({
+          fontFamily: 'Cinzel',
+          fontWeight: '800',
+          fontSize: unit.boss ? 20 : 15,
+          fill: unit.boss ? '#ffe7b8' : '#f3cf78',
+          letterSpacing: 2,
+          stroke: { color: unit.boss ? '#2a0507' : '#050b0c', width: unit.boss ? 7 : 5, join: 'round' },
+          dropShadow: { color: '#000000', alpha: 0.85, blur: 6, distance: 2, angle: Math.PI / 2 },
+        }),
       });
       this.nameLabel.anchor.set(0.5, 1);
       this.nameLabel.y = -30;

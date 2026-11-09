@@ -3050,3 +3050,52 @@ input[type='range']:hover::-webkit-slider-thumb {
 .hotkey-legend .keycap {
   margin-right: 7px;
 }
+
+/* ───────── TEXT ON PAINTINGS: plates and shadows so headings and subtitles always read ───────── */
+/* realm label in the top bar: a frosted lacquer plate instead of grey text on the sunlit arena */
+.realm-label {
+  padding: 6px 18px 7px 12px;
+  border-radius: 10px;
+  background: rgba(5, 11, 12, 0.7);
+  border: 1px solid rgba(212, 168, 75, 0.28);
+  backdrop-filter: blur(3px);
+}
+.realm-name {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+.realm-sub {
+  font-size: 14px;
+  color: var(--paper-dim);
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+/* Dao Path / Insight choice: the subtitle sat almost invisible on the golden mandala */
+.rankup-hanzi,
+.rankup-title {
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9), 0 0 3px rgba(0, 0, 0, 0.95);
+}
+.rankup-right > .muted {
+  align-self: flex-start;
+  max-width: 920px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(5, 11, 12, 0.8), rgba(5, 11, 12, 0.68));
+  border: 1px solid rgba(212, 168, 75, 0.22);
+  color: var(--paper);
+  font-size: 17px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+/* draft and challenge subtitles over busy paintings */
+.draft-header .muted,
+.reward-wrap > .muted {
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: radial-gradient(ellipse at center, rgba(5, 11, 12, 0.72) 0%, rgba(5, 11, 12, 0.5) 70%, rgba(5, 11, 12, 0) 100%);
+  color: var(--paper);
+  font-size: 16px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+}
+.draft-title,
+.result-title {
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85), 0 0 3px rgba(0, 0, 0, 0.9);
+}
