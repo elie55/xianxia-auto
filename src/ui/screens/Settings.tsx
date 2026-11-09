@@ -15,6 +15,7 @@ export function Settings() {
       <div class="newrun-header">
         <button
           class="btn small ghost"
+          data-hotkey="back"
           onClick={() => {
             audio.sfx('ui_back');
             screen.value = 'menu';
@@ -86,6 +87,25 @@ export function Settings() {
             <button class={`btn small ${m.settings.showDamage ? 'primary' : 'ghost'}`} onClick={() => set((s) => (s.showDamage = !s.showDamage))}>
               {m.settings.showDamage ? 'On' : 'Off'}
             </button>
+          </Row>
+          <Row label="Hotkeys">
+            <div class="hotkey-legend">
+              {(
+                [
+                  ['Space', 'Fight'],
+                  ['Esc', 'Menu'],
+                  ['1–3', 'Speed'],
+                  ['R', 'Reroll'],
+                  ['F', 'Freeze'],
+                  ['E', 'Sell'],
+                ] as const
+              ).map(([k, label]) => (
+                <span key={k}>
+                  <kbd class="keycap">{k}</kbd>
+                  {label}
+                </span>
+              ))}
+            </div>
           </Row>
         </div>
       </div>

@@ -142,6 +142,7 @@ export function BattleResult() {
                     )}
                     <button
                       class="btn primary big"
+                      data-hotkey="proceed"
                       style={{ marginTop: 26, width: '100%' }}
                       onClick={() => {
                         audio.sfx('ui_confirm');

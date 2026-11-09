@@ -188,7 +188,8 @@ export function BoardScreen() {
             <button
               class="btn primary big fight-btn"
               data-tut="fight"
-              {...tip(<><h4>Fight</h4><p>Starts the battle. It resolves on its own; your choices happen between fights.</p>{single && <p class="muted">A Heavenly Trial: pick one champion first.</p>}</>, 'above')}
+              data-hotkey="fight"
+              {...tip(<><h4>Fight <kbd class="keycap">Space</kbd></h4><p>Starts the battle. It resolves on its own; your choices happen between fights.</p>{single && <p class="muted">A Heavenly Trial: pick one champion first.</p>}</>, 'above')}
               disabled={!canFight || s.party.filter(Boolean).length === 0}
               onClick={() => {
                 if (s.party.filter(Boolean).length === 0 && !single) return void showToast('Place at least one disciple', 'error');

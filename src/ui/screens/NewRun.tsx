@@ -28,6 +28,7 @@ export function NewRun() {
       <div class="newrun-header">
         <button
           class="btn small ghost"
+          data-hotkey="back"
           onClick={() => {
             audio.sfx('ui_back');
             screen.value = 'menu';

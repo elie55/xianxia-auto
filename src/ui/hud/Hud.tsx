@@ -107,6 +107,8 @@ function TopBar({ s }: { s: RunState }) {
               <button
                 key={v}
                 class={`speed-btn ${battleSpeed.value === v ? 'on' : ''}`}
+                data-hotkey={`speed-${v}`}
+                {...tip(<><h4>Battle speed {v}× <kbd class="keycap">{v}</kbd></h4></>, 'left')}
                 onClick={() => {
                   battleSpeed.value = v;
                   getBattleView().setSpeed(v);
@@ -118,7 +120,7 @@ function TopBar({ s }: { s: RunState }) {
             ))}
           </div>
         )}
-        <button class="speed-btn" onClick={() => (showMenu.value = true)} {...tip(<><h4>Menu</h4></>, 'left')}>
+        <button class="speed-btn" data-hotkey="menu" onClick={() => (showMenu.value = true)} {...tip(<><h4>Menu <kbd class="keycap">Esc</kbd></h4></>, 'left')}>
           <Icon name="ui_settings" size={16} />
         </button>
       </div>
@@ -157,7 +159,7 @@ function LeftRail({ s }: { s: RunState }) {
         {Array.from({ length: s.inventorySize }).map((_, i) => {
           const itemId = s.inventory[i];
           return (
-            <div key={i} class="inv-slot">
+            <div key={i} class="inv-slot" data-sell={itemId ? `item:${itemId}` : undefined}>
               {itemId && <ItemChip itemId={itemId} size={36} draggable onDragStart={(e) => startDrag({ kind: 'item', itemId }, e)} class="clickable" />}
             </div>
           );
@@ -311,7 +313,7 @@ function HeroSlot({ s, uid, ctx, drop, dragging, reserve, portrait = 104, sock =
   void battleTick.value; // a disciple can fall (or be reborn) at any moment of a fight
   const fallen = !!h && !reserve && heroFallen(s, h.uid);
   return (
-    <div class={`hero-slot ${h ? 'filled' : 'empty'} ${over && (acceptsHero || acceptsItem) ? 'drop-ok' : ''} ${reserve ? 'reserve' : ''} ${fallen ? 'fallen' : ''}`} data-drop={h ? `hero:${uid}` : drop} data-hero-def={h?.defId}>
+    <div class={`hero-slot ${h ? 'filled' : 'empty'} ${over && (acceptsHero || acceptsItem) ? 'drop-ok' : ''} ${reserve ? 'reserve' : ''} ${fallen ? 'fallen' : ''}`} data-drop={h ? `hero:${uid}` : drop} data-sell={h ? `hero:${h.uid}` : undefined} data-hero-def={h?.defId}>
       {h && def && (
         <>
           <div
@@ -333,7 +335,7 @@ function HeroSlot({ s, uid, ctx, drop, dragging, reserve, portrait = 104, sock =
               {Array.from({ length: heroItemSlots(h, ctx) }).map((_, i) => {
                 const itemId = h.items[i];
                 return (
-                  <div key={i} class="slot-item">
+                  <div key={i} class="slot-item" data-sell={itemId ? `item:${itemId}:${h.uid}` : undefined}>
                     {itemId && <ItemChip itemId={itemId} size={chip} draggable onDragStart={(e) => startDrag({ kind: 'item', itemId, fromHero: h.uid }, e)} />}
                   </div>
                 );

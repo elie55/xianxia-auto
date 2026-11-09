@@ -84,7 +84,9 @@ export function ShopScreen() {
           <div class="shop-toolbar" data-tut="shop-toolbar">
             <button
               class="btn small"
+              data-hotkey="reroll"
               disabled={s.stones < cost}
+              {...tip(<><h4>Reroll <kbd class="keycap">R</kbd></h4><p>Replace every offer for the price shown.</p></>, 'below')}
               onClick={() => {
                 act((st) => {
                   if (shopReroll(st)) audio.sfx('ui_reroll');
@@ -94,10 +96,10 @@ export function ShopScreen() {
             >
               <Icon name="ui_reroll" size={16} /> Reroll shop · <Icon name="stones" size={16} /> {cost}
             </button>
-            <button class={`btn small ${s.shopFrozen ? 'primary' : ''}`} onClick={() => act((st) => (toggleFreeze(st), audio.sfx('ui_click')))} {...tip(<><h4>Freeze</h4><p>Keep the current offers for the next shop.</p></>, 'below')}>
+            <button class={`btn small ${s.shopFrozen ? 'primary' : ''}`} data-hotkey="freeze" onClick={() => act((st) => (toggleFreeze(st), audio.sfx('ui_click')))} {...tip(<><h4>Freeze <kbd class="keycap">F</kbd></h4><p>Keep the current offers for the next shop.</p></>, 'below')}>
               <Icon name="ui_freeze" size={16} /> {s.shopFrozen ? 'Unfreeze shop' : 'Freeze shop'}
             </button>
-            <div class={`sell-zone ${dragging?.started ? 'armed' : ''} ${dragging?.over === 'sell' ? 'over' : ''}`} data-drop="sell" {...tip(<><h4>Sell</h4><p>Drag a disciple or Treasure here to sell it for Spirit Stones. Disciples refund part of their price; equipped Treasures are refunded too.</p></>, 'below')}>
+            <div class={`sell-zone ${dragging?.started ? 'armed' : ''} ${dragging?.over === 'sell' ? 'over' : ''}`} data-drop="sell" {...tip(<><h4>Sell</h4><p>Drag a disciple or Treasure here to sell it for Spirit Stones. Disciples refund part of their price; equipped Treasures are refunded too.</p><p>Or point at one and press <kbd class="keycap">E</kbd>.</p></>, 'below')}>
               <Icon name="ui_sell" size={18} />
               {dragging?.started ? (dragging.payload.kind === 'hero' ? 'Sell disciple' : 'Sell treasure') : 'Drop here to sell'}
             </div>

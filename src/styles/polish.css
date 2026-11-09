@@ -3034,3 +3034,19 @@ input[type='range']:hover::-webkit-slider-thumb {
   font-size: 13px;
   vertical-align: 1px;
 }
+.hotkey-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 18px;
+  max-width: 560px;
+}
+.hotkey-legend span {
+  display: inline-flex;
+  align-items: center;
+  font-size: 15px;
+  color: var(--paper-dim);
+}
+.hotkey-legend .keycap {
+  margin-right: 7px;
+}
