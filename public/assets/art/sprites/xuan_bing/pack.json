@@ -24,6 +24,30 @@
       "pivotY": 0.9258,
       "charH": 211,
       "loop": true
+    },
+    "hurt": {
+      "sheet": "hurt.png",
+      "frames": 25,
+      "cols": 5,
+      "frameW": 256,
+      "frameH": 256,
+      "fps": 10.7,
+      "pivotX": 0.5273,
+      "pivotY": 0.9375,
+      "charH": 218,
+      "loop": false
+    },
+    "walk": {
+      "sheet": "walk.png",
+      "frames": 25,
+      "cols": 5,
+      "frameW": 256,
+      "frameH": 256,
+      "fps": 10.7,
+      "pivotX": 0.5234,
+      "pivotY": 0.9219,
+      "charH": 212,
+      "loop": true
     }
   }
 }
