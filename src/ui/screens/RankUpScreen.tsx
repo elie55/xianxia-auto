@@ -5,7 +5,7 @@ import { chooseUpgrade, heroByUid, teamContext } from '@/core/run';
 import { HERO_BY_ID } from '@/content/heroes';
 import { CLASSES } from '@/content/classes';
 import { RANK_NAMES } from '@/core/types';
-import { HeroCard, ClassBadge } from '@/ui/components/HeroCard';
+import { HeroCard } from '@/ui/components/HeroCard';
 import { Icon, STAT_COLOR, STAT_ICON, STAT_LABEL } from '@/ui/components/Icon';
 import { RichText } from '@/ui/components/RichText';
 import { audio } from '@/audio/AudioManager';
@@ -62,17 +62,10 @@ export function RankUpScreen() {
                   }}
                 >
                   <div class="upgrade-top">
-                    {u.addClass ? (
-                      <ClassBadge id={u.addClass} size={40} />
-                    ) : PAINTED_ICONS.has(`insight_${u.id}`) ? (
-                      <div class="upgrade-icon painted">
-                        <Icon name={`insight_${u.id}`} size={96} />
-                      </div>
-                    ) : (
-                      <div class="upgrade-icon">
-                        <Icon name={u.classPool ? `class_${u.classPool}` : `class_${def.classes[0]}`} size={26} color="var(--gold-bright)" />
-                      </div>
-                    )}
+                    {/* every option gets the same medallion: its painted icon, else the painted emblem of its class */}
+                    <div class="upgrade-icon painted">
+                      <Icon name={upgradeIcon(u, def.classes[0])} size={PAINTED_ICONS.has(`insight_${u.id}`) ? 96 : 78} color="var(--gold-bright)" />
+                    </div>
                   </div>
                   <div class="upgrade-name display">{u.name}</div>
                   <div class="upgrade-kind">{isDao ? 'Dao Path' : `${u.classPool ? CLASSES[u.classPool].name : 'Class'} Insight`}</div>
@@ -104,4 +97,10 @@ export function RankUpScreen() {
       )}
     </div>
   );
+}
+
+/** Icon for a rank-up option: its own painted icon, else the painted emblem of the class it belongs to or grants. */
+function upgradeIcon(u: { id: string; addClass?: string; classPool?: string }, fallbackClass: string): string {
+  if (PAINTED_ICONS.has(`insight_${u.id}`)) return `insight_${u.id}`;
+  return `class_${u.addClass ?? u.classPool ?? fallbackClass}`;
 }
