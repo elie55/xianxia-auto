@@ -1,0 +1,93 @@
+/* ─────────────────────────────────────────────────────────────
+   NINE HEAVENS — design tokens
+   Ink-teal panels, jade actions, gold hairlines, vermilion danger.
+   ───────────────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'Cinzel';
+  src: url('/assets/fonts/Cinzel-Variable.woff2') format('woff2');
+  font-weight: 400 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Noto Sans';
+  src: url('/assets/fonts/NotoSans-Variable.woff2') format('woff2');
+  font-weight: 300 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Ma Shan Zheng';
+  src: url('/assets/fonts/MaShanZheng-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  /* surfaces */
+  --ink-900: #070e0f;
+  --ink-800: #0b1516;
+  --ink-700: #0f1d1f;
+  --ink-600: #142628;
+  --ink-500: #1a3134;
+  --ink-400: #234044;
+  --ink-300: #2f5358;
+
+  /* accents */
+  --jade: #3fbf9f;
+  --jade-bright: #6fe3c4;
+  --jade-dim: #2a8c74;
+  --gold: #d4a84b;
+  --gold-bright: #f3cf78;
+  --gold-dim: #8a6a2b;
+  --vermilion: #d2382c;
+  --vermilion-bright: #ff6b5a;
+  --violet: #8e6cf5;
+  --violet-bright: #b89cff;
+  --frost: #7fd6ff;
+  --burn: #ff8a3c;
+  --poison: #8fdc4b;
+  --lightning: #ffe66d;
+  --heal: #7bf07b;
+  --shield: #9fd5ff;
+
+  /* text */
+  --paper: #f0e9d8;
+  --paper-dim: #bdb4a1;
+  --paper-faint: #7d7769;
+
+  /* rarity */
+  --rar-common: #c9c3b4;
+  --rar-rare: #4cc8ff;
+  --rar-epic: #c27cff;
+  --rar-unique: #ffb347;
+
+  /* rank */
+  --rank-c: #9fb3b6;
+  --rank-b: #e3b64f;
+  --rank-a: #ff5d5d;
+  --rank-s: #b78cff;
+
+  /* type */
+  --font-display: 'Cinzel', 'Noto Serif', serif;
+  --font-body: 'Noto Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-brush: 'Ma Shan Zheng', 'KaiTi', 'STKaiti', serif;
+
+  /* layout */
+  --design-w: 1920px;
+  --design-h: 1080px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+
+  /* motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 140ms;
+  --dur-med: 260ms;
+  --dur-slow: 480ms;
+
+  /* panel surfaces */
+  --panel-bg: linear-gradient(180deg, rgba(20, 38, 40, 0.94) 0%, rgba(11, 21, 22, 0.96) 100%);
+  --panel-border: rgba(212, 168, 75, 0.35);
+  --panel-shadow: 0 18px 50px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dist-electron/
+release/
+reference/
+.DS_Store
+*.log
+.vite/
+android/
+.capacitor/

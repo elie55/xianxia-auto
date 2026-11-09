@@ -1,0 +1,128 @@
+import type { EnemyDef, Hex, NodeKind } from '@/core/types';
+import type { Rng } from '@/core/rng';
+import { ENEMIES, ENEMY_BY_ID } from '@/content/enemies';
+import { BOARD_ROWS, ENEMY_MIN_COL, BOARD_COLS, offsetToAxial } from '@/battle/sim/hex';
+
+export interface EncounterUnit {
+  defId: string;
+  pos: Hex;
+}
+
+export interface Encounter {
+  id: string;
+  label: string;
+  enemies: EncounterUnit[];
+  level: number;
+  kind: NodeKind | 'single';
+}
+
+/** Tribulation Level: drives enemy scaling. */
+export function tribulationLevel(realm: number, nodeIndex: number, tier: number, floor = 0): number {
+  const realmOffset = realm === 1 ? 0 : realm === 2 ? 11 : 22 + floor * 2;
+  return realmOffset + nodeIndex + Math.floor(tier / 2);
+}
+
+function budgetFor(realm: number, nodeIndex: number, kind: NodeKind | 'single'): number {
+  const base = realm === 1 ? 2.2 : realm === 2 ? 4.5 : 7;
+  const growth = realm === 1 ? 0.75 : realm === 2 ? 1.0 : 1.3;
+  let b = base + nodeIndex * growth;
+  if (kind === 'elite') b *= 1.1;
+  if (kind === 'challenge') b *= 1.15;
+  return b;
+}
+
+function poolFor(realm: number): EnemyDef[] {
+  return ENEMIES.filter((e) => !e.boss && !e.elite && (e.realm === realm || e.realm === 'any' || (realm >= 3 && e.realm !== 1)));
+}
+
+/** Places enemies in the enemy zone: melee toward the front (left side of their zone), ranged behind. */
+export function placeEnemies(defIds: string[], rng: Rng): EncounterUnit[] {
+  const out: EncounterUnit[] = [];
+  const used = new Set<string>();
+  const centerRow = Math.floor(BOARD_ROWS / 2);
+  const rowOrder = [centerRow, centerRow - 1, centerRow + 1, centerRow - 2, centerRow + 2].filter((r) => r >= 0 && r < BOARD_ROWS);
+  const frontCols = [ENEMY_MIN_COL, ENEMY_MIN_COL + 1];
+  const backCols = [ENEMY_MIN_COL + 2, Math.min(BOARD_COLS - 1, ENEMY_MIN_COL + 3)];
+  const sorted = defIds
+    .map((id) => ENEMY_BY_ID[id])
+    .sort((a, b) => (b.boss ? 1 : 0) - (a.boss ? 1 : 0) || (a.baseStats.range ?? 1) - (b.baseStats.range ?? 1));
+  for (const def of sorted) {
+    const ranged = (def.baseStats.range ?? 1) >= 3;
+    const cols = def.boss ? [ENEMY_MIN_COL + 1, ENEMY_MIN_COL + 2] : ranged ? backCols : frontCols;
+    let placed = false;
+    for (const row of rowOrder) {
+      for (const col of cols) {
+        const key = `${col},${row}`;
+        if (used.has(key)) continue;
+        used.add(key);
+        out.push({ defId: def.id, pos: offsetToAxial(col, row) });
+        placed = true;
+        break;
+      }
+      if (placed) break;
+    }
+    if (!placed) {
+      // any free hex in zone
+      for (let col = ENEMY_MIN_COL; col < BOARD_COLS && !placed; col++) {
+        for (let row = 0; row < BOARD_ROWS; row++) {
+          const key = `${col},${row}`;
+          if (used.has(key)) continue;
+          used.add(key);
+          out.push({ defId: def.id, pos: offsetToAxial(col, row) });
+          placed = true;
+          break;
+        }
+      }
+    }
+  }
+  // tiny shuffle of rows for variety is implicit via rng consumption to keep seeds meaningful
+  rng.next();
+  return out;
+}
+
+export function generateEncounter(realm: number, nodeIndex: number, kind: NodeKind | 'single', tier: number, rng: Rng, floor = 0): Encounter {
+  const level = tribulationLevel(realm, nodeIndex, tier, floor);
+  const defIds: string[] = [];
+  let label = 'Regular Encounter';
+
+  if (kind === 'boss') {
+    const boss = realm === 1 ? 'flood_dragon' : realm === 2 ? 'blood_moon_sovereign' : rng.pick(['flood_dragon', 'blood_moon_sovereign']);
+    defIds.push(boss);
+    const adds = realm === 1 ? ['spirit_wolf', 'spirit_wolf'] : ['demon_soldier', 'blood_bat'];
+    defIds.push(...adds);
+    label = ENEMY_BY_ID[boss].name;
+  } else if (kind === 'single') {
+    const pool = poolFor(realm).filter((e) => e.cost >= 1.8);
+    const pick = rng.pick(pool.length ? pool : poolFor(realm));
+    defIds.push(pick.id);
+    label = `Heavenly Trial: ${pick.name}`;
+  } else {
+    let budget = budgetFor(realm, nodeIndex, kind);
+    if (kind === 'elite') {
+      const elite = realm === 1 ? 'moss_golem' : realm === 2 ? 'demon_general' : rng.pick(['moss_golem', 'demon_general', 'thunder_ape']);
+      defIds.push(elite);
+      budget = Math.max(1.5, budget * 0.55);
+      label = `Elite: ${ENEMY_BY_ID[elite].name}`;
+    }
+    const pool = poolFor(realm);
+    const maxUnits = kind === 'elite' ? 5 : 7;
+    let guard = 0;
+    while (budget > 0.6 && defIds.length < maxUnits && guard++ < 40) {
+      const affordable = pool.filter((e) => e.cost <= budget + 0.4);
+      if (affordable.length === 0) break;
+      const pick = rng.weighted(affordable, affordable.map((e) => 1 / Math.sqrt(e.cost)));
+      defIds.push(pick.id);
+      budget -= pick.cost;
+    }
+    if (defIds.length === 0) defIds.push(pool[0].id);
+    if (kind === 'challenge') label = 'Challenge Encounter';
+  }
+
+  return {
+    id: `${realm}-${nodeIndex}-${kind}`,
+    label,
+    enemies: placeEnemies(defIds, rng),
+    level,
+    kind,
+  };
+}
