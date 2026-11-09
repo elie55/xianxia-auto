@@ -2560,3 +2560,62 @@ input[type='range']:hover::-webkit-slider-thumb {
   animation: logo-float 6s ease-in-out infinite;
   margin-bottom: -8px;
 }
+
+/* challenge cards: painted medallions, crimson for hardships, jade for declining */
+.reward-card .reward-icon.painted {
+  width: 118px;
+  height: 118px;
+  background: radial-gradient(circle at 50% 42%, rgba(210, 56, 44, 0.3), rgba(10, 6, 8, 0.88) 72%);
+  border: 2px solid rgba(255, 107, 90, 0.7);
+  box-shadow: 0 0 30px rgba(210, 56, 44, 0.35), inset 0 0 22px rgba(0, 0, 0, 0.7);
+}
+.reward-card.decline .reward-icon.painted {
+  background: radial-gradient(circle at 50% 42%, rgba(63, 191, 159, 0.24), rgba(6, 14, 16, 0.88) 72%);
+  border-color: rgba(111, 227, 196, 0.55);
+  box-shadow: 0 0 26px rgba(63, 191, 159, 0.25), inset 0 0 22px rgba(0, 0, 0, 0.7);
+}
+.reward-card .reward-icon.painted .icon {
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.65));
+}
+
+/* Fight sits at the right edge of the arena floor, mid-height (same spot on every arena);
+   the placement hint stays as a caption above the party bar */
+.board-actions {
+  position: absolute;
+  inset: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  transform: none;
+  display: block;
+  pointer-events: none;
+}
+.board-actions > * {
+  pointer-events: auto;
+}
+.board-actions .fight-btn {
+  position: absolute;
+  right: 40px;
+  top: 612px;
+  min-width: 300px;
+}
+.board-actions .board-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 200px;
+  transform: translateX(-50%);
+  max-width: none;
+  white-space: nowrap;
+  text-align: center;
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+.board-actions .board-hint {
+  padding: 7px 56px;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  color: var(--paper-dim);
+  opacity: 1;
+  background: linear-gradient(90deg, rgba(5, 10, 11, 0) 0%, rgba(5, 10, 11, 0.74) 16%, rgba(5, 10, 11, 0.74) 84%, rgba(5, 10, 11, 0) 100%);
+}

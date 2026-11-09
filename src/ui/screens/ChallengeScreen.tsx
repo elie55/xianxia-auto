@@ -3,6 +3,7 @@ import { acceptChallenge } from '@/core/run';
 import { Hud } from '@/ui/hud/Hud';
 import { useArena } from './BoardScreen';
 import { Icon } from '@/ui/components/Icon';
+import { PAINTED_ICONS } from '@/ui/components/paintedIcons';
 import { audio } from '@/audio/AudioManager';
 
 export function ChallengeScreen() {
@@ -31,8 +32,8 @@ export function ChallengeScreen() {
                     act((st) => acceptChallenge(st, c.id));
                   }}
                 >
-                  <div class="reward-icon">
-                    <Icon name="ui_challenge" size={44} color="var(--vermilion-bright)" />
+                  <div class="reward-icon painted">
+                    <Icon name={challengeIcon(c.id)} size={PAINTED_ICONS.has(challengeIcon(c.id)) ? 92 : 44} color="var(--vermilion-bright)" />
                   </div>
                   <div class="reward-name display">{c.name}</div>
                   <div class="reward-rar">Challenge</div>
@@ -49,8 +50,8 @@ export function ChallengeScreen() {
                   act((st) => acceptChallenge(st, null));
                 }}
               >
-                <div class="reward-icon">
-                  <Icon name="ui_fight" size={44} color="var(--paper-dim)" />
+                <div class="reward-icon painted">
+                  <Icon name={PAINTED_ICONS.has('challenge_decline') ? 'challenge_decline' : 'ui_fight'} size={PAINTED_ICONS.has('challenge_decline') ? 92 : 44} color="var(--paper-dim)" />
                 </div>
                 <div class="reward-name display">Decline</div>
                 <div class="reward-rar">Regular fight</div>
@@ -62,4 +63,10 @@ export function ChallengeScreen() {
       </Hud>
     </div>
   );
+}
+
+/** Painted icon for a challenge: its own (challenge_<id>), else the generic challenge seal, else the old glyph. */
+function challengeIcon(id: string): string {
+  if (PAINTED_ICONS.has(`challenge_${id}`)) return `challenge_${id}`;
+  return PAINTED_ICONS.has('challenge_generic') ? 'challenge_generic' : 'ui_challenge';
 }
