@@ -2701,3 +2701,44 @@ input[type='range']:hover::-webkit-slider-thumb {
     filter: drop-shadow(0 0 12px rgba(122, 240, 207, 0.85)) drop-shadow(0 6px 7px rgba(0, 0, 0, 0.55));
   }
 }
+
+/* damage meter: live badge during fights, smooth bars */
+.tracker-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tracker-badge {
+  margin-left: auto;
+  font-family: var(--font-body, inherit);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--paper-faint);
+}
+.tracker-badge.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #ff8a8a;
+}
+.tracker-badge.live i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff5a5a;
+  box-shadow: 0 0 8px #ff5a5a;
+  animation: live-dot 1.2s ease-in-out infinite;
+}
+@keyframes live-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+.tracker-bar i {
+  transition: width 0.2s linear;
+}

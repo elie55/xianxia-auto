@@ -60,7 +60,8 @@ export function BoardScreen() {
     let lastTick = -1;
     view.onTime = (t) => {
       battleTime.value = t;
-      const q = Math.floor(t * 4);
+      // live HUD (damage meter, unit tooltips) refreshes 10 times per second of fight time
+      const q = Math.floor(t * 10);
       if (q !== lastTick) {
         lastTick = q;
         battleTick.value++;
@@ -71,6 +72,7 @@ export function BoardScreen() {
       act((st) => finishBattle(st, r));
     };
     view.startBattle(battle, battleSpeed.value);
+    battleTick.value++; // the meter switches to the new fight at once
     audio.playMusic(s.currentEncounter?.kind === 'boss' ? 'boss' : 'battle');
     audio.sfx('fight_start');
     return () => {

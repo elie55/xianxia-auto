@@ -222,7 +222,16 @@ function RightRail({ s }: { s: RunState }) {
           <Icon name="ui_healing" size={16} />
         </button>
       </div>
-      <div class="tracker-title display">{label}</div>
+      <div class="tracker-title display">
+        {label}
+        {units.length > 0 ? (
+          <span class="tracker-badge live" {...tip(<><h4>Live</h4><p>Updates during the fight.</p></>, 'left')}>
+            <i /> Live
+          </span>
+        ) : rows.length > 0 ? (
+          <span class="tracker-badge">Last fight</span>
+        ) : null}
+      </div>
       {rows.length === 0 && <div class="faint" style={{ fontSize: 13 }}>Combat statistics appear here.</div>}
       {rows.map((r) => (
         <div key={r.defId} class={`tracker-row ${r.alive ? '' : 'dead'}`}>
