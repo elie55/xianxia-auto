@@ -248,7 +248,7 @@ export class BattleView {
     if (tex) {
       // a dimmed cover copy fills whatever a wide or tall window leaves outside the 16:9 frame …
       const backdrop = new Sprite(tex);
-      backdrop.tint = 0x56646b;
+      backdrop.tint = 0x3e4a4f;
       this.bgSprite = backdrop;
       this.bgLayer.addChild(backdrop);
       this.fitBackground(viewport.value);
@@ -258,6 +258,17 @@ export class BattleView {
       painting.height = DESIGN_H;
       this.bgPainting = painting;
       this.world.addChildAt(painting, 0);
+      // feather the painting's left and right edges toward the dim fill so wide windows show no hard seam
+      const fade = new Graphics();
+      const steps = 16;
+      const band = 160;
+      for (let i = 0; i < steps; i++) {
+        const a = 0.55 * (1 - i / steps) ** 1.4;
+        fade.rect((band * i) / steps, 0, band / steps + 1, DESIGN_H).fill({ color: 0x070e0f, alpha: a });
+        fade.rect(DESIGN_W - (band * (i + 1)) / steps, 0, band / steps + 1, DESIGN_H).fill({ color: 0x070e0f, alpha: a });
+      }
+      this.world.addChildAt(fade, 1);
+      painting.on('destroyed', () => fade.destroy());
     }
     this.drawVignette(viewport.value);
     this.drawGround();

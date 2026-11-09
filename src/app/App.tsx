@@ -1,3 +1,5 @@
+import type { ComponentChildren } from 'preact';
+import { useErrorBoundary } from 'preact/hooks';
 import { run, screen, toast } from './store';
 import { MainMenu } from '@/ui/screens/MainMenu';
 import { NewRun } from '@/ui/screens/NewRun';
@@ -15,12 +17,14 @@ export function App() {
   useTutorialDriver();
   return (
     <>
-      {scr === 'menu' && <MainMenu />}
-      {scr === 'newRun' && <NewRun />}
-      {scr === 'run' && run.value && <RunScreen />}
-      {scr === 'settings' && <Settings />}
-      {scr === 'credits' && <Credits />}
-      {scr === 'compendium' && <Compendium />}
+      <ScreenGuard key={scr}>
+        {scr === 'menu' && <MainMenu />}
+        {scr === 'newRun' && <NewRun />}
+        {scr === 'run' && run.value && <RunScreen />}
+        {scr === 'settings' && <Settings />}
+        {scr === 'credits' && <Credits />}
+        {scr === 'compendium' && <Compendium />}
+      </ScreenGuard>
       {t && (
         <div key={t.id} class={`toast ${t.kind}`}>
           {t.text}
@@ -30,5 +34,39 @@ export function App() {
       <TooltipLayer />
       <LoadingVeil />
     </>
+  );
+}
+
+/**
+ * If a screen throws while rendering, show a recovery panel instead of an empty interface.
+ * The saved run is left untouched, so "Continue Run" still works once the cause is gone.
+ */
+function ScreenGuard({ children }: { children: ComponentChildren }) {
+  const [error, reset] = useErrorBoundary((e) => console.error('[Nine Heavens] screen crashed', e));
+  if (!error) return <>{children}</>;
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    <div class="screen center crash-screen">
+      <div class="panel crash-panel">
+        <div class="brush crash-hanzi">乱</div>
+        <div class="display crash-title">The qi went astray</div>
+        <p class="muted">Something broke while drawing this screen. Your run is saved.</p>
+        <code class="crash-detail">{message}</code>
+        <div class="row" style={{ gap: 14, justifyContent: 'center' }}>
+          <button class="btn primary" onClick={() => reset()}>
+            Try again
+          </button>
+          <button
+            class="btn ghost"
+            onClick={() => {
+              screen.value = 'menu';
+              reset();
+            }}
+          >
+            Return to the sect
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

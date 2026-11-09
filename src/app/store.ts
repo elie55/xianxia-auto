@@ -84,8 +84,9 @@ export function saveRun(): void {
     hasSavedRun.value = false;
     return;
   }
-  // battle phase saves as 'board' so a reload re-enters placement
-  const copy: RunState = { ...s, phase: s.phase === 'battle' ? 'board' : s.phase, lastResult: null };
+  // battle phase saves as 'board' so a reload re-enters placement; the last battle's record is kept so the
+  // result screen still has its stats after a reload
+  const copy: RunState = { ...s, phase: s.phase === 'battle' ? 'board' : s.phase };
   localStorage.setItem(RUN_KEY, JSON.stringify(copy));
   hasSavedRun.value = true;
 }
@@ -103,6 +104,7 @@ export function loadRun(): RunState | null {
     s.relics ??= [];
     s.pendingRankUps ??= [];
     s.rankUpResume ??= 'board';
+    s.lastResult ??= null;
     return s;
   } catch {
     return null;

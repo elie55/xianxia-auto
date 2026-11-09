@@ -18,9 +18,9 @@ export function BattleResult() {
     audio.playMusic(won ? (s.realm === 2 ? 'realm2shop' : 'shop') : 'event');
     getBattleView().stopBattle();
   }, []);
-  if (!r) return null;
-  const allies = r.units.filter((u) => u.side === 'ally' && u.onBoard);
-  const enemies = r.units.filter((u) => u.side === 'enemy');
+  // after a reload from an older save the battle record may be gone: the screen still works, minus the stats
+  const allies = r ? r.units.filter((u) => u.side === 'ally' && u.onBoard) : [];
+  const enemies = r ? r.units.filter((u) => u.side === 'enemy') : [];
   const maxDmg = Math.max(1, ...allies.map((u) => u.tracker.damageDealt));
   const b = s.lastBreakdown;
   const cost = currentRewindCost(s);
@@ -45,10 +45,12 @@ export function BattleResult() {
                       Hero stats
                     </button>
                   </div>
-                  <div class="faint" style={{ fontSize: 13, textAlign: 'right' }}>
-                    Combat duration {r.duration.toFixed(1)} s<br />
-                    {enemies.length} enemies
-                  </div>
+                  {r && (
+                    <div class="faint" style={{ fontSize: 13, textAlign: 'right' }}>
+                      Combat duration {r.duration.toFixed(1)} s<br />
+                      {enemies.length} enemies
+                    </div>
+                  )}
                 </div>
                 <div class="result-vs">
                   {allies.map((u) => (
@@ -59,6 +61,7 @@ export function BattleResult() {
                     <MiniPortrait key={u.id} defId={u.defId} size={30} enemy class={u.alive ? '' : 'dead'} />
                   ))}
                 </div>
+                {!r && <p class="muted result-missing">The battle record was not kept when the game closed. Your rewards were already counted.</p>}
                 {tab === 'tracker' &&
                   allies
                     .slice()
@@ -120,19 +123,23 @@ export function BattleResult() {
               </div>
               <div class="panel result-rewards" data-tut={won ? 'rewards' : 'fate'}>
                 <div class="panel-title display">{won ? 'Results' : 'Fate'}</div>
-                {won && b && (
+                {won && (
                   <>
-                    <Line label="Battle won" value={b.base} />
-                    <Line label={`Surviving disciples ×${b.survivorCount}`} value={b.survivors} />
-                    {b.relicBonus > 0 && <Line label="Dao Insight bonus" value={b.relicBonus} />}
-                    {b.bounty > 0 && <Line label="Bounty" value={b.bounty} />}
-                    {b.battleBonus > 0 && <Line label="Earned in combat" value={b.battleBonus} />}
-                    {b.challenge > 0 && <Line label="Challenge reward" value={b.challenge} />}
-                    {b.quests.map((q) => (
-                      <Line key={q.name} label={`Quest · ${q.name}`} value={q.amount} icon="ui_check" />
-                    ))}
-                    <div class="hairline" style={{ margin: '14px 0' }} />
-                    <Line label="Total earned" value={b.total} big />
+                    {b && (
+                      <>
+                        <Line label="Battle won" value={b.base} />
+                        <Line label={`Surviving disciples ×${b.survivorCount}`} value={b.survivors} />
+                        {b.relicBonus > 0 && <Line label="Dao Insight bonus" value={b.relicBonus} />}
+                        {b.bounty > 0 && <Line label="Bounty" value={b.bounty} />}
+                        {b.battleBonus > 0 && <Line label="Earned in combat" value={b.battleBonus} />}
+                        {b.challenge > 0 && <Line label="Challenge reward" value={b.challenge} />}
+                        {b.quests.map((q) => (
+                          <Line key={q.name} label={`Quest · ${q.name}`} value={q.amount} icon="ui_check" />
+                        ))}
+                        <div class="hairline" style={{ margin: '14px 0' }} />
+                        <Line label="Total earned" value={b.total} big />
+                      </>
+                    )}
                     <button
                       class="btn primary big"
                       style={{ marginTop: 26, width: '100%' }}
