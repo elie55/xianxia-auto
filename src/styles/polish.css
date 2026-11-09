@@ -2997,3 +2997,13 @@ input[type='range']:hover::-webkit-slider-thumb {
 #ui-root > .crash-screen {
   inset: calc(-1 * var(--bleed-y, 0px)) calc(-1 * var(--bleed-x, 0px));
 }
+
+/* defeat screen: "Reverse time" stays on one line inside its gold plaque (the painted ends took 120 of its 322 px) */
+.result-rewards .btn.big {
+  white-space: nowrap;
+  font-size: 19px;
+  letter-spacing: 0.08em;
+  border-width: 11px 46px;
+  border-image-width: 11px 46px;
+  padding: 0 4px;
+}
