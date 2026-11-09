@@ -2045,3 +2045,187 @@ input[type='range']:hover::-webkit-slider-thumb {
   margin-left: auto;
   min-width: 160px;
 }
+
+/* ───────── PAINTED CONTROLS ─────────
+   Every button, tab and toggle is a plaque from one painted family:
+   jade = primary or selected, gold = special, crimson = danger, dark lacquer = everything else. */
+.btn:not(.primary):not(.gold):not(.danger),
+.speed-btn,
+.codex-tab,
+.tracker-tabs button,
+.result-tabs button {
+  background: none;
+  border: 0;
+  border-style: solid;
+  border-width: 9px 48px;
+  border-radius: 0;
+  border-image: url('/assets/art/ui/button_dark_9.png') 60 300 fill / 9px 48px stretch;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+  color: var(--paper);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+  backdrop-filter: none;
+}
+.btn:not(.primary):not(.gold):not(.danger) {
+  padding: 0 14px;
+  min-height: 56px;
+}
+.btn:not(.primary):not(.gold):not(.danger)::after {
+  inset: 6px 30px;
+}
+.btn:not(.primary):not(.gold):not(.danger).small {
+  border-width: 7px 36px;
+  border-image-width: 7px 36px;
+  min-height: 40px;
+  padding: 0 4px;
+}
+.btn:not(.primary):not(.gold):not(.danger).big {
+  border-width: 11px 60px;
+  border-image-width: 11px 60px;
+  min-height: 68px;
+  padding: 0 10px;
+}
+.btn:not(.primary):not(.gold):not(.danger):hover:not(:disabled),
+.speed-btn:hover,
+.codex-tab:hover,
+.tracker-tabs button:hover,
+.result-tabs button:hover {
+  filter: brightness(1.25);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5), 0 0 22px rgba(243, 207, 120, 0.28);
+  color: #fff6dc;
+}
+.btn:disabled {
+  filter: grayscale(0.75) brightness(0.72);
+  opacity: 0.75;
+}
+.menu-buttons .btn.ghost:hover:not(:disabled) {
+  background: none;
+}
+
+/* tabs and toggles: dark plaque at rest, jade plaque when selected */
+.speed-btn.on,
+.codex-tab.on,
+.tracker-tabs button.on,
+.result-tabs button.on {
+  border-image-source: url('/assets/art/ui/button_jade_9.png');
+  color: #f8fff9;
+  background: none;
+}
+.speed-btn {
+  height: 40px;
+  border-width: 6px 22px;
+  border-image-width: 6px 22px;
+  padding: 0 2px;
+  color: var(--paper);
+}
+.codex-tab {
+  border-width: 8px 38px;
+  border-image-width: 8px 38px;
+  padding: 2px 6px;
+  min-height: 50px;
+}
+.tracker-tabs {
+  gap: 4px;
+}
+.tracker-tabs button {
+  height: 34px;
+  border-width: 5px 18px;
+  border-image-width: 5px 18px;
+  padding: 0;
+}
+.result-tabs {
+  background: none;
+  padding: 0;
+  gap: 6px;
+}
+.result-tabs button {
+  border-width: 6px 28px;
+  border-image-width: 6px 28px;
+  padding: 2px 4px;
+  min-height: 38px;
+}
+
+/* clickable cards and tiles: a slim version of the ornate panel frame, drawn over the edge */
+.shop-row,
+.team-size-offer,
+.event-choice,
+.codex-card,
+.pick-card,
+.champion-pick,
+.tier-box {
+  position: relative;
+}
+.shop-row::after,
+.team-size-offer::after,
+.event-choice::after,
+.tier-box::after,
+.codex-card::after,
+.pick-card::after,
+.champion-pick::after,
+.blessing-card.panel.plain::after {
+  content: '';
+  display: block;
+  position: absolute;
+  inset: -4px;
+  width: auto;
+  height: auto;
+  border: 14px solid transparent;
+  border-image: var(--frame-art) 232 / 14px round;
+  border-radius: 0;
+  opacity: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.45));
+}
+.shop-row.sold::after {
+  opacity: 0.35;
+}
+.champion-pick {
+  padding: 12px 12px 10px;
+  background: linear-gradient(180deg, rgba(20, 40, 42, 0.85), rgba(8, 16, 18, 0.92));
+}
+.champion-pick.on {
+  background: linear-gradient(180deg, rgba(38, 92, 80, 0.9), rgba(14, 36, 36, 0.95));
+  box-shadow: 0 0 22px rgba(111, 227, 196, 0.35);
+}
+
+/* toasts are small plaques too */
+.toast {
+  background: none;
+  border: 0;
+  border-style: solid;
+  border-width: 9px 48px;
+  border-radius: 0;
+  border-image: url('/assets/art/ui/button_dark_9.png') 60 300 fill / 9px 48px stretch;
+  padding: 6px 10px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+.toast.error {
+  border-image-source: url('/assets/art/ui/button_red_9.png');
+  color: #ffe1dc;
+}
+.toast.gold {
+  border-image-source: url('/assets/art/ui/button_gold_9.png');
+  color: #fff6dc;
+}
+
+/* the damage tracker keeps a painted frame, slimmer than the big panels */
+.rightrail.panel.plain {
+  border-color: transparent;
+}
+.rightrail.panel.plain::before {
+  display: block;
+  inset: -6px;
+  border-width: 16px;
+  border-image: var(--frame-art) 232 / 16px round;
+}
+
+/* framed cards: square corners so the background never pokes out of the painted frame */
+.shop-row,
+.team-size-offer,
+.event-choice,
+.codex-card,
+.pick-card,
+.champion-pick,
+.tier-box,
+.blessing-card {
+  border-radius: 2px;
+}
