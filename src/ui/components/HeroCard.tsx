@@ -9,7 +9,7 @@ import { CLASSES } from '@/content/classes';
 import { heroAbility, heroClasses, heroDaoPath, heroInsights, heroStats, type HeroState, type TeamContext } from '@/core/builder';
 import { Icon, KEYWORD_ICON, STAT_COLOR, STAT_ICON, STAT_LABEL } from './Icon';
 import { RichText } from './RichText';
-import { tip } from './Tooltip';
+import { hideTooltip, showTooltip, tip } from './Tooltip';
 import { ITEM_BY_ID } from '@/content/items';
 
 const EMPTY_CTX: TeamContext = { relics: [], itemSlotBonus: 0, itemSlotsPerRank: false, warriorBlessing: false, qualityBlessing: false };
@@ -36,7 +36,7 @@ export function Portrait({ id, accent, hanzi, class: cls }: { id: string; accent
 export function RankGlyph({ rank, size = 44 }: { rank: Rank; size?: number }) {
   const r = RANK_NAMES[rank];
   return (
-    <div class={`rank-glyph rank-${rank}`} style={{ width: size, height: size, fontSize: size * 0.5 }} {...tip(<><h4>{r.name}</h4><div class="sub">Rank {r.short}</div><p>Cultivation realm of this disciple. Buy a copy of the disciple to break through.</p></>)}>
+    <div class={`rank-glyph rank-${rank} has-tip`} style={{ width: size, height: size, fontSize: size * 0.5 }} {...tip(<><h4>{r.name}</h4><div class="sub">Rank {r.short}</div><p>Cultivation realm of this disciple. Buy a copy of the disciple to break through.</p></>)}>
       <span class="display">{r.short}</span>
     </div>
   );
@@ -46,7 +46,7 @@ export function ClassBadge({ id, size = 34 }: { id: keyof typeof CLASSES; size?:
   const c = CLASSES[id];
   return (
     <div
-      class="class-badge"
+      class="class-badge has-tip"
       style={{ width: size, height: size, ['--c' as string]: c.color }}
       {...tip(
         <>
@@ -77,6 +77,8 @@ export interface HeroCardProps {
   onClick?: () => void;
   footer?: ComponentChildren;
   showStats?: boolean;
+  /** The narrower shop card: fewer trait chips fit on a row. */
+  compact?: boolean;
   class?: string;
 }
 
@@ -91,13 +93,37 @@ export function HeroCard(p: HeroCardProps) {
   const insights = heroInsights(hero);
   const [hover, setHover] = useState(false);
   const showStats = p.showStats ?? (hover || p.selected);
+  const main = CLASSES[classes[0]];
+  const classLine = classes.length > 1 ? classes.map((c) => CLASSES[c].name).join(' · ') : `${main.name} · ${main.role}`;
+  const usesSpirit = stats.spirit > stats.attack;
+  // traits on ONE row of this card size (at most three); whatever does not fit folds into a "+N" chip
+  const rowWidth = p.compact ? 225 : p.size === 'lg' ? 315 : 275;
+  const chipWidth = (t: string) => t.length * 8 + 39;
+  let traits: Keyword[] = def.tags.slice(0, 3);
+  if (def.tags.length > 3 || traits.reduce((a, t) => a + chipWidth(t), 0) > rowWidth) {
+    traits = [];
+    let used = 40; // room for the "+N" chip
+    for (const t of def.tags.slice(0, 3)) {
+      if (traits.length && used + chipWidth(t) > rowWidth) break;
+      traits.push(t);
+      used += chipWidth(t);
+    }
+  }
+  const moreTraits = def.tags.filter((t) => !traits.includes(t));
   return (
     <div
       class={`hero-card ${p.size ?? 'md'} ${p.selected ? 'selected' : ''} ${p.dimmed ? 'dimmed' : ''} ${p.onClick ? 'clickable' : ''} ${showStats ? 'stats-open' : ''} ${p.class ?? ''}`}
       style={{ ['--accent' as string]: def.accent }}
       onClick={p.onClick}
       onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+      // hovering anywhere on the card shows the full ability; badges, traits and stats keep their own tooltips
+      onMouseOver={(e) => {
+        if (!(e.target as HTMLElement).closest('.has-tip')) showTooltip(e, <AbilityTip hero={hero} />, 'right');
+      }}
+      onMouseLeave={() => {
+        setHover(false);
+        hideTooltip();
+      }}
     >
       <div class="pennant-border" />
       <div class="pennant">
@@ -114,19 +140,46 @@ export function HeroCard(p: HeroCardProps) {
             <ClassBadge key={c} id={c} />
           ))}
         </div>
-        <div class="side-badges right">
-          {def.tags.slice(0, 3).map((t) => (
-            <div key={t} class={`tag kw-${t}`} {...tip(<><h4 class={`kw-${t}`}>{t}</h4><p>{KEYWORD_DESC[t]}</p>{tagSource(def, t) && <p class="muted">{tagSource(def, t)}</p>}</>)}>
-              <Icon name={KEYWORD_ICON[t] ?? 'ui_info'} size={12} /> {t}
-            </div>
-          ))}
-        </div>
         <div class="card-rank">
           <RankGlyph rank={hero.rank} size={40} />
         </div>
         <div class="nameplate">
           <div class="hero-name display">{def.name}</div>
-          <div class="hero-hanzi brush">{def.hanzi}</div>
+          <div class="hero-class-line" style={{ ['--cls' as string]: main.color }}>
+            <span class="hero-hanzi brush">{def.hanzi}</span>
+            <span class="hero-class">{classLine}</span>
+          </div>
+        </div>
+        {/* traits, ability and key stats live on the card itself, below the art (they used to sit on the portrait) */}
+        <div class="card-info">
+          <div class="trait-strip">
+            {traits.map((t) => (
+              <div key={t} class={`trait kw-${t} has-tip`} {...tip(<><h4 class={`kw-${t}`}>{t}</h4><p>{KEYWORD_DESC[t]}</p>{tagSource(def, t) && <p class="muted">{tagSource(def, t)}</p>}</>)}>
+                <Icon name={KEYWORD_ICON[t] ?? 'ui_info'} size={14} /> {t}
+              </div>
+            ))}
+            {moreTraits.length > 0 && (
+              <div class="trait more has-tip" {...tip(<>{moreTraits.map((t) => <p key={t}><b class={`kw-${t}`}>{t}:</b> {KEYWORD_DESC[t]}</p>)}</>)}>
+                +{moreTraits.length}
+              </div>
+            )}
+          </div>
+          <div class="card-ability">
+            <Icon name="stat_qi" size={16} color="#8fd5ff" />
+            <span class="card-ability-name">{ability.name}</span>
+            <span class="card-ability-qi">{ability.qiCost} Qi</span>
+          </div>
+          <div class="card-keystats">
+            <span>
+              <Icon name="stat_hp" size={14} color={STAT_COLOR.hp} /> <b>{Math.round(stats.hp)}</b> HP
+            </span>
+            <span>
+              <Icon name={STAT_ICON[usesSpirit ? 'spirit' : 'attack']} size={14} color={STAT_COLOR[usesSpirit ? 'spirit' : 'attack']} /> <b>{Math.round(usesSpirit ? stats.spirit : stats.attack)}</b> {usesSpirit ? 'SPI' : 'ATK'}
+            </span>
+            <span>
+              <Icon name={STAT_ICON.range} size={14} color={STAT_COLOR.range} /> {stats.range <= 1 ? 'Melee' : <><b>{Math.round(stats.range)}</b> Range</>}
+            </span>
+          </div>
         </div>
         <div class={`stats ${showStats ? 'open' : ''}`}>
           <div class="bar hp">
@@ -140,15 +193,12 @@ export function HeroCard(p: HeroCardProps) {
           </div>
           <div class="stat-grid">
             {(['attack', 'attackSpeed', 'spirit', 'range', 'crit', 'defense', 'qiRegen', 'omnivamp'] as const).map((k) => (
-              <div key={k} class="stat" {...tip(<><h4 style={{ color: STAT_COLOR[k] }}>{STAT_LABEL[k]}</h4><p>{STAT_DESC[k]}</p></>)}>
+              <div key={k} class="stat has-tip" {...tip(<><h4 style={{ color: STAT_COLOR[k] }}>{STAT_LABEL[k]}</h4><p>{STAT_DESC[k]}</p></>)}>
                 <Icon name={STAT_ICON[k]} size={15} color={STAT_COLOR[k]} />
                 <span>{fmtStat(k, stats[k])}</span>
               </div>
             ))}
           </div>
-        </div>
-        <div class="ability-diamond" {...tip(<AbilityTip hero={hero} />)}>
-          <Icon name={classes[0] ? `class_${classes[0]}` : 'ui_info'} size={30} />
         </div>
       </div>
       {p.footer && <div class="card-footer">{p.footer}</div>}

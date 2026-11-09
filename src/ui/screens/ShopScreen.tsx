@@ -173,7 +173,7 @@ export function ShopScreen() {
                         ▲ Rank Up
                       </div>
                       {o ? (
-                        <HeroCard defId={o.defId} rank={o.rank} price={o.price} sale={o.sale} owned={owned} onClick={() => onBuyHero(o.key)} ctx={ctx} />
+                        <HeroCard defId={o.defId} rank={o.rank} price={o.price} sale={o.sale} owned={owned} onClick={() => onBuyHero(o.key)} ctx={ctx} compact />
                       ) : (
                         <div class="hero-card sold-card">
                           <div class="pennant-border" />
