@@ -529,7 +529,13 @@ export class BattleView {
 
   startBattle(battle: Battle, speed: number): void {
     this.stopBattle();
-    this.clearUnits();
+    // the placement preview and the battle are built from the same config (same ids, same characters):
+    // reuse its sprites so pressing Fight never blinks the armies out and back in
+    const previous = new Map(this.views);
+    this.views.clear();
+    this.fx.removeChildren();
+    this.fxBack.removeChildren();
+    this.texts.removeChildren();
     this.battle = battle;
     this.mode = 'battle';
     this.speed = speed;
@@ -541,8 +547,18 @@ export class BattleView {
     gsap.globalTimeline.timeScale(speed);
     this.fx.timeScale = speed;
     this.fxBack.timeScale = speed;
-    for (const u of battle.units) this.addView(u, false);
-    for (const v of this.views.values()) v.spawnAnim(Math.random() * 0.2);
+    for (const u of battle.units) {
+      const old = previous.get(u.id);
+      if (old && !old.destroyed && old.unit.defId === u.defId) {
+        previous.delete(u.id);
+        old.rebind(u);
+        this.views.set(u.id, old);
+        continue;
+      }
+      const v = this.addView(u, false);
+      if (v.visible) v.spawnAnim(Math.random() * 0.2);
+    }
+    for (const v of previous.values()) v.destroy({ children: true });
   }
 
   setSpeed(s: number): void {

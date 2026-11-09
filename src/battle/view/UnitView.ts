@@ -34,7 +34,7 @@ function softShadow(): Texture {
 }
 
 export class UnitView extends Container {
-  readonly unit: Unit;
+  unit: Unit;
   /** Holds the sprite; offset for hover, hit reactions and the idle bob. */
   private body = new Container();
   private pack: SpritePack | null = null;
@@ -443,6 +443,14 @@ export class UnitView extends Container {
     this.shadow.alpha = this.unit.flying ? 0.55 : 0.9;
     this.playAnim('idle');
     gsap.fromTo(this.body.scale, { y: 0.4 }, { y: 1, duration: 0.5, ease: 'back.out(2)' });
+  }
+
+  /** Hands this sprite to another Unit of the same character (placement preview → live battle) without redrawing it. */
+  rebind(unit: Unit): void {
+    this.unit = unit;
+    this.dead = false;
+    this.bars.visible = true;
+    this.refreshBars();
   }
 
   spawnAnim(delay = 0): void {
