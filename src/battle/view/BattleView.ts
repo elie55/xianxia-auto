@@ -460,7 +460,7 @@ export class BattleView {
         const v = this.viewOf(e.id);
         const t = this.viewOf(e.targetId);
         if (!v) break;
-        v.attackAnim(e.ranged);
+        v.attackAnim(e.ranged, e.hitDelay);
         if (e.ranged && t) {
           const style = PROJECTILE_STYLES[e.projectile ?? 'spirit_bolt'] ?? PROJECTILE_STYLES.spirit_bolt;
           this.fx.projectile(v.x, v.y + v.chestY, t.x, t.y + t.chestY, e.hitDelay, style);

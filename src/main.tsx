@@ -5,9 +5,11 @@ import './styles/run.css';
 import { render } from 'preact';
 import { App } from '@/app/App';
 import { installScaling } from '@/app/scale';
+import { applyDebugQuery } from '@/app/debug';
 
 const uiRoot = document.getElementById('ui-root')!;
 installScaling(uiRoot);
+applyDebugQuery();
 render(<App />, uiRoot);
 
 // Prevent the browser context menu / pinch zoom inside the game.

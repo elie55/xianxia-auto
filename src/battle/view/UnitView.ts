@@ -1,16 +1,16 @@
-import { AnimatedSprite, ColorMatrixFilter, Container, Graphics, Sprite, Text, TextStyle, Texture } from 'pixi.js';
+import { AnimatedSprite, ColorMatrixFilter, Container, Graphics, Sprite, Text, TextStyle } from 'pixi.js';
 import gsap from 'gsap';
 import type { Unit } from '@/battle/sim/unit';
 import { STATUS_COLORS } from './Vfx';
-import { loadSpritePack, type SpritePack } from './SpritePack';
+import { loadSpritePack, type SpriteAnimDef, type SpritePack } from './SpritePack';
 import { loadUnitTexture } from './textures';
 
+/** On-screen height (design px) of a scale-1 character. */
 const UNIT_HEIGHT = 150;
 
 export class UnitView extends Container {
   readonly unit: Unit;
   private body = new Container();
-  private figure: Container | Sprite | AnimatedSprite | null = null;
   private pack: SpritePack | null = null;
   private anim: AnimatedSprite | null = null;
   private currentAnim = 'idle';
@@ -78,16 +78,12 @@ export class UnitView extends Container {
     if (pack && pack.anims.idle?.length) {
       this.pack = pack;
       const a = new AnimatedSprite(pack.anims.idle);
-      a.anchor.set(0.5 + (pack.def.anchorX ?? 0) / pack.def.frameW, pack.def.anchorY ?? 0.96);
-      const h = (pack.def.height ?? UNIT_HEIGHT) * this.baseScale;
-      a.scale.set(h / pack.def.frameH);
-      a.animationSpeed = (pack.def.animations.idle.fps ?? pack.def.fps) / 60;
       a.loop = true;
-      a.play();
       this.body.removeChildren();
-      this.figure = a;
       this.anim = a;
       this.body.addChild(a);
+      this.applyAnimDef('idle');
+      a.play();
       this.hasRealArt = true;
       return;
     }
@@ -98,26 +94,38 @@ export class UnitView extends Container {
     const h = UNIT_HEIGHT * this.baseScale;
     s.scale.set(h / s.texture.height);
     this.body.removeChildren();
-    this.figure = s;
     this.body.addChild(s);
     this.hasRealArt = true;
   }
 
+  /** Sets anchor/scale/speed for the given animation so the character keeps its on-screen size. */
+  private applyAnimDef(name: string, speedOverride?: number): SpriteAnimDef | null {
+    const a = this.anim;
+    const def = this.pack?.def.animations[name];
+    if (!a || !def) return null;
+    a.anchor.set(def.pivotX, def.pivotY);
+    const targetH = UNIT_HEIGHT * this.baseScale;
+    a.scale.set(targetH / def.charH);
+    a.animationSpeed = (speedOverride ?? def.fps) / 60;
+    return def;
+  }
+
   /** Plays a pack animation if available; returns true when handled. */
-  private playAnim(name: string, onDone?: () => void): boolean {
+  private playAnim(name: string, opts: { fps?: number; onDone?: () => void } = {}): boolean {
     const a = this.anim;
     const frames = this.pack?.anims[name];
     if (!a || !frames || frames.length === 0) return false;
-    const def = this.pack!.def.animations[name];
+    const def = this.applyAnimDef(name, opts.fps);
+    if (!def) return false;
     this.currentAnim = name;
     a.textures = frames;
-    a.animationSpeed = (def.fps ?? this.pack!.def.fps) / 60;
     a.loop = !!def.loop;
+    a.onComplete = undefined;
     a.gotoAndPlay(0);
     if (!def.loop) {
       a.onComplete = () => {
         a.onComplete = undefined;
-        onDone?.();
+        opts.onDone?.();
         if (!this.dead) this.playAnim('idle');
       };
     }
@@ -163,17 +171,16 @@ export class UnitView extends Container {
     glyph.anchor.set(0.5);
     glyph.y = u.side === 'ally' ? -40 * s : -42 * s;
     c.addChild(glyph);
-    this.figure = c;
     this.body.addChild(c);
   }
 
   setFacing(f: 1 | -1): void {
-    this.body.scale.x = f * Math.abs(this.body.scale.x || 1);
+    const sx = Math.abs(this.body.scale.x) || 1;
+    this.body.scale.x = f * sx;
   }
 
   update(time: number, idleSpeed = 1): void {
     if (this.dead) return;
-    // idle bob only for non-animated figures
     if (!this.anim) this.body.y = Math.sin(time * 2.2 * idleSpeed + this.bob) * (this.hasRealArt ? 1.5 : 2);
     this.aura.alpha = this.auraAlpha + Math.sin(time * 3 + this.bob) * 0.1;
     this.refreshBars();
@@ -236,14 +243,18 @@ export class UnitView extends Container {
     return -UNIT_HEIGHT * this.baseScale * 0.5;
   }
 
-  attackAnim(ranged: boolean): void {
+  /** Attack: with a sheet, time the animation so its hit frame lands when the sim applies damage. */
+  attackAnim(ranged: boolean, hitDelay = 0.22): void {
     const dir = this.body.scale.x >= 0 ? 1 : -1;
-    const tl = gsap.timeline();
-    if (this.playAnim('attack')) {
-      // small forward push even with sheet animation for impact
-      tl.to(this.body, { x: 10 * dir, duration: 0.1, ease: 'power2.out' }).to(this.body, { x: 0, duration: 0.3, ease: 'power2.out' });
+    const def = this.pack?.def.animations.attack;
+    if (def && this.anim) {
+      const hitFrame = def.hitFrame ?? Math.round(def.frames * 0.45);
+      const fps = Math.min(60, Math.max(def.fps, hitFrame / Math.max(0.12, hitDelay)));
+      this.playAnim('attack', { fps });
+      gsap.fromTo(this.body, { x: 0 }, { x: 8 * dir, duration: hitDelay, ease: 'power2.in', yoyo: true, repeat: 1, overwrite: 'auto' });
       return;
     }
+    const tl = gsap.timeline();
     if (ranged) {
       tl.to(this.body, { x: -10 * dir, duration: 0.08, ease: 'power2.out' }).to(this.body, { x: 0, duration: 0.25, ease: 'power2.out' });
       tl.to(this.body.scale, { y: 1.06, duration: 0.08, yoyo: true, repeat: 1 }, 0);
@@ -254,7 +265,7 @@ export class UnitView extends Container {
   }
 
   castAnim(): void {
-    if (!this.playAnim('cast') && !this.playAnim('attack')) {
+    if (!this.playAnim('cast') && !this.playAnim('attack', { fps: 30 })) {
       const tl = gsap.timeline();
       tl.to(this.body.scale, { y: 1.12, duration: 0.15, ease: 'power2.out' }).to(this.body.scale, { y: 1, duration: 0.25, ease: 'back.out(2)' });
     }
@@ -332,9 +343,8 @@ export class UnitView extends Container {
 
   spawnAnim(delay = 0): void {
     this.alpha = 0;
-    this.body.scale.y = 0.6;
-    gsap.to(this, { alpha: 1, duration: 0.3, delay });
-    gsap.to(this.body.scale, { y: 1, duration: 0.45, delay, ease: 'back.out(2)' });
+    gsap.to(this, { alpha: 1, duration: 0.3, delay, overwrite: 'auto' });
+    gsap.fromTo(this.body.scale, { y: 0.6 }, { y: 1, duration: 0.45, delay, ease: 'back.out(2)', overwrite: 'auto' });
   }
 }
 
@@ -350,4 +360,4 @@ export function darken(c: number, f: number): number {
   return (r << 16) | (g << 8) | b;
 }
 
-export { loadUnitTexture, type Texture };
+export { loadUnitTexture };
