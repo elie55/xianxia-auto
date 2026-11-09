@@ -125,7 +125,7 @@ export class VfxLayer extends Container {
         alpha: 0,
         duration: life,
         ease: 'power2.out',
-        onComplete: () => s.destroy(),
+        onComplete: () => (gsap.killTweensOf(s), s.destroy()),
       });
       gsap.to(s.scale, { x: 0.1, y: 0.1, duration: life, ease: 'power1.in' });
     }
@@ -191,7 +191,7 @@ export class VfxLayer extends Container {
     s.x = x;
     s.y = y;
     this.addChild(s);
-    gsap.to(s, { width: size, height: size, alpha: 0, duration, ease: 'power2.out', onComplete: () => s.destroy() });
+    gsap.to(s, { width: size, height: size, alpha: 0, duration, ease: 'power2.out', onComplete: () => (gsap.killTweensOf(s), s.destroy()) });
   }
 
   /** Curved slash arc with a bright core. */
@@ -335,7 +335,7 @@ export class VfxLayer extends Container {
           s.rotation += 0.12;
           s.alpha = 1 - st.t * st.t;
         },
-        onComplete: () => s.destroy(),
+        onComplete: () => (gsap.killTweensOf(s), s.destroy()),
       });
     }
     this.flash(x, y - 40, color, 110, 0.3);
@@ -356,7 +356,7 @@ export class VfxLayer extends Container {
       s.y = y - Math.random() * 30;
       this.addChild(s);
       const delay = Math.random() * 0.25;
-      gsap.to(s, { y: y - height * (0.5 + Math.random() * 0.5), x: s.x + (Math.random() - 0.5) * 40, alpha: 0, duration: 0.6 + Math.random() * 0.4, delay, ease: 'power1.out', onComplete: () => s.destroy() });
+      gsap.to(s, { y: y - height * (0.5 + Math.random() * 0.5), x: s.x + (Math.random() - 0.5) * 40, alpha: 0, duration: 0.6 + Math.random() * 0.4, delay, ease: 'power1.out', onComplete: () => (gsap.killTweensOf(s), s.destroy()) });
       gsap.to(s.scale, { x: s.scale.x * 0.3, y: s.scale.y * 0.3, duration: 0.9, delay, ease: 'power1.in' });
     }
     this.pillar(x, y, color, height * 0.8, 0.5);
@@ -377,7 +377,7 @@ export class VfxLayer extends Container {
       s.y = y - 20 - Math.random() * 30;
       this.addChild(s);
       const ang = Math.random() * Math.PI * 2;
-      gsap.to(s, { x: s.x + Math.cos(ang) * radius * Math.random(), y: s.y - 30 - Math.random() * 50, alpha: 0, duration: 0.9 + Math.random() * 0.5, ease: 'power1.out', onComplete: () => s.destroy() });
+      gsap.to(s, { x: s.x + Math.cos(ang) * radius * Math.random(), y: s.y - 30 - Math.random() * 50, alpha: 0, duration: 0.9 + Math.random() * 0.5, ease: 'power1.out', onComplete: () => (gsap.killTweensOf(s), s.destroy()) });
       gsap.to(s, { width: sz * 2.2, height: sz * 2.2, duration: 1.1, ease: 'power1.out' });
     }
   }
@@ -401,7 +401,7 @@ export class VfxLayer extends Container {
       const delay = Math.random() * 0.3;
       gsap.to(s, { alpha: 1, duration: 0.2, delay });
       gsap.to(s, { y: s.y - height * (0.5 + Math.random() * 0.5), x: s.x + Math.sin(i) * 14, duration: life, delay, ease: 'sine.out' });
-      gsap.to(s, { alpha: 0, duration: 0.35, delay: delay + life - 0.35, onComplete: () => s.destroy() });
+      gsap.to(s, { alpha: 0, duration: 0.35, delay: delay + life - 0.35, onComplete: () => (gsap.killTweensOf(s), s.destroy()) });
       gsap.to(s.scale, { x: s.scale.x * 1.6, y: s.scale.y * 1.6, duration: 0.25, delay: delay + life * 0.4, yoyo: true, repeat: 1 });
     }
   }
@@ -436,7 +436,7 @@ export class VfxLayer extends Container {
     s.y = y;
     s.alpha = 0;
     this.addChild(s);
-    const tl = gsap.timeline({ onComplete: () => s.destroy() });
+    const tl = gsap.timeline({ onComplete: () => (gsap.killTweensOf(s), s.destroy()) });
     tl.to(s, { alpha: 1, duration: 0.3 }, 0.25);
     tl.to(s, { y: y - 170, x: x + (Math.random() - 0.5) * 60, duration: 1.4, ease: 'sine.out' }, 0.25);
     tl.to(s, { alpha: 0, width: 10, height: 10, duration: 0.5, ease: 'power1.in' }, 1.15);
@@ -529,7 +529,7 @@ export class VfxLayer extends Container {
           tr.x = lastX;
           tr.y = lastY;
           this.addChild(tr);
-          gsap.to(tr, { alpha: 0, width: 4, height: 4, duration: 0.3, onComplete: () => tr.destroy() });
+          gsap.to(tr, { alpha: 0, width: 4, height: 4, duration: 0.3, onComplete: () => (gsap.killTweensOf(tr), tr.destroy()) });
         }
         lastX = c.x;
         lastY = c.y;
@@ -555,7 +555,7 @@ export class VfxLayer extends Container {
       s.x = x + (Math.random() - 0.5) * 50;
       s.y = y - Math.random() * 40;
       this.addChild(s);
-      gsap.to(s, { y: s.y - 60 - Math.random() * 40, x: s.x + (Math.random() - 0.5) * 30, alpha: 0, duration: 0.7 + Math.random() * 0.4, ease: 'power1.out', onComplete: () => s.destroy() });
+      gsap.to(s, { y: s.y - 60 - Math.random() * 40, x: s.x + (Math.random() - 0.5) * 30, alpha: 0, duration: 0.7 + Math.random() * 0.4, ease: 'power1.out', onComplete: () => (gsap.killTweensOf(s), s.destroy()) });
     }
   }
 
