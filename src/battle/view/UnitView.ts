@@ -287,7 +287,7 @@ export class UnitView extends Container {
   hurtAnim(crit: boolean): void {
     this.flash(crit ? 2.2 : 1.6, crit ? 0.14 : 0.09);
     const dir = this.body.scale.x >= 0 ? 1 : -1;
-    if (this.currentAnim === 'idle' || this.currentAnim === 'walk') this.playAnim('hurt');
+    if (this.currentAnim === 'idle' || this.currentAnim === 'walk') this.playAnim('hurt', { fps: 36 });
     gsap.fromTo(this.body, { x: -6 * dir }, { x: 0, duration: 0.18, ease: 'power2.out', overwrite: 'auto' });
   }
 
