@@ -132,12 +132,14 @@ export function hexRound(q: number, r: number): Hex {
  */
 export const HEX_SIZE = 62; // outer radius in design pixels
 export const HEX_SQUASH = 0.72;
+/** Live layout: the battle view sets the row squash per arena painting so every row stays on the painted floor. */
+export const hexLayout = { squash: HEX_SQUASH };
 export const HEX_W = Math.sqrt(3) * HEX_SIZE;
 export const HEX_H_STEP = 1.5 * HEX_SIZE * HEX_SQUASH;
 
 export function hexToPixel(h: Hex): { x: number; y: number } {
   const x = HEX_SIZE * (Math.sqrt(3) * h.q + (Math.sqrt(3) / 2) * h.r);
-  const y = HEX_SIZE * 1.5 * h.r * HEX_SQUASH;
+  const y = HEX_SIZE * 1.5 * h.r * hexLayout.squash;
   return { x, y };
 }
 
@@ -150,7 +152,7 @@ export function boardPixelSize(): { w: number; h: number } {
 
 /** Inverse of hexToPixel (local board coordinates). */
 export function pixelToHex(x: number, y: number): Hex {
-  const r = y / (HEX_SIZE * 1.5 * HEX_SQUASH);
+  const r = y / (HEX_SIZE * 1.5 * hexLayout.squash);
   const q = (x / HEX_SIZE - (Math.sqrt(3) / 2) * r) / Math.sqrt(3);
   return hexRound(q, r);
 }

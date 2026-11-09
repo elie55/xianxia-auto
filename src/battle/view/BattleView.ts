@@ -12,6 +12,7 @@ import {
   ENEMY_MIN_COL,
   HEX_SIZE,
   HEX_SQUASH,
+  hexLayout,
   HEX_W,
   allHexes,
   axialToOffset,
@@ -91,6 +92,8 @@ export class BattleView {
   }
   private bgLayer = new Container();
   private bgSprite: Sprite | null = null;
+  /** The arena painting drawn in the design frame, so its floor always meets the hexes whatever the window shape. */
+  private bgPainting: Sprite | null = null;
   private bgGradient = new Graphics();
   private world = new Container();
   private arenaLayer = new Container();
@@ -169,17 +172,31 @@ export class BattleView {
     if (c) c.style.visibility = v ? 'visible' : 'hidden';
   }
 
-  /** Vertical centre of the hex board per arena painting: each realm's floor sits at a different height. */
-  private static readonly BOARD_CENTER_Y: Record<number, number> = { 1: 684, 2: 704, 3: 724 };
+  /**
+   * Board placement per arena painting, measured on the 1920×1080 paintings: the vertical centre of the five rows and
+   * the row squash that keeps the back row on the painted floor (the abyss platform and the ladder terrace only
+   * occupy the lower third of their paintings).
+   */
+  private static readonly ARENA_LAYOUT: Record<number, { centerY: number; squash: number }> = {
+    1: { centerY: 740, squash: 0.62 },
+    2: { centerY: 790, squash: 0.52 },
+    3: { centerY: 775, squash: 0.56 },
+  };
 
-  /** Centres the board horizontally and drops it onto the current arena's floor. */
+  /** Centres the board horizontally and drops it onto the current arena's floor; standing units follow. */
   private layoutBoard(): void {
+    const cfg = BattleView.ARENA_LAYOUT[this.realm] ?? { centerY: 740, squash: HEX_SQUASH };
+    hexLayout.squash = cfg.squash;
     const w = HEX_W * (BOARD_COLS - 1) + HEX_W / 2;
-    const h = HEX_SIZE * 1.5 * HEX_SQUASH * (BOARD_ROWS - 1);
-    const cy = BattleView.BOARD_CENTER_Y[this.realm] ?? 690;
+    const h = HEX_SIZE * 1.5 * cfg.squash * (BOARD_ROWS - 1);
     this.boardOrigin.x = DESIGN_W / 2 - w / 2;
-    this.boardOrigin.y = cy - h / 2;
+    this.boardOrigin.y = cfg.centerY - h / 2;
     for (const layer of [this.arenaLayer, this.unitLayer, this.fx, this.texts]) layer.position.set(this.boardOrigin.x, this.boardOrigin.y);
+    for (const v of this.views.values()) {
+      if (!v.unit.pos) continue;
+      const p = hexToPixel(v.unit.pos);
+      v.position.set(p.x, p.y);
+    }
   }
 
   /** Skill banner: the ability name sweeps in above the caster in the class colour, then drifts up and fades. */
@@ -221,11 +238,23 @@ export class BattleView {
       this.bgSprite.destroy();
       this.bgSprite = null;
     }
+    if (this.bgPainting) {
+      this.bgPainting.destroy();
+      this.bgPainting = null;
+    }
     if (tex) {
-      const s = new Sprite(tex);
-      this.bgSprite = s;
-      this.bgLayer.addChild(s);
+      // a dimmed cover copy fills whatever a wide or tall window leaves outside the 16:9 frame …
+      const backdrop = new Sprite(tex);
+      backdrop.tint = 0x56646b;
+      this.bgSprite = backdrop;
+      this.bgLayer.addChild(backdrop);
       this.fitBackground(viewport.value);
+      // … while the crisp painting shares the board's frame, so the painted floor always meets the hexes
+      const painting = new Sprite(tex);
+      painting.width = DESIGN_W;
+      painting.height = DESIGN_H;
+      this.bgPainting = painting;
+      this.world.addChildAt(painting, 0);
     }
     this.drawVignette(viewport.value);
     this.drawGround();
@@ -275,7 +304,7 @@ export class BattleView {
     const g = this.ground;
     g.clear();
     const w = HEX_W * (BOARD_COLS - 1) + HEX_W / 2;
-    const h = HEX_SIZE * 1.5 * HEX_SQUASH * (BOARD_ROWS - 1);
+    const h = HEX_SIZE * 1.5 * hexLayout.squash * (BOARD_ROWS - 1);
     const cx = w / 2;
     const cy = h / 2;
     const col = this.realm === 1 ? 0x1d4a3d : this.realm === 2 ? 0x4a1d24 : 0x1f2c55;
@@ -308,7 +337,7 @@ export class BattleView {
     const pts: number[] = [];
     for (let i = 0; i < 6; i++) {
       const a = Math.PI / 6 + (Math.PI / 3) * i;
-      pts.push(x + Math.cos(a) * r, y + Math.sin(a) * r * HEX_SQUASH);
+      pts.push(x + Math.cos(a) * r, y + Math.sin(a) * r * hexLayout.squash);
     }
     return g.poly(pts);
   }
@@ -346,8 +375,8 @@ export class BattleView {
       const p = this.hexCenterDesign(h);
       minX = Math.min(minX, p.x - HEX_W / 2);
       maxX = Math.max(maxX, p.x + HEX_W / 2);
-      minY = Math.min(minY, p.y - HEX_SIZE * HEX_SQUASH);
-      maxY = Math.max(maxY, p.y + HEX_SIZE * HEX_SQUASH);
+      minY = Math.min(minY, p.y - HEX_SIZE * hexLayout.squash);
+      maxY = Math.max(maxY, p.y + HEX_SIZE * hexLayout.squash);
     }
     return { x: minX, y: minY - 90, w: maxX - minX, h: maxY - minY + 100 };
   }
@@ -683,7 +712,7 @@ export class BattleView {
         this.hitStop(v.unit.boss ? 110 : 80);
         this.screenFlash(accent, v.unit.boss ? 0.22 : 0.14, 0.32);
         v.tintFlash(0xffffff, 0.25);
-        this.fx.ring(v.x, v.y, accent, 96, 4, 0.7, HEX_SQUASH);
+        this.fx.ring(v.x, v.y, accent, 96, 4, 0.7, hexLayout.squash);
         this.fx.glyph(v.x, v.y, accent, 78, 0.9);
         if (!this.fx.flipbook('fx_qi_cast', v.x, v.y + 12, { scale: Math.max(0.9, v.bodyHeight / 190), anchorY: 0.92, tint: accent, fps: 26 })) this.fx.pillar(v.x, v.y, accent, 200, 0.5);
         this.fx.flash(v.x, v.y + v.chestY, accent, 180, 0.4);
@@ -735,7 +764,7 @@ export class BattleView {
         if (!v || e.amount <= 0) break;
         if (showNumbers) this.texts.spawn(v.x, v.y + v.headY, `+${e.amount}`, 'heal');
         this.fx.motes(v.x, v.y, 0x8dff9a, 8, 120);
-        this.fx.ring(v.x, v.y, 0x8dff9a, 50, 2, 0.5, HEX_SQUASH);
+        this.fx.ring(v.x, v.y, 0x8dff9a, 50, 2, 0.5, hexLayout.squash);
         audio.sfx('heal', { volume: 0.35, throttleMs: 300 });
         break;
       }
@@ -774,7 +803,7 @@ export class BattleView {
             break;
           case 'taunt':
             if (showNumbers) this.texts.spawn(v.x, v.y + v.headY - 10, 'TAUNTED', 'label', { size: 14 });
-            this.fx.ring(v.x, v.y, 0xffd27f, 60, 3, 0.5, HEX_SQUASH);
+            this.fx.ring(v.x, v.y, 0xffd27f, 60, 3, 0.5, hexLayout.squash);
             break;
           case 'sunder':
             if (showNumbers) this.texts.spawn(v.x, v.y + v.headY - 10, `-${e.stacks} DEF`, 'label', { size: 13 });
@@ -846,7 +875,7 @@ export class BattleView {
         if (e.start) {
           v.setAura(0xffb86b, 0.7);
           this.texts.spawn(v.x, v.y + v.headY - 24, `SURGE · ${e.name.toUpperCase()}`, 'label', { size: 14 });
-          this.fx.ring(v.x, v.y, 0xffb86b, 90, 3, 0.6, HEX_SQUASH);
+          this.fx.ring(v.x, v.y, 0xffb86b, 90, 3, 0.6, hexLayout.squash);
           this.fx.fireColumn(v.x, v.y, 0xffb86b, 140, 8);
         } else {
           v.setAura(v.unit.side === 'ally' ? 0x3fbf9f : 0xd2382c, 0.35);
@@ -995,7 +1024,7 @@ export class BattleView {
       case 'stone_aura':
       case 'obsidian':
         this.fx.dome(p.x, p.y, key === 'obsidian' ? 0x9a8ad0 : 0xbfe4ff, (at?.halfWidth ?? 40) + 18, at?.bodyHeight ?? 150);
-        this.fx.ring(p.x, p.y, key === 'obsidian' ? 0x9a8ad0 : 0xbfe4ff, 80, 4, 0.5, HEX_SQUASH);
+        this.fx.ring(p.x, p.y, key === 'obsidian' ? 0x9a8ad0 : 0xbfe4ff, 80, 4, 0.5, hexLayout.squash);
         break;
       case 'lotus_fire':
       case 'lotus_bloom':
@@ -1003,7 +1032,7 @@ export class BattleView {
       case 'ghost_fire': {
         const color = key === 'ghost_fire' ? 0x7ff0e1 : 0xff8a3c;
         this.fx.fireColumn(p.x, p.y, color, key === 'phoenix_strike' ? 240 : 180, 14);
-        this.fx.ring(p.x, p.y, key === 'ghost_fire' ? 0x7ff0e1 : 0xff6b3c, 70, 3, 0.6, HEX_SQUASH);
+        this.fx.ring(p.x, p.y, key === 'ghost_fire' ? 0x7ff0e1 : 0xff6b3c, 70, 3, 0.6, hexLayout.squash);
         audio.sfx('fire', { volume: 0.5, throttleMs: 200 });
         break;
       }
@@ -1011,7 +1040,7 @@ export class BattleView {
       case 'frost_burst':
       case 'freeze':
         this.fx.shards(p.x, p.y, 0xa8e4ff, key === 'frost_array' ? 14 : 9, 1);
-        this.fx.ring(p.x, p.y, 0xa8e4ff, 90, 3, 0.6, HEX_SQUASH);
+        this.fx.ring(p.x, p.y, 0xa8e4ff, 90, 3, 0.6, hexLayout.squash);
         if (key === 'frost_array') this.fx.glyph(p.x, p.y, 0xa8e4ff, 80, 1);
         audio.sfx('frost', { volume: 0.4, throttleMs: 200 });
         break;
@@ -1035,7 +1064,7 @@ export class BattleView {
         audio.sfx('boss_roar', { volume: 0.4 });
         break;
       case 'moon_pulse':
-        this.fx.ring(p.x, p.y, 0xc9d8ff, 220, 4, 0.9, HEX_SQUASH);
+        this.fx.ring(p.x, p.y, 0xc9d8ff, 220, 4, 0.9, hexLayout.squash);
         this.fx.flash(p.x, p.y + chest, 0xc9d8ff, 220, 0.5);
         this.fx.motes(p.x, p.y, 0xc9d8ff, 14, 200);
         this.screenFlash(0xc9d8ff, 0.1, 0.5);
@@ -1054,7 +1083,7 @@ export class BattleView {
         break;
       case 'enrage':
         this.fx.flash(p.x, p.y + chest, 0xff2e4d, 260, 0.6);
-        this.fx.ring(p.x, p.y, 0xff2e4d, 150, 5, 0.7, HEX_SQUASH);
+        this.fx.ring(p.x, p.y, 0xff2e4d, 150, 5, 0.7, hexLayout.squash);
         this.fx.fireColumn(p.x, p.y, 0xff2e4d, 200, 12);
         this.screenFlash(0xff2e4d, 0.22, 0.6);
         this.shake(8);

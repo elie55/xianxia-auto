@@ -1537,3 +1537,18 @@
   text-transform: uppercase;
   color: var(--rar);
 }
+
+/* Fight sits centred above the party bar, in the no-man's land between the armies, so it never covers a unit */
+.board-actions {
+  right: auto;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 196px;
+  flex-direction: row;
+  align-items: center;
+  gap: 18px;
+}
+.board-hint {
+  max-width: 460px;
+  text-align: right;
+}
