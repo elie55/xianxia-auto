@@ -1113,3 +1113,139 @@
 .draft-blessings {
   padding-top: 26px;
 }
+
+/* ───────── PARTY BAR v2: full width, taller, big hero blocks ───────── */
+.bottombar {
+  height: 262px;
+  gap: 26px;
+  padding-bottom: 22px;
+  background: linear-gradient(0deg, rgba(7, 14, 15, 0.98) 0%, rgba(7, 14, 15, 0.75) 55%, transparent 100%);
+}
+.bottombar::before {
+  left: 18px;
+  right: 18px;
+  width: auto;
+  transform: none;
+  bottom: 12px;
+  height: 218px;
+  background: linear-gradient(180deg, rgba(16, 32, 34, 0.7), rgba(5, 10, 11, 0.92));
+}
+.bottombar::after {
+  left: 4px;
+  right: 4px;
+  width: auto;
+  transform: none;
+  bottom: -4px;
+  height: 250px;
+  border-width: 34px;
+  border-image-width: 34px;
+}
+.bb-label {
+  font-size: 17px;
+  letter-spacing: 0.3em;
+  padding-bottom: 58px;
+  width: 150px;
+}
+.bb-label .faint {
+  font-size: 13px;
+  margin-top: 4px;
+}
+.bb-divider {
+  height: 160px;
+}
+.slot-row {
+  gap: 18px;
+}
+.hero-slot {
+  width: 158px;
+  padding: 10px 8px 8px;
+  gap: 6px;
+}
+.slot-items {
+  height: 40px;
+  gap: 6px;
+}
+.slot-item {
+  width: 40px;
+  height: 40px;
+  border-radius: 7px;
+}
+.slot-portrait {
+  width: 118px;
+  height: 118px;
+}
+.slot-portrait .mini-portrait {
+  width: 112px !important;
+  height: 112px !important;
+  border-width: 3px;
+}
+.slot-portrait:hover .mini-portrait {
+  transform: translateY(-4px) scale(1.05);
+}
+.slot-rank {
+  right: -2px;
+  bottom: -2px;
+}
+.slot-rank .rank-glyph {
+  width: 34px !important;
+  height: 34px !important;
+  font-size: 17px !important;
+}
+.slot-med {
+  width: 28px;
+  height: 28px;
+  left: -2px;
+  bottom: -2px;
+}
+.slot-name {
+  font-size: 15px;
+  letter-spacing: 0.12em;
+}
+.hero-slot .slot-portrait.empty {
+  width: 112px;
+  height: 112px;
+  border-width: 2px;
+}
+
+/* room for the taller bar */
+.board-actions {
+  bottom: 292px;
+}
+.shop-panel {
+  top: 100px;
+  bottom: 276px;
+  padding: 16px 28px 16px;
+}
+.shop-cards .hero-card {
+  width: 250px;
+  height: 400px;
+}
+.event-panel {
+  top: 46%;
+  transform: translateY(-50%);
+  min-height: 460px;
+  max-height: 600px;
+}
+.event-panel.anim-pop {
+  animation-name: pop-in-centred2;
+}
+@keyframes pop-in-centred2 {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+}
+.result-wrap {
+  margin-top: -90px;
+}
+.reward-wrap {
+  margin-top: -80px;
+}
+.leftrail,
+.rightrail {
+  top: 104px;
+}

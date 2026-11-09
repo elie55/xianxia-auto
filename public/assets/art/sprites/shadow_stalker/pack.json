@@ -35,10 +35,10 @@
       "frameH": 256,
       "fps": 10.7,
       "pivotX": 0.3757,
-      "pivotY": 0.9597,
-      "charH": 232,
+      "pivotY": 0.9805,
+      "charH": 245,
       "loop": false,
-      "charW": 190
+      "charW": 201
     },
     "walk": {
       "sheet": "walk.png",

@@ -9,10 +9,10 @@
       "fps": 10.7,
       "pivotX": 0.4821,
       "pivotY": 0.9297,
-      "charH": 231,
+      "charH": 214,
       "loop": false,
       "hitFrame": 11,
-      "charW": 137
+      "charW": 127
     },
     "idle": {
       "sheet": "idle.png",
@@ -48,10 +48,10 @@
       "frameH": 256,
       "fps": 10.7,
       "pivotX": 0.4821,
-      "pivotY": 0.9414,
-      "charH": 231,
+      "pivotY": 0.9415,
+      "charH": 215,
       "loop": true,
-      "charW": 137
+      "charW": 128
     }
   }
 }

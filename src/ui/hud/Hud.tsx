@@ -298,9 +298,9 @@ function HeroSlot({ s, uid, ctx, drop, dragging, reserve }: { s: RunState; uid: 
             onPointerDown={(e) => startDrag({ kind: 'hero', uid: h.uid }, e)}
             {...tip(<HeroSlotTip h={h} />, 'above')}
           >
-            <MiniPortrait defId={h.defId} size={82} />
+            <MiniPortrait defId={h.defId} size={112} />
             <div class="slot-rank">
-              <RankGlyph rank={h.rank} size={26} />
+              <RankGlyph rank={h.rank} size={34} />
             </div>
             {reserve && <div class="slot-med" {...tip(<><h4 class="kw-Meditation">Reserve</h4><p>Only [Meditation] effects work from here.</p></>)}><Icon name="kw_meditation" size={12} /></div>}
           </div>

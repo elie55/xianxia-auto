@@ -48,10 +48,10 @@
       "frameH": 256,
       "fps": 10.7,
       "pivotX": 0.4433,
-      "pivotY": 0.8906,
-      "charH": 210,
+      "pivotY": 0.879,
+      "charH": 196,
       "loop": true,
-      "charW": 189
+      "charW": 176
     }
   }
 }

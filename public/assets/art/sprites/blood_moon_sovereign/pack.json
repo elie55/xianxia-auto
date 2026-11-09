@@ -8,11 +8,11 @@
       "frameH": 256,
       "fps": 10.7,
       "pivotX": 0.5382,
-      "pivotY": 0.8702,
-      "charH": 208,
+      "pivotY": 0.8555,
+      "charH": 181,
       "loop": false,
       "hitFrame": 11,
-      "charW": 239
+      "charW": 208
     },
     "idle": {
       "sheet": "idle.png",

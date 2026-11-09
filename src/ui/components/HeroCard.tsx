@@ -1,4 +1,5 @@
 import type { ComponentChildren } from 'preact';
+import { PAINTED_ICONS } from '@/ui/components/paintedIcons';
 import { useState } from 'preact/hooks';
 import type { Rank } from '@/core/types';
 import { RANK_NAMES } from '@/core/types';
@@ -208,7 +209,7 @@ export function ItemChip({ itemId, size = 40, onClick, class: cls, draggable, on
       onPointerDown={draggable ? onDragStart : undefined}
       {...tip(<ItemTip itemId={itemId} />)}
     >
-      <Icon name={`item_${it.icon}`} size={size * 0.6} />
+      <Icon name={`item_${it.icon}`} size={size * (PAINTED_ICONS.has(`item_${it.icon}`) ? 0.88 : 0.6)} />
     </div>
   );
 }
