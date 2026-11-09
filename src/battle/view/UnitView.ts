@@ -6,7 +6,7 @@ import { loadSpritePack, type SpriteAnimDef, type SpritePack } from './SpritePac
 import { loadUnitTexture } from './textures';
 
 /** On-screen height (design px) of a scale-1 character. */
-const UNIT_HEIGHT = 160;
+const UNIT_HEIGHT = 180;
 /** Flying units hover this far above their hex (design px, before scale). */
 const HOVER_LIFT = 16;
 

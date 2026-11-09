@@ -91,7 +91,7 @@ export function HeroCard(p: HeroCardProps) {
   const showStats = p.showStats ?? (hover || p.selected);
   return (
     <div
-      class={`hero-card ${p.size ?? 'md'} ${p.selected ? 'selected' : ''} ${p.dimmed ? 'dimmed' : ''} ${p.onClick ? 'clickable' : ''} ${p.class ?? ''}`}
+      class={`hero-card ${p.size ?? 'md'} ${p.selected ? 'selected' : ''} ${p.dimmed ? 'dimmed' : ''} ${p.onClick ? 'clickable' : ''} ${showStats ? 'stats-open' : ''} ${p.class ?? ''}`}
       style={{ ['--accent' as string]: def.accent }}
       onClick={p.onClick}
       onMouseEnter={() => setHover(true)}
@@ -119,10 +119,12 @@ export function HeroCard(p: HeroCardProps) {
             </div>
           ))}
         </div>
+        <div class="card-rank">
+          <RankGlyph rank={hero.rank} size={40} />
+        </div>
         <div class="nameplate">
           <div class="hero-name display">{def.name}</div>
           <div class="hero-hanzi brush">{def.hanzi}</div>
-          <RankGlyph rank={hero.rank} />
         </div>
         <div class={`stats ${showStats ? 'open' : ''}`}>
           <div class="bar hp">

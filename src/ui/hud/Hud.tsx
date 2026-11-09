@@ -288,7 +288,7 @@ function HeroSlot({ s, uid, ctx, drop, dragging, reserve }: { s: RunState; uid: 
               const itemId = h.items[i];
               return (
                 <div key={i} class="slot-item">
-                  {itemId && <ItemChip itemId={itemId} size={26} draggable onDragStart={(e) => startDrag({ kind: 'item', itemId, fromHero: h.uid }, e)} />}
+                  {itemId && <ItemChip itemId={itemId} size={30} draggable onDragStart={(e) => startDrag({ kind: 'item', itemId, fromHero: h.uid }, e)} />}
                 </div>
               );
             })}
@@ -298,9 +298,9 @@ function HeroSlot({ s, uid, ctx, drop, dragging, reserve }: { s: RunState; uid: 
             onPointerDown={(e) => startDrag({ kind: 'hero', uid: h.uid }, e)}
             {...tip(<HeroSlotTip h={h} />, 'above')}
           >
-            <MiniPortrait defId={h.defId} size={64} />
+            <MiniPortrait defId={h.defId} size={82} />
             <div class="slot-rank">
-              <RankGlyph rank={h.rank} size={22} />
+              <RankGlyph rank={h.rank} size={26} />
             </div>
             {reserve && <div class="slot-med" {...tip(<><h4 class="kw-Meditation">Reserve</h4><p>Only [Meditation] effects work from here.</p></>)}><Icon name="kw_meditation" size={12} /></div>}
           </div>
