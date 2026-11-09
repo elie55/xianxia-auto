@@ -38,6 +38,7 @@ import { run } from './store';
  *   ?demo=rankup       → a breakthrough (Dao Path choice)
  *   ?demo=reward       → Dao Insight reward pick
  *   ?demo=challenge    → challenge offers
+ *   ?demo=insight      → class Insight choice (rank 2 breakthrough)
  *   ?demo=cleared      → realm cleared
  *   &realm=1|2|3       → arena painting of that realm (with any board scene)
  *   ?demo=end          → run end (victory)
@@ -64,7 +65,7 @@ export function applyDebugQuery(): boolean {
     return true;
   }
   const eventId = value.startsWith('event:') ? value.slice(6) : null;
-  const SCENES = new Set(['boss', 'battle', 'single', 'result', 'defeat', 'shop', 'rankup', 'reward', 'challenge', 'cleared', 'end']);
+  const SCENES = new Set(['boss', 'battle', 'single', 'result', 'defeat', 'shop', 'rankup', 'insight', 'reward', 'challenge', 'cleared', 'end']);
   const ids = value && !SCENES.has(value) && !eventId ? value.split(',').filter((id) => HEROES.some((h) => h.id === id)) : ['li_jian', 'shan_tie', 'hong_lian', 'mei_yao', 'ying_wu'];
   draftPick(s, ids[0] ?? 'li_jian', 'wealth');
   s.currentEvent = null;
@@ -124,6 +125,14 @@ function applyScene(s: RunState, scene: string): void {
       const h = s.roster[0];
       h.rank = 1;
       h.daoPathId = undefined;
+      queueRankUp(s, h.uid);
+      beginRankUps(s, 'board');
+      break;
+    }
+    case 'insight': {
+      const h = s.roster[0];
+      h.rank = 2;
+      h.daoPathId = HEROES.find((def) => def.id === h.defId)!.daoPaths[0].id;
       queueRankUp(s, h.uid);
       beginRankUps(s, 'board');
       break;

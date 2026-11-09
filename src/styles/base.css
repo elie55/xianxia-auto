@@ -16,7 +16,7 @@ body {
   background: var(--ink-900);
   color: var(--paper);
   font-family: var(--font-body);
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.35;
   -webkit-font-smoothing: antialiased;
   user-select: none;
@@ -232,7 +232,7 @@ button:disabled {
 .btn.small {
   min-height: 38px;
   padding: 0 18px;
-  font-size: 14px;
+  font-size: 15px;
 }
 .btn.big {
   min-height: 64px;
@@ -293,7 +293,7 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-shadow: 0 1px 2px #000;
 }
@@ -305,7 +305,7 @@ button:disabled {
   gap: 4px;
   padding: 2px 8px;
   border-radius: 3px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -427,16 +427,16 @@ button:disabled {
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
   pointer-events: none;
   animation: tip-in var(--dur-fast) var(--ease-out);
-  font-size: 14px;
+  font-size: 15px;
 }
 .tooltip h4 {
   margin: 0 0 4px;
   font-family: var(--font-display);
-  font-size: 16px;
+  font-size: 17px;
   letter-spacing: 0.06em;
 }
 .tooltip .sub {
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--paper-faint);
@@ -447,7 +447,7 @@ button:disabled {
 }
 .tooltip .hint {
   margin-top: 8px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--paper-faint);
   letter-spacing: 0.08em;
 }
@@ -552,7 +552,7 @@ button:disabled {
   border: 1px solid rgba(212, 168, 75, 0.5);
   font-family: var(--font-display);
   letter-spacing: 0.1em;
-  font-size: 16px;
+  font-size: 17px;
   animation: pop-in var(--dur-med) var(--ease-spring);
   z-index: 100;
   pointer-events: none;

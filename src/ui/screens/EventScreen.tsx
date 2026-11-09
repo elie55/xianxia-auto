@@ -77,7 +77,7 @@ export function EventScreen() {
                 </div>
                 {pendingChoice && (
                   <div class="hero-picker anim-rise">
-                    <div class="muted" style={{ fontSize: 13 }}>
+                    <div class="muted" style={{ fontSize: 14 }}>
                       Choose a disciple:
                     </div>
                     <div class="row" style={{ gap: 10, flexWrap: 'wrap' }}>
@@ -107,7 +107,7 @@ export function EventScreen() {
                 <p class="event-text outcome">{outcome.text}</p>
                 {s.pendingPick && (
                   <div class="pick-grid">
-                    <div class="muted" style={{ fontSize: 13, width: '100%' }}>
+                    <div class="muted" style={{ fontSize: 14, width: '100%' }}>
                       {s.pendingPick.title} {s.pendingPick.count > 1 ? `(${s.pendingPick.count} left)` : ''}
                     </div>
                     {s.pendingPick.kind === 'item' &&

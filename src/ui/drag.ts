@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import { toDesign } from '@/app/scale';
 
-export type DragPayload = { kind: 'hero'; uid: string } | { kind: 'item'; itemId: string; fromHero?: string };
+export type DragPayload = { kind: 'hero'; uid: string; fromBoard?: boolean } | { kind: 'item'; itemId: string; fromHero?: string };
 
 export interface DragState {
   payload: DragPayload;

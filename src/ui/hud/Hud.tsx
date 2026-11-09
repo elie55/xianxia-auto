@@ -223,7 +223,7 @@ function RightRail({ s }: { s: RunState }) {
         </button>
       </div>
       <div class="tracker-title display">{label}</div>
-      {rows.length === 0 && <div class="faint" style={{ fontSize: 12 }}>Combat statistics appear here.</div>}
+      {rows.length === 0 && <div class="faint" style={{ fontSize: 13 }}>Combat statistics appear here.</div>}
       {rows.map((r) => (
         <div key={r.defId} class={`tracker-row ${r.alive ? '' : 'dead'}`}>
           <MiniPortrait defId={r.defId} size={34} />
@@ -360,14 +360,14 @@ function HeroSlotTip({ h, s, ctx }: { h: HeroState; s: RunState; ctx: TeamContex
       <div class="tip-bar" style={{ height: 13 }}>
         <i style={{ width: `${hpPct}%`, background: 'linear-gradient(180deg,#7ef29a,#2f9c4b)' }} />
         {shieldPct > 0 && <i style={{ left: `${hpPct}%`, width: `${shieldPct}%`, background: 'linear-gradient(180deg,#e6f3ff,#9fd5ff)' }} />}
-        <span style={{ fontSize: 10 }}>
+        <span style={{ fontSize: 11 }}>
           HP {Math.round(hp)} / {maxHp}
           {shield > 0 ? ` (+${Math.round(shield)} shield)` : ''}
         </span>
       </div>
       <div class="tip-bar" style={{ height: 13 }}>
         <i style={{ width: `${qiPct}%`, background: 'linear-gradient(180deg,#8fd5ff,#2f7fc4)' }} />
-        <span style={{ fontSize: 10 }}>
+        <span style={{ fontSize: 11 }}>
           Qi {Math.round(qi)} / {maxQi}
           {live ? '' : ' to cast'}
         </span>
@@ -376,7 +376,7 @@ function HeroSlotTip({ h, s, ctx }: { h: HeroState; s: RunState; ctx: TeamContex
         {TIP_STATS.map((k) => (
           <div key={k} class="tip-stat" style={{ color: STAT_COLOR[k] }}>
             <Icon name={STAT_ICON[k]} size={13} /> {value(k)}
-            <span class="faint" style={{ fontWeight: 400, fontSize: 11 }}>
+            <span class="faint" style={{ fontWeight: 400, fontSize: 12 }}>
               {STAT_LABEL[k]}
             </span>
           </div>
@@ -384,7 +384,7 @@ function HeroSlotTip({ h, s, ctx }: { h: HeroState; s: RunState; ctx: TeamContex
         {extra.map((k) => (
           <div key={k} class="tip-stat" style={{ color: STAT_COLOR[k] }}>
             <Icon name={STAT_ICON[k]} size={13} /> {fmtStat(k, stats[k])}
-            <span class="faint" style={{ fontWeight: 400, fontSize: 11 }}>
+            <span class="faint" style={{ fontWeight: 400, fontSize: 12 }}>
               {STAT_LABEL[k]}
             </span>
           </div>
@@ -400,7 +400,7 @@ function HeroSlotTip({ h, s, ctx }: { h: HeroState; s: RunState; ctx: TeamContex
 
 function DragGhost() {
   const d = drag.value;
-  if (!d || !d.started) return null;
+  if (!d || !d.started || (d.payload.kind === 'hero' && d.payload.fromBoard)) return null;
   const p = d.payload;
   return (
     <div class="drag-ghost" style={{ left: d.x, top: d.y }}>
@@ -455,9 +455,11 @@ export function handleDrop(payload: DragPayload, target: string | null, clientX:
     return;
   }
   // hero
+  const lifted = payload.fromBoard ? getBattleView() : null;
   if (target?.startsWith('party:') || target?.startsWith('reserve:')) {
     const [kind, idx] = target.split(':');
     act((st) => moveHero(st, payload.uid, { kind: kind as 'party' | 'reserve', index: Number(idx) }));
+    lifted?.dropLifted(null);
     audio.sfx('ui_drop');
     return;
   }
@@ -470,6 +472,7 @@ export function handleDrop(payload: DragPayload, target: string | null, clientX:
       });
       audio.sfx('ui_drop');
     }
+    lifted?.dropLifted(null);
     return;
   }
   // board hex
@@ -487,7 +490,10 @@ export function handleDrop(payload: DragPayload, target: string | null, clientX:
       }
       setPosition(st, payload.uid, hex);
     });
+    lifted?.dropLifted(hex);
     audio.sfx('ui_drop');
+  } else {
+    lifted?.dropLifted(null);
   }
 }
 
@@ -496,6 +502,10 @@ export function hoverTarget(payload: DragPayload, clientX: number, clientY: numb
   const view = getBattleView();
   const hex = view.hexAtDesign(d.x, d.y);
   if (payload.kind === 'hero') {
+    if (payload.fromBoard) {
+      view.liftHero(payload.uid);
+      view.moveLifted(d.x, d.y);
+    }
     const ok = !!hex && isAllyZone(hex);
     view.setHighlight(hex, ok);
     return hex ? (ok ? 'board' : 'board-invalid') : null;

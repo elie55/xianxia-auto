@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { PAINTED_ICONS } from '@/ui/components/paintedIcons';
 import { screen } from '@/app/store';
 import { HEROES } from '@/content/heroes';
 import { ENEMIES } from '@/content/enemies';
@@ -95,7 +96,10 @@ export function Compendium() {
                 <div class="codex-insights">
                   {c.insights.map((i) => (
                     <div key={i.id} class="codex-insight">
-                      <span class="gold">{i.name}</span> <RichText text={i.desc} />
+                      {PAINTED_ICONS.has(`insight_${i.id}`) && <Icon name={`insight_${i.id}`} size={30} />}
+                      <div>
+                        <span class="gold">{i.name}</span> <RichText text={i.desc} />
+                      </div>
                     </div>
                   ))}
                 </div>

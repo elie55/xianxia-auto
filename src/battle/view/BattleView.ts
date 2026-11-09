@@ -288,6 +288,40 @@ export class BattleView {
     return { x: minX, y: minY - 90, w: maxX - minX, h: maxY - minY + 100 };
   }
 
+  private lifted: UnitView | null = null;
+
+  /** Placement: lifts a hero's sprite so it follows the pointer while the player drags it across the arena. */
+  liftHero(uid: string): void {
+    if (this.lifted?.unit.heroUid === uid) return;
+    const v = [...this.views.values()].find((x) => x.unit.heroUid === uid);
+    if (!v) return;
+    this.lifted = v;
+    gsap.killTweensOf(v);
+    gsap.to(v.scale, { x: 1.08, y: 1.08, duration: 0.15, ease: 'power2.out', overwrite: 'auto' });
+  }
+
+  /** Moves the lifted sprite under a design-space pointer position. */
+  moveLifted(designX: number, designY: number): void {
+    const v = this.lifted;
+    if (!v) return;
+    v.x = designX - this.boardOrigin.x;
+    v.y = designY - this.boardOrigin.y + 36;
+  }
+
+  /** Drops the lifted sprite onto `hex` (its new home) or back onto the hex it came from. */
+  dropLifted(hex: Hex | null): void {
+    const v = this.lifted;
+    if (!v) return;
+    this.lifted = null;
+    if (hex) v.unit.pos = hex;
+    gsap.to(v.scale, { x: 1, y: 1, duration: 0.15, overwrite: 'auto' });
+    if (v.unit.pos) {
+      const p = hexToPixel(v.unit.pos);
+      gsap.to(v, { x: p.x, y: p.y, duration: 0.22, ease: 'power2.out', overwrite: 'auto' });
+      this.fx.dust(p.x, p.y);
+    }
+  }
+
   /** The live sim unit fighting for a hero (by run uid), or null when none is on the board. */
   unitForHero(uid: string): Unit | null {
     for (const v of this.views.values()) if (v.unit.heroUid === uid) return v.unit;
@@ -480,7 +514,7 @@ export class BattleView {
       }
       v.setFacing(u.facing);
       v.setMoving(!!(b && u.moving));
-      v.zIndex = v.y + (u.boss ? 1 : 0);
+      v.zIndex = v.y + (u.boss ? 1 : 0) + (v === this.lifted ? 10000 : 0);
       v.update(this.elapsed, 1);
     }
   }

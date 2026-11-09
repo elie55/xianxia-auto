@@ -76,8 +76,12 @@
   pointer-events: none;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
 }
+/* the tracker is too small for the ornate frame: its corner pieces read as one stray medallion */
 .rightrail.panel.plain::before {
-  display: block;
+  display: none;
+}
+.rightrail.panel.plain {
+  border: 1px solid rgba(212, 168, 75, 0.35);
 }
 .rail-title {
   padding-bottom: 5px;
@@ -228,8 +232,25 @@
   align-items: stretch;
 }
 .upgrade-card {
-  min-height: 400px;
-  padding-top: 32px;
+  min-height: 360px;
+  padding-top: 30px;
+}
+/* painted insight icon on a jade medallion */
+.upgrade-card .upgrade-icon.painted {
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 42%, rgba(212, 168, 75, 0.22), rgba(6, 14, 16, 0.85) 72%);
+  border: 2px solid rgba(212, 168, 75, 0.6);
+  box-shadow: 0 0 34px rgba(212, 168, 75, 0.25), inset 0 0 26px rgba(0, 0, 0, 0.6);
+}
+.upgrade-card .upgrade-icon.painted .icon {
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+}
+.upgrade-card .upgrade-name {
+  margin-top: 6px;
 }
 .upgrade-card .upgrade-icon,
 .upgrade-card .class-badge {
@@ -332,7 +353,7 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 3px 14px;
   margin: 8px 0 4px;
-  font-size: 13px;
+  font-size: 14px;
 }
 .tooltip .tip-stat {
   display: flex;
@@ -357,7 +378,7 @@
 .tooltip .tip-bar > span {
   position: absolute;
   inset: 0;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -373,7 +394,7 @@
 .tooltip .tip-status {
   padding: 2px 7px;
   border-radius: 3px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid currentColor;
@@ -390,7 +411,7 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 9px;
+  font-size: 10px;
   color: var(--gold);
   opacity: 0.8;
 }
@@ -464,7 +485,7 @@
   animation: pop-in var(--dur-med) var(--ease-spring) both;
 }
 .tut-step {
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.26em;
   color: var(--jade-bright);
   margin-bottom: 6px;
@@ -476,7 +497,7 @@
   margin-bottom: 8px;
 }
 .tut-text {
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.55;
   color: var(--paper);
 }
@@ -488,7 +509,7 @@
 }
 .tut-skip {
   font-family: var(--font-display);
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.16em;
   color: var(--paper-faint);
   text-transform: uppercase;
@@ -522,7 +543,7 @@
 
 .shop-footnote {
   text-align: center;
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.06em;
   padding: 6px 0 2px;
 }
@@ -547,7 +568,7 @@
   background: rgba(20, 38, 40, 0.7);
   border: 1px solid rgba(212, 168, 75, 0.25);
   color: var(--paper-dim);
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: 0.16em;
   transition: all var(--dur-fast);
 }
@@ -590,7 +611,7 @@
 }
 .codex-class {
   padding: 22px 26px;
-  font-size: 14px;
+  font-size: 15px;
 }
 .codex-class p {
   margin: 6px 0;
@@ -613,7 +634,7 @@
   color: var(--c);
 }
 .codex-class-role {
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--paper-faint);
@@ -627,7 +648,7 @@
   border-top: 1px solid rgba(212, 168, 75, 0.18);
 }
 .codex-insight {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.4;
   color: var(--paper-dim);
 }
@@ -661,7 +682,7 @@
   gap: 10px;
 }
 .codex-enemy-name {
-  font-size: 15px;
+  font-size: 16px;
   letter-spacing: 0.1em;
 }
 .codex-enemy-tags {
@@ -677,7 +698,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px 12px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
 }
 .codex-enemy-stats span {
@@ -687,7 +708,7 @@
 }
 .codex-enemy-ability {
   margin: 10px 0 0;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.45;
   color: var(--paper-dim);
 }
@@ -706,17 +727,17 @@
 }
 .codex-row-name {
   font-weight: 700;
-  font-size: 14px;
+  font-size: 15px;
 }
 .codex-row-rar {
   margin-left: 6px;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--paper-faint);
 }
 .codex-row-desc {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--paper-dim);
   margin-top: 3px;
   line-height: 1.4;
@@ -811,7 +832,7 @@
   z-index: 1;
 }
 .bb-label {
-  font-size: 14px;
+  font-size: 15px;
   letter-spacing: 0.26em;
   color: var(--paper);
   padding-bottom: 44px;
@@ -820,7 +841,7 @@
 }
 .bb-label .faint {
   display: block;
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.12em;
 }
 .bb-divider {
@@ -864,7 +885,7 @@
 }
 .slot-name {
   font-family: var(--font-display);
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.1em;
   color: var(--paper);
   text-shadow: 0 1px 3px #000;
@@ -1144,14 +1165,14 @@
   border-image-width: 28px;
 }
 .bb-label {
-  font-size: 15px;
+  font-size: 16px;
   letter-spacing: 0.3em;
   padding-bottom: 0;
   width: var(--label-w, 96px);
   flex: none;
 }
 .bb-label .faint {
-  font-size: 12px;
+  font-size: 13px;
   margin-top: 4px;
 }
 .bb-divider {
@@ -1200,7 +1221,7 @@
   gap: 9px;
 }
 .slot-name {
-  font-size: 15px;
+  font-size: 16px;
   letter-spacing: 0.08em;
   text-align: left;
   white-space: nowrap;
@@ -1297,4 +1318,117 @@
 /* Cinzel capitals sit about 1.5 px above the line centre at display sizes; nudge big labels onto the plaque axis */
 .btn.big {
   padding-top: 3px;
+}
+
+/* ───────── SHOP STOCK: rows you cannot miss ───────── */
+.shop-section-title {
+  font-size: 16px;
+  letter-spacing: 0.22em;
+  color: var(--gold-bright);
+  padding-bottom: 8px;
+  margin-top: 6px;
+  text-shadow: 0 0 12px rgba(243, 207, 120, 0.35);
+}
+.shop-section-title::before {
+  content: '◆';
+  font-size: 10px;
+  color: var(--gold);
+}
+.shop-row {
+  position: relative;
+  padding: 12px 14px 12px 18px;
+  gap: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(212, 168, 75, 0.38);
+  background: linear-gradient(180deg, rgba(20, 40, 42, 0.92), rgba(8, 16, 18, 0.95));
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.shop-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 4px;
+  border-radius: 0 3px 3px 0;
+  background: var(--rar, var(--gold));
+  box-shadow: 0 0 10px var(--rar, var(--gold));
+}
+.shop-row.sold::before {
+  display: none;
+}
+.shop-row .item-chip,
+.shop-row .relic-chip {
+  width: 58px;
+  height: 58px;
+  border-radius: 10px;
+  flex: none;
+  margin: 0 !important;
+}
+.shop-row-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.04em;
+}
+.shop-row-stats {
+  font-size: 15px;
+  margin-top: 4px;
+}
+.shop-row-desc {
+  font-size: 14px;
+  margin-top: 4px;
+}
+.price-inline {
+  padding: 8px 14px;
+  font-size: 17px;
+  border-radius: 6px;
+  border: 1px solid rgba(212, 168, 75, 0.7);
+  background: linear-gradient(180deg, rgba(212, 168, 75, 0.28), rgba(90, 70, 20, 0.4));
+  color: #ffe9a8;
+  box-shadow: 0 0 14px rgba(212, 168, 75, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+.shop-row:hover .price-inline {
+  background: linear-gradient(180deg, rgba(212, 168, 75, 0.48), rgba(120, 90, 25, 0.55));
+}
+.shop-row.poor .price-inline {
+  border-color: rgba(255, 120, 100, 0.6);
+  color: #ffb3a7;
+  background: rgba(60, 20, 20, 0.5);
+  box-shadow: none;
+}
+.shop-row:hover {
+  transform: translateX(3px) scale(1.01);
+  border-color: var(--gold-bright);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 0 24px rgba(212, 168, 75, 0.18);
+}
+
+/* sect expansion tiles */
+.team-size-offer {
+  padding: 14px 12px 12px;
+  gap: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(212, 168, 75, 0.38);
+  background: linear-gradient(180deg, rgba(20, 40, 42, 0.92), rgba(8, 16, 18, 0.95));
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.team-size-offer .ts-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--paper);
+}
+.team-size-offer:hover {
+  border-color: var(--gold-bright);
+  transform: translateY(-2px);
+}
+
+.codex-insight {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.codex-insight > .icon {
+  flex: none;
+  margin-top: -3px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
 }

@@ -49,6 +49,7 @@ export function BoardScreen() {
   const isBattle = s.phase === 'battle';
   const single = !!s.fightReward?.single;
   const canFight = !single || !!s.singleChampion;
+  const rootRef = useRef<HTMLDivElement>(null);
 
   // start the simulation when entering the battle phase
   useEffect(() => {
@@ -94,16 +95,22 @@ export function BoardScreen() {
   useEffect(() => {
     if (!ready) return;
     const canvas = view.canvasEl;
-    if (!canvas) return;
+    const surface = rootRef.current;
+    if (!canvas || !surface) return;
+    // the screen root sits above the canvas and receives its pointer events; ignore events on HUD children
+    const onArena = (e: PointerEvent) => {
+      const t = e.target as HTMLElement | null;
+      return !!t && (t === surface || !!t.closest('#pixi-root'));
+    };
     let hovered: number | null = null;
     const down = (e: PointerEvent) => {
-      if (isBattle) return;
+      if (isBattle || !onArena(e)) return;
       const d = toDesign(e.clientX, e.clientY);
       const uid = view.heroAtDesign(d.x, d.y);
       if (uid) {
         hovered = null;
         hideTooltip();
-        startDrag({ kind: 'hero', uid }, e);
+        startDrag({ kind: 'hero', uid, fromBoard: true }, e);
       }
     };
     const move = (e: PointerEvent) => {
@@ -112,16 +119,16 @@ export function BoardScreen() {
         return;
       }
       const d = toDesign(e.clientX, e.clientY);
-      const u = view.unitAtDesign(d.x, d.y);
+      const u = onArena(e) ? view.unitAtDesign(d.x, d.y) : null;
       if (!u) {
         if (hovered !== null) {
           hovered = null;
           hideTooltip();
         }
-        canvas.style.cursor = '';
+        surface.style.cursor = '';
         return;
       }
-      canvas.style.cursor = u.side === 'ally' && !isBattle ? 'grab' : 'default';
+      surface.style.cursor = u.side === 'ally' && !isBattle ? 'grab' : 'default';
       const head = view.unitHeadDesign(u.id);
       if (!head) return;
       if (u.id !== hovered || isBattle) {
@@ -131,23 +138,23 @@ export function BoardScreen() {
     };
     const leave = () => {
       hovered = null;
-      canvas.style.cursor = '';
+      surface.style.cursor = '';
       hideTooltip();
     };
-    canvas.addEventListener('pointerdown', down);
-    canvas.addEventListener('pointermove', move);
-    canvas.addEventListener('pointerleave', leave);
+    surface.addEventListener('pointerdown', down);
+    surface.addEventListener('pointermove', move);
+    surface.addEventListener('pointerleave', leave);
     return () => {
-      canvas.removeEventListener('pointerdown', down);
-      canvas.removeEventListener('pointermove', move);
-      canvas.removeEventListener('pointerleave', leave);
+      surface.removeEventListener('pointerdown', down);
+      surface.removeEventListener('pointermove', move);
+      surface.removeEventListener('pointerleave', leave);
       hideTooltip();
     };
   }, [isBattle, ready]);
 
   const enc = s.currentEncounter;
   return (
-    <div class="screen board-screen">
+    <div class="screen board-screen" ref={rootRef}>
       <Hud>
         {!isBattle && enc && (
           <div class="encounter-banner anim-rise">
@@ -160,7 +167,7 @@ export function BoardScreen() {
         {!isBattle && single && (
           <div class="champion-panel panel anim-pop">
             <div class="panel-title display">Choose your champion</div>
-            <div class="muted" style={{ fontSize: 13, marginBottom: 10 }}>
+            <div class="muted" style={{ fontSize: 14, marginBottom: 10 }}>
               One disciple faces the creature alone.
             </div>
             <div class="row" style={{ gap: 12 }}>

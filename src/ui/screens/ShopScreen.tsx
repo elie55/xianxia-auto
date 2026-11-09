@@ -125,7 +125,7 @@ export function ShopScreen() {
                               })
                             }
                           >
-                            <Icon name={`relic_${RELIC_BY_ID[o.relicId].icon}`} size={26} color="var(--gold-bright)" />
+                            <Icon name={`relic_${RELIC_BY_ID[o.relicId].icon}`} size={52} color="var(--gold-bright)" />
                             <span class="ts-name">{RELIC_BY_ID[o.relicId].name}</span>
                             <span class="price-inline">
                               <Icon name="stones" size={12} /> {o.price}
@@ -166,8 +166,8 @@ function ShopItemRow({ s, offer, onBuy }: { s: RunState; offer: { itemId: string
   const it = ITEM_BY_ID[offer.itemId];
   const can = s.stones >= offer.price;
   return (
-    <button class={`shop-row ${can ? '' : 'poor'}`} onClick={onBuy} {...tip(<ItemTip itemId={offer.itemId} />)}>
-      <ItemChip itemId={offer.itemId} size={44} />
+    <button class={`shop-row rar-${it.rarity} ${can ? "" : "poor"}`} onClick={onBuy} {...tip(<ItemTip itemId={offer.itemId} />)}>
+      <ItemChip itemId={offer.itemId} size={58} />
       <div class="shop-row-info">
         <div class={`shop-row-name rar-${it.rarity}`}>{it.name}</div>
         <div class="shop-row-stats">
@@ -193,9 +193,9 @@ function ShopRelicRow({ s, offer, onBuy }: { s: RunState; offer: { relicId: stri
   const r = RELIC_BY_ID[offer.relicId];
   const can = s.stones >= offer.price;
   return (
-    <button class={`shop-row relic ${can ? '' : 'poor'}`} onClick={onBuy} {...tip(<RelicTip relicId={offer.relicId} />)}>
-      <div class={`relic-chip rar-${r.rarity}`} style={{ margin: 6 }}>
-        <Icon name={`relic_${r.icon}`} size={22} />
+    <button class={`shop-row relic rar-${r.rarity} ${can ? "" : "poor"}`} onClick={onBuy} {...tip(<RelicTip relicId={offer.relicId} />)}>
+      <div class={`relic-chip rar-${r.rarity}`}>
+        <Icon name={`relic_${r.icon}`} size={44} />
       </div>
       <div class="shop-row-info">
         <div class={`shop-row-name rar-${r.rarity}`}>{r.name}</div>

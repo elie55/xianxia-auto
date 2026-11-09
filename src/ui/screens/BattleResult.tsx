@@ -45,7 +45,7 @@ export function BattleResult() {
                       Hero stats
                     </button>
                   </div>
-                  <div class="faint" style={{ fontSize: 12, textAlign: 'right' }}>
+                  <div class="faint" style={{ fontSize: 13, textAlign: 'right' }}>
                     Combat duration {r.duration.toFixed(1)} s<br />
                     {enemies.length} enemies
                   </div>
@@ -147,7 +147,7 @@ export function BattleResult() {
                 )}
                 {!won && (
                   <>
-                    <p class="muted" style={{ fontSize: 14 }}>
+                    <p class="muted" style={{ fontSize: 15 }}>
                       Your disciples lie broken on the battlefield. A Time Reversal Talisman can unwind the fight — at a price that grows each time.
                     </p>
                     <div class="rewind-cost">
@@ -156,7 +156,7 @@ export function BattleResult() {
                         Time Reversal · <Icon name="stones" size={14} /> {cost}
                       </span>
                     </div>
-                    <div class="muted" style={{ fontSize: 13 }}>
+                    <div class="muted" style={{ fontSize: 14 }}>
                       You have <b class="gold">{s.stones}</b> Spirit Stones.
                     </div>
                     <button
