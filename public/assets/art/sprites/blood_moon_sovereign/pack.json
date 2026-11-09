@@ -1,0 +1,29 @@
+{
+  "animations": {
+    "attack": {
+      "sheet": "attack.png",
+      "frames": 25,
+      "cols": 5,
+      "frameW": 256,
+      "frameH": 256,
+      "fps": 10.7,
+      "pivotX": 0.5488,
+      "pivotY": 0.8555,
+      "charH": 197,
+      "loop": false,
+      "hitFrame": 11
+    },
+    "idle": {
+      "sheet": "idle.png",
+      "frames": 25,
+      "cols": 5,
+      "frameW": 256,
+      "frameH": 256,
+      "fps": 10.7,
+      "pivotX": 0.5312,
+      "pivotY": 0.9102,
+      "charH": 208,
+      "loop": true
+    }
+  }
+}

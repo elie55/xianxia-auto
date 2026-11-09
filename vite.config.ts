@@ -1,11 +1,12 @@
 import { defineConfig } from 'vitest/config';
 import preact from '@preact/preset-vite';
 import { fileURLToPath, URL } from 'node:url';
+import { devAssetInbox } from './scripts/dev-asset-inbox';
 
 export default defineConfig({
   // Relative base so the same build works in Electron (file://) and Capacitor.
   base: './',
-  plugins: [preact()],
+  plugins: [preact(), devAssetInbox(fileURLToPath(new URL('.', import.meta.url)))],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -15,6 +16,8 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     host: '127.0.0.1',
+    // Let the AutoSprite web app POST generated sheets into the dev asset inbox (scripts/dev-asset-inbox.ts).
+    cors: { origin: ['https://www.autosprite.io', 'http://localhost:5173', 'http://127.0.0.1:5173'], preflightContinue: true },
   },
   build: {
     target: 'es2022',

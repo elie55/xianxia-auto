@@ -31,18 +31,19 @@
     "preact": "^10.29.8"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
     "@preact/preset-vite": "^2.10.6",
     "@types/howler": "^2.2.12",
     "@types/node": "^24.0.0",
     "cross-env": "^10.0.0",
     "electron": "^45.2.3",
     "electron-builder": "^26.18.0",
+    "sharp": "^0.35.5",
     "tsx": "^4.20.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.8",
-    "vitest": "^5.1.0",
-    "@capacitor/cli": "^8.6.0",
-    "@capacitor/core": "^8.6.0",
-    "@capacitor/android": "^8.6.0"
+    "vitest": "^5.1.0"
   }
 }
