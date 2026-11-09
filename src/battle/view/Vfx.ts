@@ -413,16 +413,17 @@ export class VfxLayer extends Container {
     g.y = y;
     g.blendMode = 'add';
     this.addChild(g);
-    const st = { a: 0.9, k: 0.85 };
+    // a thin shimmering outline that never covers the character: faint fill, soft rim, quick fade
+    const st = { a: 0.55, k: 0.9 };
     const draw = () => {
       g.clear();
-      g.ellipse(0, -ry * 0.55, rx * st.k, ry * 0.75 * st.k).fill({ color, alpha: st.a * 0.22 });
-      g.ellipse(0, -ry * 0.55, rx * st.k, ry * 0.75 * st.k).stroke({ color, width: 3, alpha: st.a });
-      g.ellipse(0, -ry * 0.55, rx * st.k * 0.8, ry * 0.75 * st.k * 0.8).stroke({ color: 0xffffff, width: 1, alpha: st.a * 0.6 });
+      g.ellipse(0, -ry * 0.55, rx * st.k, ry * 0.75 * st.k).fill({ color, alpha: st.a * 0.06 });
+      g.ellipse(0, -ry * 0.55, rx * st.k, ry * 0.75 * st.k).stroke({ color, width: 2, alpha: st.a * 0.7 });
+      g.ellipse(0, -ry * 0.55, rx * st.k * 0.86, ry * 0.75 * st.k * 0.86).stroke({ color: 0xffffff, width: 1, alpha: st.a * 0.25 });
     };
     draw();
-    gsap.to(st, { k: 1.08, duration: 0.25, ease: 'back.out(2)', onUpdate: draw });
-    gsap.to(st, { a: 0, duration: 0.5, delay: 0.25, ease: 'power1.in', onUpdate: draw, onComplete: () => g.destroy() });
+    gsap.to(st, { k: 1.05, duration: 0.22, ease: 'back.out(2)', onUpdate: draw });
+    gsap.to(st, { a: 0, duration: 0.4, delay: 0.18, ease: 'power1.in', onUpdate: draw, onComplete: () => g.destroy() });
   }
 
   /** Glowing soul wisp that drifts upward (death). */
