@@ -10,7 +10,10 @@ export const preload = signal({ done: 0, total: 1, finished: false });
 
 /** Paintings and UI art shown by DOM screens (warm the HTTP cache so screens never pop in). */
 const ART = [
-  'art/bg/menu_keyart.jpg',
+  'art/ui/logo.webp',
+  'art/bg/menu_keyart2.jpg',
+  'art/ui/button_dark.png',
+  'art/ui/button_dark_9.png',
   'art/bg/ui_hall.jpg',
   'art/bg/ui_draft.jpg',
   'art/bg/ui_breakthrough.jpg',

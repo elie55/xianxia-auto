@@ -2229,3 +2229,334 @@ input[type='range']:hover::-webkit-slider-thumb {
 .blessing-card {
   border-radius: 2px;
 }
+
+/* ───────── MAIN MENU v2: painted logo over the celestial stairway ───────── */
+.menu-screen.v2 .menu-bg {
+  background: #070c14;
+  overflow: hidden;
+}
+.menu-screen.v2 .menu-keyart {
+  background: url('/assets/art/bg/menu_keyart2.jpg') center / cover no-repeat;
+  opacity: 1;
+  transform-origin: 50% 42%;
+  translate: calc(var(--px, 0) * -14px) calc(var(--py, 0) * -9px);
+  animation: menu-kenburns-v2 50s ease-in-out infinite alternate;
+}
+@keyframes menu-kenburns-v2 {
+  from {
+    scale: 1.04;
+  }
+  to {
+    scale: 1.11;
+  }
+}
+/* breathing light behind the great gate */
+.menu-gate-glow {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: 640px;
+  height: 640px;
+  margin: -320px 0 0 -320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 230, 160, 0.42) 0%, rgba(255, 220, 140, 0.12) 38%, rgba(255, 220, 140, 0) 68%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  translate: calc(var(--px, 0) * -10px) calc(var(--py, 0) * -6px);
+  animation: gate-breathe 6s ease-in-out infinite;
+}
+@keyframes gate-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    scale: 0.94;
+  }
+  50% {
+    opacity: 1;
+    scale: 1.06;
+  }
+}
+/* two bands of mist drifting across the sea of clouds */
+.menu-cloud {
+  position: absolute;
+  left: -30%;
+  width: 160%;
+  height: 340px;
+  pointer-events: none;
+  background: radial-gradient(ellipse 30% 50% at 20% 50%, rgba(240, 232, 255, 0.3), transparent 70%), radial-gradient(ellipse 26% 46% at 62% 55%, rgba(255, 240, 250, 0.26), transparent 70%),
+    radial-gradient(ellipse 22% 40% at 92% 48%, rgba(235, 228, 255, 0.24), transparent 70%);
+  filter: blur(6px);
+}
+.menu-cloud.one {
+  top: 52%;
+  animation: cloud-drift 46s linear infinite alternate;
+}
+.menu-cloud.two {
+  top: 68%;
+  opacity: 0.8;
+  animation: cloud-drift 62s linear infinite alternate-reverse;
+}
+@keyframes cloud-drift {
+  from {
+    transform: translateX(-6%);
+  }
+  to {
+    transform: translateX(6%);
+  }
+}
+/* golden motes rising from the stairway */
+.menu-motes i {
+  position: absolute;
+  bottom: -10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff6d0, rgba(243, 207, 120, 0.4) 60%, transparent 70%);
+  box-shadow: 0 0 10px rgba(243, 207, 120, 0.8);
+  animation: mote-rise linear infinite;
+  opacity: 0;
+}
+@keyframes mote-rise {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(30px, -820px);
+    opacity: 0;
+  }
+}
+/* falling cherry petals */
+.menu-petals i {
+  position: absolute;
+  top: -40px;
+  border-radius: 80% 0 80% 0;
+  background: linear-gradient(135deg, #ffe0ec, #f59ac0 70%, #e2709d);
+  box-shadow: 0 1px 3px rgba(120, 30, 70, 0.25);
+  opacity: 0;
+  animation: petal-fall linear infinite;
+}
+@keyframes petal-fall {
+  0% {
+    transform: translate(0, 0) rotate(var(--rot, 0deg));
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate(var(--drift, 60px), 1180px) rotate(calc(var(--rot, 0deg) + 600deg));
+    opacity: 0.85;
+  }
+}
+/* readability: darker top corners for the logo, darker floor for the menu */
+.menu-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(0deg, rgba(4, 7, 12, 0.94) 0%, rgba(4, 7, 12, 0.62) 22%, rgba(4, 7, 12, 0) 44%),
+    radial-gradient(ellipse 60% 48% at 50% 22%, rgba(6, 8, 22, 0.55), rgba(6, 8, 22, 0) 70%), radial-gradient(ellipse 90% 80% at 50% 50%, transparent 60%, rgba(4, 7, 12, 0.6) 100%);
+}
+
+/* logo */
+.menu-logo-wrap {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  width: 760px;
+  margin-left: -380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  translate: calc(var(--px, 0) * 8px) calc(var(--py, 0) * 5px);
+  transition: translate 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+  animation: logo-enter 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes logo-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.96);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+.menu-logo-halo {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 900px;
+  height: 520px;
+  margin: -260px 0 0 -450px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(5, 8, 20, 0.62) 0%, rgba(5, 8, 20, 0.35) 45%, rgba(5, 8, 20, 0) 72%);
+  pointer-events: none;
+}
+.menu-logo-img {
+  position: relative;
+  width: 700px;
+  aspect-ratio: 1514 / 1008;
+  background: url('/assets/art/ui/logo.webp') center / contain no-repeat;
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 34px rgba(243, 207, 120, 0.28));
+  animation: logo-float 8s ease-in-out infinite;
+}
+/* light sweeping across the gold lettering, masked to the logo's own shape */
+.menu-logo-img::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  -webkit-mask: url('/assets/art/ui/logo.webp') center / contain no-repeat;
+  mask: url('/assets/art/ui/logo.webp') center / contain no-repeat;
+  background: linear-gradient(105deg, transparent 0%, transparent 42%, rgba(255, 250, 225, 0.8) 50%, transparent 58%, transparent 100%);
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  mix-blend-mode: screen;
+  animation: logo-sweep 7s ease-in-out 1.8s infinite;
+}
+@keyframes logo-sweep {
+  0% {
+    background-position: 100% 0;
+  }
+  36%,
+  100% {
+    background-position: 0% 0;
+  }
+}
+@keyframes logo-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+.menu-screen.v2 .menu-tagline {
+  position: relative;
+  margin-top: -6px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: #f3e6c4;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 18px rgba(0, 0, 0, 0.7);
+}
+.menu-rule {
+  display: block;
+  width: 90px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-bright));
+  position: relative;
+}
+.menu-rule::after {
+  content: '';
+  position: absolute;
+  right: -4px;
+  top: -3px;
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+  background: var(--gold-bright);
+  box-shadow: 0 0 8px rgba(243, 207, 120, 0.8);
+}
+.menu-rule.flip {
+  transform: scaleX(-1);
+}
+
+/* actions */
+.menu-actions {
+  position: absolute;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+}
+.menu-primary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.menu-hero-btn {
+  width: 480px;
+  font-size: 25px;
+  letter-spacing: 0.16em;
+}
+.menu-hero-btn.primary {
+  border-image-source: url('/assets/art/ui/button_jade.png');
+}
+.menu-hero-btn:not(.primary) {
+  border-image-source: url('/assets/art/ui/button_dark.png');
+}
+.menu-secondary {
+  display: flex;
+  gap: 16px;
+}
+.menu-secondary .btn {
+  min-width: 214px;
+  font-size: 16px;
+}
+.menu-screen.v2 .menu-stats {
+  position: absolute;
+  left: 40px;
+  bottom: 34px;
+  display: flex;
+  gap: 22px;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  color: var(--paper-dim);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+.menu-screen.v2 .menu-stats b {
+  color: var(--gold-bright);
+  margin-left: 4px;
+}
+.menu-screen.v2 .menu-version {
+  right: 40px;
+  bottom: 34px;
+  top: auto;
+  left: auto;
+  font-size: 13px;
+  color: var(--paper-faint);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+/* menu v2 refinements: tagline on its own lacquer ribbon, logo lifted off the bright sky */
+.menu-screen.v2 .menu-tagline {
+  margin-top: 4px;
+  white-space: nowrap;
+  padding: 9px 30px;
+  font-size: 14px;
+  letter-spacing: 0.3em;
+  background: linear-gradient(90deg, rgba(6, 10, 22, 0) 0%, rgba(6, 10, 22, 0.78) 18%, rgba(6, 10, 22, 0.78) 82%, rgba(6, 10, 22, 0) 100%);
+}
+.menu-logo-halo {
+  top: 40%;
+  width: 980px;
+  height: 600px;
+  margin: -300px 0 0 -490px;
+  background: radial-gradient(ellipse at center, rgba(5, 8, 24, 0.72) 0%, rgba(5, 8, 24, 0.42) 42%, rgba(5, 8, 24, 0) 72%);
+}
+.menu-logo-img {
+  width: 660px;
+  filter: drop-shadow(0 0 2px rgba(20, 12, 4, 0.9)) drop-shadow(0 10px 26px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 40px rgba(243, 207, 120, 0.3));
+}
+
+/* loading veil: the painted logo instead of plain lettering */
+.veil-logo {
+  width: 560px;
+  aspect-ratio: 1514 / 1008;
+  background: url('/assets/art/ui/logo.webp') center / contain no-repeat;
+  filter: drop-shadow(0 10px 26px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 30px rgba(243, 207, 120, 0.25));
+  animation: logo-float 6s ease-in-out infinite;
+  margin-bottom: -8px;
+}

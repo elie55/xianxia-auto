@@ -59,6 +59,8 @@ Every disciple and enemy has a sprite pack in `public/assets/art/sprites/<id>/pa
 - `scripts/ground-anchors.mjs` — measures feet and pivots from pixel alpha so every clip stands on its hex.
 - `scripts/fix-anim-scale.mjs` — normalises each clip's zoom to the idle clip (AutoSprite renders clips at different zooms).
 - `scripts/split-icon-sheet.mjs` — splits a generated 4×4 icon sheet into painted icons under `public/assets/icons/painted` and registers them.
+- `scripts/make-button-variants.mjs` — derives the dark lacquer button plaque from the painted jade one (same gold trim).
+- `scripts/make-ico.mjs` — builds `build/icon.ico` and the 512 px icon from a square PNG.
 - `scripts/make-ui-sounds.mjs` — synthesises the hover tick and card-flip whoosh (WAV) that have no recorded asset.
 - `scripts/import-fx-sheet.mjs` — imports a generated 4×4 VFX flipbook (frames on black, played additively) as `public/assets/art/fx/<name>.jpg`.
 

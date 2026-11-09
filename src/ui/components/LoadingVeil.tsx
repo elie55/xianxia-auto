@@ -21,12 +21,7 @@ export function LoadingVeil() {
   const pct = Math.min(100, Math.round((p.done / Math.max(1, p.total)) * 100));
   return (
     <div class={`loading-veil ${p.finished ? 'out' : ''}`}>
-      <div class="veil-seal">
-        <div class="veil-ring" />
-        <div class="veil-ring two" />
-        <span class="brush">九</span>
-      </div>
-      <div class="display veil-title">Nine Heavens</div>
+      <div class="veil-logo" role="img" aria-label="Nine Heavens" />
       <div class="veil-bar">
         <i style={{ width: `${pct}%` }} />
       </div>
