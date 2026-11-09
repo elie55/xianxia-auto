@@ -55,7 +55,7 @@ export function ShopScreen() {
             <button class={`btn small ${s.shopFrozen ? 'primary' : ''}`} onClick={() => act((st) => (toggleFreeze(st), audio.sfx('ui_click')))} {...tip(<><h4>Freeze</h4><p>Keep the current offers for the next shop.</p></>, 'below')}>
               <Icon name="ui_freeze" size={16} /> {s.shopFrozen ? 'Unfreeze shop' : 'Freeze shop'}
             </button>
-            <div class={`sell-zone ${dragging?.started ? 'armed' : ''} ${dragging?.over === 'sell' ? 'over' : ''}`} data-drop="sell">
+            <div class={`sell-zone ${dragging?.started ? 'armed' : ''} ${dragging?.over === 'sell' ? 'over' : ''}`} data-drop="sell" {...tip(<><h4>Sell</h4><p>Drag a disciple or Treasure here to sell it for Spirit Stones. Disciples refund part of their price; equipped Treasures are refunded too.</p></>, 'below')}>
               <Icon name="ui_sell" size={18} />
               {dragging?.started ? (dragging.payload.kind === 'hero' ? 'Sell disciple' : 'Sell treasure') : 'Drop here to sell'}
             </div>

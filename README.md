@@ -19,8 +19,7 @@ npm run electron:dev   # desktop shell against the dev server
 npm run electron:build # Windows installer + portable exe in release/
 ```
 
-Developer shortcuts (dev server): `?demo` puts a ready 5-disciple party on the board, `?demo=boss` places it before the
-Realm I boss, `?demo=li_jian,shan_tie` picks the party, `?demo=event:spirit_spring` opens an event screen.
+Developer shortcuts (dev server): `?demo` puts a ready 5-disciple party on the board; `?demo=boss|draft|battle|single|result|defeat|shop|rankup|reward|challenge|cleared|end` opens that scene; `?demo=li_jian,shan_tie` picks the party; `?demo=event:spirit_spring` opens an event; `?screen=compendium|settings|credits|newRun` jumps to a menu screen. Add `&noanim` to freeze entrance animations (deterministic screenshots) and `&notut` to suppress the tutorial.
 
 ### Android
 

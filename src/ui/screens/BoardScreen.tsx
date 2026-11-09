@@ -5,7 +5,7 @@ import { battleConfig, finishBattle, heroByUid, startBattle, type RunState } fro
 import { getBattleView } from '@/battle/view/BattleView';
 import { Hud, battleSpeed, battleTick, battleTime, handleDrop, hoverTarget } from '@/ui/hud/Hud';
 import { drag, setDropHandlers, startDrag } from '@/ui/drag';
-import { hideTooltip, showTooltipAtDesign } from '@/ui/components/Tooltip';
+import { hideTooltip, showTooltipAtDesign, tip } from '@/ui/components/Tooltip';
 import { UnitTip } from '@/ui/components/UnitTip';
 import { Icon } from '@/ui/components/Icon';
 import { MiniPortrait } from '@/ui/components/MiniPortrait';
@@ -179,6 +179,7 @@ export function BoardScreen() {
             <button
               class="btn primary big fight-btn"
               data-tut="fight"
+              {...tip(<><h4>Fight</h4><p>Starts the battle. It resolves on its own; your choices happen between fights.</p>{single && <p class="muted">A Heavenly Trial: pick one champion first.</p>}</>, 'above')}
               disabled={!canFight || s.party.filter(Boolean).length === 0}
               onClick={() => {
                 if (s.party.filter(Boolean).length === 0 && !single) return void showToast('Place at least one disciple', 'error');

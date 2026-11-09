@@ -252,7 +252,7 @@ function BottomBar({ s }: { s: RunState }) {
   const dragging = drag.value;
   return (
     <div class="bottombar" data-tut="party">
-      <div class="bb-label display">
+      <div class="bb-label display" {...tip(<><h4>Party</h4><p>Disciples who fight. Drag a portrait onto the board to place them, or onto another slot to swap.</p><p class="muted">Sect Expansion Insights raise the party size.</p></>, 'above')}>
         Party <span class="faint">{s.party.filter(Boolean).length}/{s.partySize}</span>
       </div>
       <div class="slot-row">
@@ -266,7 +266,7 @@ function BottomBar({ s }: { s: RunState }) {
           <HeroSlot key={`r${i}`} s={s} uid={uid} ctx={ctx} drop={`reserve:${i}`} dragging={dragging} reserve />
         ))}
       </div>
-      <div class="bb-label display">
+      <div class="bb-label display" {...tip(<><h4>Reserve</h4><p>Disciples who sit out the fight. Only [Meditation] effects work from here. Keep copies for rank-ups or swap them in later.</p></>, 'above')}>
         Reserve <span class="faint">{s.reserve.filter(Boolean).length}/{s.reserveSize}</span>
       </div>
     </div>
