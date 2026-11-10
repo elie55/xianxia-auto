@@ -560,6 +560,36 @@
 .rr-ach-xp.new {
   color: var(--jade-bright);
 }
+/* the panel ends above the footer buttons (40px from the bottom, about 70px tall) and its two columns scroll on their
+   own when a run pays many lines, levels or achievements; the header stays in place */
+.run-rewards {
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 auto;
+  min-height: 0;
+  margin-bottom: 150px;
+}
+.rr-head {
+  flex: none;
+}
+.rr-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+.rr-lines,
+.rr-progress {
+  position: relative;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 168, 75, 0.5) transparent;
+  /* room for the card glows, the tilted seal and the lines sliding in, which a scroll box clips; the negative margin
+     keeps the columns where they were */
+  padding: 6px 12px 14px 14px;
+  margin: -6px -12px -14px -14px;
+}
 
 /* ───────── Renown screen ───────── */
 .renown-screen .renown-header {

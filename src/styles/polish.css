@@ -7084,3 +7084,71 @@ button.class-member:hover .portrait {
 .newrun-footer {
   padding: 14px 0 40px;
 }
+
+/* ───────── DRAFT: a Back button to the contracts, and starting blessings that answer the cursor ───────── */
+.draft-back {
+  position: absolute;
+  top: 24px;
+  left: 40px;
+  z-index: 2;
+}
+/* the row's rise-in animation holds `transform`, which cancelled the old translateY lift, so the lift uses `translate`.
+   On hover a blessing rises and glows, its painted frame brightens, its icon swells and a sheen crosses it once. */
+.blessing-card {
+  transition: translate var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.blessing-card:hover {
+  translate: 0 -5px;
+  background: linear-gradient(180deg, rgba(36, 66, 64, 0.95), rgba(14, 27, 28, 0.97));
+}
+.blessing-card:hover:not(.selected) {
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5), 0 0 26px rgba(243, 207, 120, 0.24);
+}
+.blessing-card.selected:hover {
+  box-shadow: 0 0 0 1px var(--jade-bright), 0 14px 30px rgba(0, 0, 0, 0.5), 0 0 34px rgba(63, 191, 159, 0.35);
+}
+.blessing-card.panel.plain::after {
+  transition: filter var(--dur-fast) var(--ease-out);
+}
+.blessing-card.panel.plain:hover::after {
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 6px rgba(243, 207, 120, 0.55)) brightness(1.25);
+}
+.blessing-card .icon {
+  transition: scale var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out);
+}
+.blessing-card:hover .icon {
+  scale: 1.12;
+  filter: drop-shadow(0 0 8px rgba(243, 207, 120, 0.8));
+}
+.blessing-card:hover .blessing-name {
+  color: #fff3cf;
+}
+.blessing-card:hover .blessing-desc {
+  color: var(--paper);
+}
+/* the sheen: a soft band of light that sweeps left to right as the cursor arrives */
+.blessing-card.panel.plain::before {
+  display: block;
+  inset: 0;
+  width: auto;
+  height: auto;
+  border: 0;
+  border-radius: inherit;
+  opacity: 0;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 236, 190, 0.16) 50%, transparent 62%) no-repeat;
+  background-size: 260% 100%;
+  background-position: 105% 0;
+}
+.blessing-card.panel.plain:hover::before {
+  animation: blessing-sheen 0.8s var(--ease-out) both;
+}
+@keyframes blessing-sheen {
+  from {
+    opacity: 1;
+    background-position: 105% 0;
+  }
+  to {
+    opacity: 1;
+    background-position: -5% 0;
+  }
+}

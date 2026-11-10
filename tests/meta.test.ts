@@ -69,17 +69,19 @@ const fakeResult = (over: Partial<BattleResult> = {}): BattleResult =>
 
 describe('Sect Renown curve', () => {
   it('matches the design doc totals', () => {
-    expect(cumulativeXp(10)).toBe(1080);
-    expect(cumulativeXp(30)).toBe(9180);
-    expect(cumulativeXp(50)).toBe(27380);
-    expect(xpToNext(29)).toBe(690);
-    expect(xpToNext(49)).toBe(1100);
+    expect(cumulativeXp(10)).toBe(4320);
+    expect(cumulativeXp(30)).toBe(36720);
+    expect(cumulativeXp(50)).toBe(109520);
+    expect(xpToNext(29)).toBe(2760);
+    expect(xpToNext(49)).toBe(4400);
   });
   it('turns XP into levels', () => {
-    expect(levelOf(0)).toMatchObject({ level: 1, into: 0, need: 120 });
-    expect(levelOf(1079).level).toBe(9);
-    expect(levelOf(1080).level).toBe(10);
-    expect(levelOf(27380)).toMatchObject({ level: 50, frac: 1 });
+    expect(levelOf(0)).toMatchObject({ level: 1, into: 0, need: 480 });
+    expect(levelOf(4319).level).toBe(9);
+    expect(levelOf(4320).level).toBe(10);
+    // the first victory that used to reach Renown 13 (1,685 XP) now reaches Renown 4
+    expect(levelOf(1685).level).toBe(4);
+    expect(levelOf(109520)).toMatchObject({ level: 50, frac: 1 });
     expect(levelOf(10 ** 9).level).toBe(50);
     expect(rankOf(1).name).toBe('Humble Sect');
     expect(rankOf(29).name).toBe('Established Sect');

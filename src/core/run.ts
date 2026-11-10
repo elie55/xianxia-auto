@@ -1402,7 +1402,18 @@ export function afterResultContinue(s: RunState): void {
     s.phase = 'reward';
     return;
   }
+  // the guardian of Realm II is the run's last fight: no shop after it, straight on to the Realm Cleared screen
+  // (the Realm I guardian keeps its shop before Realm II, and the Ladder's floors keep theirs)
+  if (isFinalGuardianWon(s)) {
+    advanceNode(s);
+    return;
+  }
   openShop(s);
+}
+
+/** The fight just won was the guardian of Realm II, the last fight of a run (the Heavenly Ladder is optional). */
+export function isFinalGuardianWon(s: RunState): boolean {
+  return s.realm === 2 && currentNode(s).kind === 'boss' && s.currentEncounter?.kind === 'boss' && s.lastResult?.winner === 'ally';
 }
 
 export function chooseReward(s: RunState, relicId: string): void {

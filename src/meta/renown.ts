@@ -6,15 +6,18 @@ import type { RunState } from '@/core/run';
  */
 export const MAX_RENOWN = 50;
 
-/** XP needed to go from `level` to `level + 1` (levels 1–49). */
+/**
+ * XP needed to go from `level` to `level + 1` (levels 1–49). Four times the first curve (2026-11-10): a first victory
+ * full of new Compendium entries and achievements took a sect from Renown 1 to 13 in one run; it now reaches about 4.
+ */
 export function xpToNext(level: number): number {
   if (level >= MAX_RENOWN) return 0;
-  if (level < 10) return 120;
-  if (level < 30) return 120 + 30 * (level - 10);
-  return 720 + 20 * (level - 30);
+  if (level < 10) return 480;
+  if (level < 30) return 480 + 120 * (level - 10);
+  return 2880 + 80 * (level - 30);
 }
 
-/** Total XP needed to reach `level` from nothing (level 1 = 0, level 10 = 1,080, level 30 = 9,180, level 50 = 27,380). */
+/** Total XP needed to reach `level` from nothing (level 1 = 0, level 10 = 4,320, level 30 = 36,720, level 50 = 109,520). */
 export function cumulativeXp(level: number): number {
   let total = 0;
   for (let l = 1; l < Math.min(level, MAX_RENOWN); l++) total += xpToNext(l);

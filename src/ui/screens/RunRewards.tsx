@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { meta } from '@/app/store';
 import { reducedMotion } from '@/app/motion';
 import type { RunPayout } from '@/core/run';
@@ -28,6 +28,16 @@ export function RunRewards({ payout }: { payout: RunPayout }) {
   const [bar, setBar] = useState(calm ? { level: to.level, frac: to.frac, anim: false } : { level: from.level, frac: from.frac, anim: false });
   const [cards, setCards] = useState<number[]>(calm ? gained : []);
   const linesDone = shown >= lines.length;
+  // the Renown column scrolls when a run pays many levels: keep the newest reward card in view as it turns over (only
+  // this column scrolls: scrollIntoView could also move the run-end screen, which clips with overflow: hidden)
+  const progressRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const box = progressRef.current;
+    const card = box?.querySelector<HTMLElement>('.rr-card:last-child');
+    if (calm || !box || !card) return;
+    const top = card.offsetTop + card.offsetHeight + 14 - box.clientHeight;
+    if (top > box.scrollTop) box.scrollTo({ top, behavior: 'smooth' });
+  }, [cards.length]);
 
   // the lines come in one by one
   useEffect(() => {
@@ -96,7 +106,7 @@ export function RunRewards({ payout }: { payout: RunPayout }) {
             </div>
           ))}
         </div>
-        <div class="rr-progress">
+        <div class="rr-progress" ref={progressRef}>
           <div class="rr-level-row">
             <span class={`rr-seal ${cards.length ? 'pop' : ''}`} key={bar.level}>
               <span class="brush">{rank.hanzi}</span>

@@ -133,11 +133,14 @@ pay 20 / 25 / 30 Spirit Stones in Realm I / Realm II / the Ladder, plus 1 per su
 
 | Levels | XP per level | Cumulative XP at the end |
 | --- | --- | --- |
-| 1–10 | 120 flat | 1,080 (Renown 10 after about 4–6 runs) |
-| 10–30 | 120 + 30 × (level − 10), so 120 → 690 | 9,180 |
-| 30–50 | 720 + 20 × (level − 30), so 720 → 1,100 | 27,380 |
+| 1–10 | 480 flat | 4,320 (Renown 10 after about 5–7 runs) |
+| 10–30 | 480 + 120 × (level − 10), so 480 → 2,760 | 36,720 |
+| 30–50 | 2,880 + 80 × (level − 30), so 2,880 → 4,400 | 109,520 |
 
-At roughly 400 XP per run on average (including achievements and discoveries), Renown 50 takes about 65–70 runs.
+The curve was quadrupled on 2026-11-10. With the first one, a first victory (its discoveries and achievements
+included, 1,685 XP) went from Renown 1 to 13 in a single run; it now reaches Renown 4. Later runs pay less, about 520
+XP for a Mortal victory and more on harder contracts, so Renown 50 takes on the order of 100–150 runs. Saves keep their
+XP and are levelled on the new curve.
 
 ### 5.2 Sect ranks
 

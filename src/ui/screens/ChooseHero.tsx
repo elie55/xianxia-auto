@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { act, run, showToast } from '@/app/store';
+import { act, run, screen, setRun, showToast } from '@/app/store';
 import { draftPick, draftReroll } from '@/core/run';
 import { BLESSINGS } from '@/content/difficulties';
 import { HeroCard } from '@/ui/components/HeroCard';
@@ -17,6 +17,12 @@ export function ChooseHero() {
     audio.sfx('ui_confirm');
     act((st) => draftPick(st, hero, blessing));
   };
+  // nothing has happened yet: going back drops the run (no defeat, no saved run) and returns to the contracts
+  const back = () => {
+    audio.sfx('ui_back');
+    setRun(null);
+    screen.value = 'newRun';
+  };
   return (
     <div class="screen draft-screen">
       <div class="draft-bg">
@@ -24,6 +30,9 @@ export function ChooseHero() {
           择
         </div>
       </div>
+      <button class="btn small ghost draft-back anim-fade" data-hotkey="back" onClick={back}>
+        <Icon name="ui_back" size={20} /> Back
+      </button>
       <div class="draft-header anim-fade">
         <div class="brush draft-hanzi">选择弟子</div>
         <div class="display draft-title">Choose Your First Disciple</div>
