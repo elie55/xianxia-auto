@@ -338,6 +338,13 @@ export interface RelicDef {
   teamSize?: boolean;
 }
 
+/** A recolour applied to a sprite: hue rotation in degrees, saturation and brightness as factors (1 = unchanged). */
+export interface SpriteLook {
+  hue?: number;
+  saturate?: number;
+  brightness?: number;
+}
+
 export interface EnemyDef {
   id: string;
   name: string;
@@ -357,6 +364,10 @@ export interface EnemyDef {
   /** Power budget cost used by the encounter generator. */
   cost: number;
   realm: 1 | 2 | 'any';
+  /** The contract battlefield this foe belongs to (src/content/themes.ts). Unset: the Mortal realms and the Ladder. */
+  theme?: string;
+  /** Recolour of a variant that reuses another foe's sprite. */
+  look?: SpriteLook;
   accent?: string;
   classes?: ClassId[];
   /** Stones dropped (bonus). */

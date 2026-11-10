@@ -41,6 +41,7 @@ import { run } from './store';
  *   ?demo=insight      → class Insight choice (rank 2 breakthrough)
  *   ?demo=cleared      → realm cleared
  *   &realm=1|2|3       → arena painting of that realm (with any board scene)
+ *   &tier=0..7         → the demo run's contract (its battlefields and foes)
  *   ?demo=end          → run end (victory)
  */
 export function applyDebugQuery(): boolean {
@@ -58,7 +59,8 @@ export function applyDebugQuery(): boolean {
   if (!params.has('demo')) return false;
   const value = params.get('demo') ?? '';
   resetItemQuests();
-  const s = newRun(0, 42);
+  const tierParam = Number(params.get('tier') ?? 0);
+  const s = newRun(Number.isInteger(tierParam) && tierParam >= 0 && tierParam <= 7 ? tierParam : 0, 42);
   if (value === 'draft') {
     setRun(s);
     screen.value = 'run';

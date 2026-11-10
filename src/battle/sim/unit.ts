@@ -1,4 +1,4 @@
-import type { AbilityDef, ClassId, EffectDef, Hex, Rank, Scale, Side, StatKey, Stats } from '@/core/types';
+import type { AbilityDef, ClassId, EffectDef, Hex, Rank, Scale, Side, SpriteLook, StatKey, Stats } from '@/core/types';
 import { STAT_KEYS } from '@/core/types';
 
 export interface StatMod {
@@ -59,6 +59,8 @@ export interface UnitInit {
   elite?: boolean;
   /** Visual-only: the unit hovers instead of standing. */
   flying?: boolean;
+  /** Visual-only: recolour of a variant that reuses another foe's sprite. */
+  look?: SpriteLook;
   /** Visual-only: portrait key for the tracker. */
   portrait?: string;
   /** Item slot count for "items per rank" difficulty, informational. */
@@ -78,6 +80,7 @@ export class Unit {
   readonly heroUid?: string;
   readonly companion?: string;
   readonly sprite: string;
+  readonly look?: SpriteLook;
   readonly visualScale: number;
   readonly projectile?: string;
   readonly accent?: string;
@@ -163,6 +166,7 @@ export class Unit {
     this.heroUid = init.heroUid;
     this.companion = init.companion;
     this.sprite = init.sprite;
+    this.look = init.look;
     this.visualScale = init.scale ?? 1;
     this.projectile = init.projectile;
     this.accent = init.accent;

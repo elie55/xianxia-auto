@@ -4,6 +4,7 @@ import { compendiumReturn, meta, screen } from '@/app/store';
 import { emptySeen, type SeenKind } from '@/app/discovery';
 import { HEROES, HERO_BY_ID } from '@/content/heroes';
 import { ENEMIES, ENEMY_BY_ID } from '@/content/enemies';
+import { THEME_BY_ID, lookFilter } from '@/content/themes';
 import { ITEMS, ITEM_BY_ID } from '@/content/items';
 import { RELICS, RELIC_BY_ID } from '@/content/relics';
 import { CLASSES } from '@/content/classes';
@@ -35,9 +36,12 @@ const TABS: { id: Tab; label: string; hanzi: string; seen?: SeenKind }[] = [
   { id: 'insights', label: 'Dao Insights', hanzi: '悟', seen: 'relics' },
 ];
 
+/** Foes of battlefields still being made stay out of the Compendium until their contract can be played. */
+const ENEMY_LIST = ENEMIES.filter((e) => !e.theme || THEME_BY_ID[e.theme]?.ready);
+
 const ALL_IDS: Record<SeenKind, string[]> = {
   heroes: HEROES.map((h) => h.id),
-  enemies: ENEMIES.map((e) => e.id),
+  enemies: ENEMY_LIST.map((e) => e.id),
   items: ITEMS.map((i) => i.id),
   relics: RELICS.map((r) => r.id),
 };
@@ -177,7 +181,7 @@ export function Compendium() {
   };
 
   const heroes = HEROES.filter((h) => keep(seen.heroes.has(h.id), heroMatch(h, sel, q)));
-  const enemies = ENEMIES.filter((e) => keep(seen.enemies.has(e.id), enemyMatch(e, sel, q)));
+  const enemies = ENEMY_LIST.filter((e) => keep(seen.enemies.has(e.id), enemyMatch(e, sel, q)));
   const items = ITEM_LIST.filter((i) => keep(seen.items.has(i.id), itemMatch(i, sel, q)));
   const relics = RELIC_LIST.filter((r) => keep(seen.relics.has(r.id), relicMatch(r, sel, q)));
   const shown = tab === 'disciples' ? heroes.length : tab === 'enemies' ? enemies.length : tab === 'treasures' ? items.length : tab === 'insights' ? relics.length : 1;
@@ -440,7 +444,8 @@ function UnseenCard({ rarity, label }: { rarity: string; label: string }) {
   );
 }
 
-const realmPlate = (e: EnemyDef) => (e.realm === 2 ? 'realm2_abyss' : e.boss && e.realm !== 1 ? 'realm3_ladder' : 'realm1_bamboo');
+const realmPlate = (e: EnemyDef) => (e.theme ? THEME_BY_ID[e.theme]?.art ?? 'realm1_bamboo' : e.realm === 2 ? 'realm2_abyss' : e.boss && e.realm !== 1 ? 'realm3_ladder' : 'realm1_bamboo');
+const themeLabel = (e: EnemyDef) => (e.theme ? THEME_BY_ID[e.theme]?.name : undefined);
 const kindLabel = (e: EnemyDef) => (e.boss ? 'Realm Guardian' : e.elite ? 'Elite' : 'Regular');
 const realmLabel = (e: EnemyDef) => (e.realm === 'any' ? 'Both realms' : `Realm ${e.realm}`);
 
@@ -448,7 +453,8 @@ function EnemyCard({ e, unseen }: { e: EnemyDef; unseen?: boolean }) {
   return (
     <>
       <div class="codex-enemy-art" style={{ ['--plate' as string]: `url(./assets/art/bg/${realmPlate(e)}.jpg)` }}>
-        <img src={`./assets/art/sprites/${e.sprite}.png`} alt="" draggable={false} />
+        {/* an unseen foe keeps the silhouette filter from CSS; a seen variant shows its recolour */}
+        <img src={`./assets/art/sprites/${e.sprite}.png`} alt="" draggable={false} style={unseen ? undefined : { filter: lookFilter(e.look) }} />
       </div>
       <div class="codex-enemy-body">
         <div class="codex-enemy-head">
@@ -457,7 +463,7 @@ function EnemyCard({ e, unseen }: { e: EnemyDef; unseen?: boolean }) {
         </div>
         <div class="codex-enemy-tags">
           <span class="tag">{kindLabel(e)}</span>
-          <span class="tag">{realmLabel(e)}</span>
+          <span class="tag">{themeLabel(e) ?? realmLabel(e)}</span>
           {!unseen && e.flying && <span class="tag">Flying</span>}
           {!unseen && e.bounty ? <span class="tag gold">Bounty {e.bounty}</span> : null}
         </div>
@@ -639,13 +645,13 @@ function Section({ title, aside, children }: { title: string; aside?: string; ch
 const CLIP_LABEL: Record<string, string> = { idle: 'Idle', attack: 'Attack', cast: 'Technique', death: 'Defeat' };
 
 /** The detail page's stage: the sprite's idle on a painted backplate, with buttons that play its other clips. */
-function Stage({ sprite, plate, height }: { sprite: string; plate: string; height: number }) {
+function Stage({ sprite, plate, height, look }: { sprite: string; plate: string; height: number; look?: EnemyDef['look'] }) {
   const def = useSpritePack(sprite);
   const [clip, setClip] = useState({ anim: 'idle', n: 0 });
   const clips = ['idle', 'attack', 'cast'].filter((k) => def?.animations[k]);
   return (
     <div class="drawer-stage" style={{ ['--plate' as string]: `url(./assets/art/bg/${plate}.jpg)` }}>
-      <div class="drawer-ground">
+      <div class="drawer-ground" style={{ filter: lookFilter(look) }}>
         <SpriteClip id={sprite} anim={clip.anim} nonce={clip.n} height={height} onDone={() => setClip((c) => ({ anim: 'idle', n: c.n + 1 }))} />
       </div>
       {clips.length > 1 && (
@@ -785,7 +791,7 @@ function EnemyDetail({ id }: { id: string }) {
   const keys = (['hp', 'attack', 'spirit', 'attackSpeed', 'range', 'defense', 'crit', 'moveSpeed'] as const).filter((k) => e.baseStats[k] !== undefined);
   return (
     <>
-      <Stage sprite={e.sprite} plate={realmPlate(e)} height={Math.round(230 * Math.min(1.25, e.scale ?? 1))} />
+      <Stage sprite={e.sprite} plate={realmPlate(e)} look={e.look} height={Math.round(230 * Math.min(1.25, e.scale ?? 1))} />
       <div class="drawer-head">
         {e.hanzi && (
           <span class="brush drawer-hanzi" style={{ color: e.accent ?? 'var(--vermilion-bright)' }}>
@@ -795,7 +801,7 @@ function EnemyDetail({ id }: { id: string }) {
         <div>
           <div class="display drawer-name">{e.name}</div>
           <div class="drawer-sub">
-            {kindLabel(e)} · {realmLabel(e)}
+            {kindLabel(e)} · {themeLabel(e) ?? realmLabel(e)}
           </div>
         </div>
       </div>

@@ -21,8 +21,9 @@ import { audio } from '@/audio/AudioManager';
 import { toDesign } from '@/app/scale';
 import { isAllyZone } from '@/battle/sim/hex';
 import { RANK_NAMES, type NodeKind } from '@/core/types';
-import { REALM_BOSSES, REALM_ELITES, tribulationLevel } from '@/core/encounters';
+import { realmElites, realmGuardians, tribulationLevel } from '@/core/encounters';
 import { ENEMY_BY_ID } from '@/content/enemies';
+import { themeFor } from '@/content/themes';
 import { PAINTED_ICONS } from '@/ui/components/paintedIcons';
 import { baseWinStones, heroSellValue, itemSellValue } from '@/core/run';
 import { stonesHeld } from '@/ui/flourish';
@@ -55,7 +56,6 @@ const NODE_LABEL: Record<NodeKind, string> = {
 };
 
 const nodeIcon = (k: NodeKind) => (PAINTED_ICONS.has(`node_${k}`) ? `node_${k}` : NODE_ICON[k]);
-const realmKey = (realm: number): 1 | 2 | 3 => (realm === 1 ? 1 : realm === 2 ? 2 : 3);
 const FIGHT_NODES: NodeKind[] = ['fight', 'elite', 'boss', 'challenge'];
 
 /** What a node holds: its kind, Tribulation level, what happens there, the reward and the foes (when known). */
@@ -82,7 +82,7 @@ function NodeTip({ s, index }: { s: RunState; index: number }) {
   };
   // foes: the real ones for the node you stand on, the known champion for elites and the guardian
   const live = state === 'current' && s.currentEncounter && FIGHT_NODES.includes(n.kind) ? s.currentEncounter.enemies.map((e) => e.defId) : [];
-  const known = n.kind === 'boss' ? REALM_BOSSES[realmKey(s.realm)] : n.kind === 'elite' ? REALM_ELITES[realmKey(s.realm)] : [];
+  const known = n.kind === 'boss' ? realmGuardians(s.realm, s.tier) : n.kind === 'elite' ? realmElites(s.realm, s.tier) : [];
   const foes = [...new Set(live.length ? live : known)].slice(0, 5);
   return (
     <div class="node-tip">
@@ -142,7 +142,7 @@ function TopBar({ s }: { s: RunState }) {
   const diff = DIFFICULTIES[s.tier];
   const level = s.currentEncounter?.level ?? tribulationLevel(s.realm, s.nodeIndex, s.tier, s.floor);
   const inBattle = s.phase === 'battle';
-  const realmName = s.realm === 1 ? 'Azure Bamboo Province' : s.realm === 2 ? 'Blood Moon Abyss' : `Heavenly Ladder · Floor ${s.floor}`;
+  const realmName = s.realm === 1 || s.realm === 2 ? themeFor(s.tier, s.realm).name : `Heavenly Ladder · Floor ${s.floor}`;
   return (
     <div class="topbar" data-tut="topbar">
       <div class="topbar-left">

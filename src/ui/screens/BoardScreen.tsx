@@ -4,6 +4,7 @@ import { Battle } from '@/battle/sim/battle';
 import { baseWinStones, battleConfig, finishBattle, heroByUid, startBattle, teamContext, type RunState } from '@/core/run';
 import { heroAbility, heroStats } from '@/core/builder';
 import { ENEMY_BY_ID } from '@/content/enemies';
+import { lookFilter } from '@/content/themes';
 import { getBattleView } from '@/battle/view/BattleView';
 import { Hud, HeroSlotTip, battleSpeed, battleTick, battleTime, handleDrop, hoverTarget } from '@/ui/hud/Hud';
 import { drag, setDropHandlers, startDrag } from '@/ui/drag';
@@ -23,13 +24,13 @@ export function useArena(s: RunState): void {
   useEffect(() => {
     if (mounted.current) return;
     mounted.current = true;
-    void view.mount(document.getElementById('pixi-root')!).then(() => view.setRealm(s.realm));
+    void view.mount(document.getElementById('pixi-root')!).then(() => view.setRealm(s.realm, s.tier));
     setDropHandlers(handleDrop, hoverTarget);
     return () => setDropHandlers(null, null);
   }, []);
   useEffect(() => {
-    void view.setRealm(s.realm);
-  }, [s.realm]);
+    void view.setRealm(s.realm, s.tier);
+  }, [s.realm, s.tier]);
   useEffect(() => {
     if (s.phase === 'battle') return;
     const cfg = battleConfig(s);
@@ -168,7 +169,7 @@ export function BoardScreen() {
             <div class="enc-foes">
               {foeGroups(enc).map((g) => (
                 <span key={g.id} class={`enc-foe ${ENEMY_BY_ID[g.id]?.boss ? 'boss' : ENEMY_BY_ID[g.id]?.elite ? 'elite' : ''}`} {...tip(<><h4>{ENEMY_BY_ID[g.id]?.name}</h4><p>{g.n > 1 ? `${g.n} of them in this fight.` : 'One in this fight.'}</p></>, 'below')}>
-                  <img src={`./assets/art/sprites/${ENEMY_BY_ID[g.id]?.sprite ?? g.id}.png`} alt="" draggable={false} />
+                  <img src={`./assets/art/sprites/${ENEMY_BY_ID[g.id]?.sprite ?? g.id}.png`} alt="" draggable={false} style={{ filter: lookFilter(ENEMY_BY_ID[g.id]?.look) }} />
                   {g.n > 1 && <b>×{g.n}</b>}
                 </span>
               ))}

@@ -75,6 +75,13 @@ export class UnitView extends Container {
   private brightness = new ColorMatrixFilter();
   /** Heals, shields and statuses light the body's outline instead of recolouring the sprite (tintFlash). */
   private glow: GlowFilter | null = null;
+  /** Colour shift of a recoloured variant. */
+  private look: ColorMatrixFilter | null = null;
+
+  /** The body's filters in order: variant colour, flash / grey-out, outline glow. */
+  private filterChain() {
+    return [this.look, this.brightness, this.glow].filter((f): f is NonNullable<typeof f> => !!f);
+  }
   private bob = Math.random() * Math.PI * 2;
   private baseScale: number;
   private auraColor = 0x3fbf9f;
@@ -104,7 +111,15 @@ export class UnitView extends Container {
     this.addChild(this.aura);
 
     this.addChild(this.body);
-    this.body.filters = [this.brightness];
+    // a recoloured variant (Mist Wolf from the Spirit Wolf's sprite...) keeps its colour shift under every other effect
+    if (unit.look) {
+      const look = new ColorMatrixFilter();
+      if (unit.look.hue) look.hue(unit.look.hue, true);
+      if (unit.look.saturate !== undefined) look.saturate(unit.look.saturate - 1, true);
+      if (unit.look.brightness !== undefined) look.brightness(unit.look.brightness, true);
+      this.look = look;
+    }
+    this.body.filters = this.filterChain();
     this.brightness.enabled = false;
 
     this.buildPlaceholder();
@@ -543,7 +558,7 @@ export class UnitView extends Container {
     if (this.destroyed) return;
     if (!this.glow) {
       this.glow = new GlowFilter({ distance: 12, outerStrength: 0, innerStrength: 0, color, quality: 0.2, alpha: 0.9 });
-      this.body.filters = [this.brightness, this.glow];
+      this.body.filters = this.filterChain();
     }
     const g = this.glow;
     g.color = color;

@@ -15,6 +15,7 @@ import { installUiSounds } from '@/ui/flourish';
 import { installDiscovery } from '@/app/discovery';
 import { installMeta } from '@/meta/runtime';
 import './styles/meta.css';
+import './styles/themes.css';
 
 const uiRoot = document.getElementById('ui-root')!;
 installScaling(uiRoot);

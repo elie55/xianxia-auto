@@ -1,6 +1,7 @@
 import type { EnemyDef, Hex, NodeKind } from '@/core/types';
 import type { Rng } from '@/core/rng';
 import { ENEMIES, ENEMY_BY_ID } from '@/content/enemies';
+import { themeFor } from '@/content/themes';
 import { BOARD_ROWS, ENEMY_MIN_COL, BOARD_COLS, offsetToAxial, axialToOffset, hexToPixel } from '@/battle/sim/hex';
 
 export interface EncounterUnit {
@@ -31,8 +32,10 @@ function budgetFor(realm: number, nodeIndex: number, kind: NodeKind | 'single'):
   return b;
 }
 
-function poolFor(realm: number): EnemyDef[] {
-  return ENEMIES.filter((e) => !e.boss && !e.elite && (e.realm === realm || e.realm === 'any' || (realm >= 3 && e.realm !== 1)));
+/** Regular foes of a realm on a contract: the contract's battlefield theme, or the Ladder's mix of Realm II foes. */
+function poolFor(realm: number, tier = 0): EnemyDef[] {
+  if (realm === 1 || realm === 2) return themeFor(tier, realm).regulars.map((id) => ENEMY_BY_ID[id]).filter(Boolean);
+  return ENEMIES.filter((e) => !e.theme && !e.boss && !e.elite && e.realm !== 1);
 }
 
 /**
@@ -99,33 +102,43 @@ export const REALM_BOSSES: Record<1 | 2 | 3, string[]> = { 1: ['flood_dragon'], 
 export const REALM_ELITES: Record<1 | 2 | 3, string[]> = { 1: ['moss_golem'], 2: ['demon_general'], 3: ['moss_golem', 'demon_general', 'thunder_ape'] };
 const realmKey = (realm: number): 1 | 2 | 3 => (realm === 1 ? 1 : realm === 2 ? 2 : 3);
 
+/** Who can guard a realm on a contract (the Ladder draws from the Mortal guardians). Also shown in node previews. */
+export function realmGuardians(realm: number, tier = 0): string[] {
+  return realm === 1 || realm === 2 ? themeFor(tier, realm).guardians : REALM_BOSSES[3];
+}
+
+/** The elite champions of a realm on a contract. */
+export function realmElites(realm: number, tier = 0): string[] {
+  return realm === 1 || realm === 2 ? themeFor(tier, realm).elites : REALM_ELITES[3];
+}
+
 export function generateEncounter(realm: number, nodeIndex: number, kind: NodeKind | 'single', tier: number, rng: Rng, floor = 0): Encounter {
   const level = tribulationLevel(realm, nodeIndex, tier, floor);
   const defIds: string[] = [];
   let label = 'Regular Encounter';
 
   if (kind === 'boss') {
-    const bosses = REALM_BOSSES[realmKey(realm)];
+    const bosses = realmGuardians(realm, tier);
     const boss = bosses.length === 1 ? bosses[0] : rng.pick(bosses);
     defIds.push(boss);
-    const adds = realm === 1 ? ['spirit_wolf', 'spirit_wolf'] : ['blood_bat', 'blood_bat'];
+    const adds = realm === 1 || realm === 2 ? themeFor(tier, realm).escort : ['blood_bat', 'blood_bat'];
     defIds.push(...adds);
     label = ENEMY_BY_ID[boss].name;
   } else if (kind === 'single') {
-    const pool = poolFor(realm).filter((e) => e.cost >= 1.8);
-    const pick = rng.pick(pool.length ? pool : poolFor(realm));
+    const pool = poolFor(realm, tier).filter((e) => e.cost >= 1.8);
+    const pick = rng.pick(pool.length ? pool : poolFor(realm, tier));
     defIds.push(pick.id);
     label = `Heavenly Trial: ${pick.name}`;
   } else {
     let budget = budgetFor(realm, nodeIndex, kind);
     if (kind === 'elite') {
-      const elites = REALM_ELITES[realmKey(realm)];
+      const elites = realmElites(realm, tier);
       const elite = elites.length === 1 ? elites[0] : rng.pick(elites);
       defIds.push(elite);
       budget = Math.max(1.5, budget * 0.5);
       label = `Elite: ${ENEMY_BY_ID[elite].name}`;
     }
-    const pool = poolFor(realm);
+    const pool = poolFor(realm, tier);
     const maxUnits = kind === 'elite' ? 5 : 7;
     let guard = 0;
     while (budget > 0.6 && defIds.length < maxUnits && guard++ < 40) {

@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks';
 import type { ComponentChildren } from 'preact';
 import { meta, screen, setRun } from '@/app/store';
 import { DIFFICULTIES } from '@/content/difficulties';
+import { THEMES } from '@/content/themes';
 import { ladderFloorOf, newRun, resetItemQuests } from '@/core/run';
 import { randomSeed } from '@/core/rng';
 import { Icon } from '@/ui/components/Icon';
@@ -13,6 +14,11 @@ const TIER_COLOR = ['#9fd8c4', '#6fe3c4', '#8fd5ff', '#f3cf78', '#ffb347', '#ff7
 /** The icon of the modifier each contract adds. */
 const MOD_ICON: Record<number, string> = { 1: 'kw_bleed', 2: 'stat_hp', 3: 'stones', 4: 'ui_bag', 5: 'stat_attack', 6: 'ui_shop', 7: 'kw_lightning' };
 const MAX_TIER = DIFFICULTIES.length - 1;
+/** A contract's own Realm I battlefield, painted behind its seal once that battlefield exists. */
+const fieldArt = (tier: number) => {
+  const t = THEMES.find((th) => th.tier === tier && th.realm === 1 && th.ready);
+  return t ? `url(./assets/art/bg/${t.art}.jpg)` : undefined;
+};
 
 export function NewRun() {
   const m = meta.value;
@@ -59,8 +65,8 @@ export function NewRun() {
             return (
               <button
                 key={x.tier}
-                class={`tier-card ${x.tier === tier ? 'active' : ''} ${locked ? 'locked' : ''}`}
-                style={{ ['--tc' as string]: TIER_COLOR[x.tier] }}
+                class={`tier-card ${x.tier === tier ? 'active' : ''} ${locked ? 'locked' : ''} ${fieldArt(x.tier) ? 'has-art' : ''}`}
+                style={{ ['--tc' as string]: TIER_COLOR[x.tier], ['--art' as string]: fieldArt(x.tier) }}
                 disabled={locked}
                 onClick={() => {
                   if (x.tier === tier) return;

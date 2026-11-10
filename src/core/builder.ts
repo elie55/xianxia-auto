@@ -220,6 +220,7 @@ export function buildEnemyUnit(def: EnemyDef, level: number, id: number, pos: He
     onBoard: true,
     targeting: def.targeting,
     sprite: def.sprite,
+    look: def.look,
     scale: def.scale,
     projectile: def.projectile,
     accent: def.accent,

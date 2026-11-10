@@ -1,0 +1,7 @@
+/* ───────── CONTRACT BATTLEFIELDS: a tier card shows its contract's own Realm I battlefield behind the seal ───────── */
+.tier-card.has-art {
+  background: radial-gradient(120% 70% at 50% 34%, color-mix(in srgb, var(--tc) 16%, transparent), transparent 62%), linear-gradient(180deg, rgba(6, 12, 13, 0.25) 0%, rgba(6, 12, 13, 0.55) 45%, rgba(6, 12, 13, 0.94) 82%), var(--art) center 62% / cover no-repeat;
+}
+.tier-card.has-art.active {
+  background: radial-gradient(120% 70% at 50% 34%, color-mix(in srgb, var(--tc) 26%, transparent), transparent 66%), linear-gradient(180deg, rgba(10, 30, 28, 0.15) 0%, rgba(8, 24, 22, 0.5) 45%, rgba(6, 16, 15, 0.94) 82%), var(--art) center 62% / cover no-repeat;
+}

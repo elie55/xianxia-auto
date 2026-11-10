@@ -1,6 +1,7 @@
 import { Application, Container, Graphics, Sprite, Text, TextStyle, Texture, Assets } from 'pixi.js';
 import { reducedMotion } from '@/app/motion';
 import { AmbientLayer } from './Ambient';
+import { arenaFor, type Arena } from '@/content/themes';
 import gsap from 'gsap';
 import { signal } from '@preact/signals';
 import { installAnimationSafety, sweepDeadTweens } from './animSafety';
@@ -147,6 +148,8 @@ export class BattleView {
   /** Milliseconds of simulation freeze left (impact "hit-stop"). Rendering keeps running. */
   private hitStopMs = 0;
   private realm = 1;
+  /** The battlefield being shown: painting, floor placement, ambience and fallback colours. */
+  private arena: Arena = arenaFor(1, 0);
   private elapsed = 0;
   onEnd: ((r: BattleResult) => void) | null = null;
   onTime: ((t: number) => void) | null = null;
@@ -173,7 +176,7 @@ export class BattleView {
     // first child: the painting is inserted below it later, the board layers stay above it
     this.ambient = new AmbientLayer(this.app.renderer);
     this.world.addChild(this.ambient);
-    this.ambient.setRealm(this.realm || 1);
+    this.ambient.setKind(this.arena.ambient);
     this.world.addChild(this.arenaLayer);
     this.arenaLayer.addChild(this.ground);
     this.arenaLayer.addChild(this.hexLayer);
@@ -217,19 +220,12 @@ export class BattleView {
   }
 
   /**
-   * Board placement per arena painting, measured on the 1920×1080 paintings: the vertical centre of the five rows and
-   * the row squash that keeps the back row on the painted floor (the abyss platform and the ladder terrace only
-   * occupy the lower third of their paintings).
+   * Centres the board horizontally and drops it onto the current arena's floor; standing units follow. Each arena
+   * (src/content/themes.ts) gives the vertical centre of the five rows and the row squash that keeps the back row on
+   * its painted floor, measured on the 1920×1080 painting.
    */
-  private static readonly ARENA_LAYOUT: Record<number, { centerY: number; squash: number }> = {
-    1: { centerY: 740, squash: 0.62 },
-    2: { centerY: 790, squash: 0.52 },
-    3: { centerY: 775, squash: 0.56 },
-  };
-
-  /** Centres the board horizontally and drops it onto the current arena's floor; standing units follow. */
   private layoutBoard(): void {
-    const cfg = BattleView.ARENA_LAYOUT[this.realm] ?? { centerY: 740, squash: HEX_SQUASH };
+    const cfg = this.arena.layout ?? { centerY: 740, squash: HEX_SQUASH };
     hexLayout.squash = cfg.squash;
     const w = HEX_W * (BOARD_COLS - 1) + HEX_W / 2;
     const h = HEX_SIZE * 1.5 * cfg.squash * (BOARD_ROWS - 1);
@@ -271,14 +267,18 @@ export class BattleView {
 
   // ───────────────────────── arena ─────────────────────────
 
-  async setRealm(realm: number): Promise<void> {
+  /** Paints the battlefield of a realm on a contract (tier): the contract's own theme once built, else the Mortal one. */
+  async setRealm(realm: number, tier = 0): Promise<void> {
+    const arena = arenaFor(realm, tier);
     this.realm = realm;
-    this.ambient?.setRealm(realm);
+    this.arena = arena;
+    this.ambient?.setKind(arena.ambient);
     this.layoutBoard();
     this.drawBackground(viewport.value);
     this.drawGround();
-    const key = realm === 1 ? 'realm1_bamboo' : realm === 2 ? 'realm2_abyss' : 'realm3_ladder';
-    const tex = await Assets.load<Texture>(`./assets/art/bg/${key}.jpg`).catch(() => null);
+    const tex = await Assets.load<Texture>(`./assets/art/bg/${arena.art}.jpg`).catch(() => null);
+    // a newer call may have switched battlefields while this painting loaded
+    if (this.arena !== arena) return;
     if (this.bgSprite) {
       this.bgSprite.destroy();
       this.bgSprite = null;
@@ -346,7 +346,7 @@ export class BattleView {
   private drawBackground(v: Viewport): void {
     const g = this.bgGradient;
     g.clear();
-    const colors = this.realm === 1 ? [0x0f2a2a, 0x163d35, 0x0a1a19] : this.realm === 2 ? [0x2a0d14, 0x4a1420, 0x160609] : [0x101a33, 0x27345e, 0x0a0f1f];
+    const colors = this.arena.palette;
     const steps = 24;
     for (let i = 0; i < steps; i++) {
       const t = i / (steps - 1);
@@ -363,7 +363,7 @@ export class BattleView {
     const h = HEX_SIZE * 1.5 * hexLayout.squash * (BOARD_ROWS - 1);
     const cx = w / 2;
     const cy = h / 2;
-    const col = this.realm === 1 ? 0x1d4a3d : this.realm === 2 ? 0x4a1d24 : 0x1f2c55;
+    const col = this.arena.palette[3];
     // A painted arena is its own floor: draw nothing over it. The ellipses are only a fallback stage
     // for when the background painting is missing.
     if (this.bgSprite) return;

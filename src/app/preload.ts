@@ -2,6 +2,7 @@ import { signal } from '@preact/signals';
 import { Assets } from 'pixi.js';
 import { HEROES } from '@/content/heroes';
 import { ENEMIES } from '@/content/enemies';
+import { THEMES } from '@/content/themes';
 import { loadSpritePack } from '@/battle/view/SpritePack';
 import { FLIPBOOK_SHEETS } from '@/battle/view/BattleView';
 
@@ -19,9 +20,9 @@ const ART = [
   'art/bg/ui_breakthrough.jpg',
   'art/bg/ui_victory.jpg',
   'art/bg/ui_defeat.jpg',
-  'art/bg/realm1_bamboo.jpg',
-  'art/bg/realm2_abyss.jpg',
   'art/bg/realm3_ladder.jpg',
+  // every playable battlefield (the Mortal realms and each finished contract theme)
+  ...THEMES.filter((t) => t.ready).map((t) => `art/bg/${t.art}.jpg`),
   'art/ui/frame_ornate.png',
   'art/ui/button_jade.png',
   'art/ui/button_jade_9.png',
@@ -51,7 +52,9 @@ export function startPreload(skipVeil: boolean): void {
   for (const a of ART) tasks.push(() => image(`./assets/${a}`));
   for (const h of HEROES) tasks.push(() => image(`./assets/art/heroes/${h.portrait ?? h.id}/portrait.png`));
   for (const n of FLIPBOOK_SHEETS) tasks.push(() => Assets.load(`./assets/art/fx/${n}.jpg`).catch(() => null));
-  const packs = new Set<string>([...HEROES.map((h) => h.sprite ?? h.id), ...ENEMIES.map((e) => e.sprite)]);
+  // foes of contract battlefields still being made are skipped (their packs may not exist yet)
+  const playable = ENEMIES.filter((e) => !e.theme || THEMES.some((t) => t.id === e.theme && t.ready));
+  const packs = new Set<string>([...HEROES.map((h) => h.sprite ?? h.id), ...playable.map((e) => e.sprite)]);
   for (const id of packs) tasks.push(() => loadSpritePack(id));
 
   preload.value = { done: 0, total: tasks.length, finished: skipVeil };

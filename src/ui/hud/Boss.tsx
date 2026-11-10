@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { RunState } from '@/core/run';
 import { ENEMY_BY_ID } from '@/content/enemies';
+import { themeFor } from '@/content/themes';
 import { getBattleView } from '@/battle/view/BattleView';
 import { audio } from '@/audio/AudioManager';
 import { battleTick } from './Hud';
 
 /** The guardian's title under its name, per realm. */
 export function bossEpithet(s: RunState): string {
-  return s.realm === 1 ? 'Guardian of the Azure Bamboo Province' : s.realm === 2 ? 'Sovereign of the Blood Moon Abyss' : `Warden of the Heavenly Ladder · Floor ${s.floor}`;
+  if (s.realm === 1) return `Guardian of the ${themeFor(s.tier, 1).name}`;
+  if (s.realm === 2) return `Sovereign of the ${themeFor(s.tier, 2).name}`;
+  return `Warden of the Heavenly Ladder · Floor ${s.floor}`;
 }
 
 /**

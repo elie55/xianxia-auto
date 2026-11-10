@@ -2,7 +2,8 @@ import { useEffect } from 'preact/hooks';
 import { act, meta, run, updateMeta } from '@/app/store';
 import { nextRealm } from '@/core/run';
 import { concludeRun } from '@/meta/runtime';
-import { REALM_BOSSES } from '@/core/encounters';
+import { realmGuardians } from '@/core/encounters';
+import { arenaFor, themeFor } from '@/content/themes';
 import { ENEMY_BY_ID } from '@/content/enemies';
 import { Icon } from '@/ui/components/Icon';
 import { BrushBanner } from '@/ui/components/Triumph';
@@ -11,7 +12,6 @@ import { fmt } from '@/ui/hud/Hud';
 import { audio } from '@/audio/AudioManager';
 import { getBattleView } from '@/battle/view/BattleView';
 
-const REALM_ART: Record<1 | 2 | 3, string> = { 1: 'realm1_bamboo', 2: 'realm2_abyss', 3: 'realm3_ladder' };
 
 export function RealmCleared() {
   const s = run.value!;
@@ -27,20 +27,21 @@ export function RealmCleared() {
     }
   }, []);
   const realm = s.realm;
-  const realmName = realm === 1 ? 'Azure Bamboo Province' : realm === 2 ? 'Blood Moon Abyss' : `Heavenly Ladder · Floor ${s.floor}`;
+  // each contract has its own battlefields (src/content/themes.ts)
+  const realmName = realm === 1 || realm === 2 ? themeFor(s.tier, realm).name : `Heavenly Ladder · Floor ${s.floor}`;
   // the guardian that was just beaten (from the boss fight), else the realm's usual guardian
-  const bossId = s.currentEncounter?.enemies.map((e) => e.defId).find((id) => ENEMY_BY_ID[id]?.boss) ?? REALM_BOSSES[realm][0];
+  const bossId = s.currentEncounter?.enemies.map((e) => e.defId).find((id) => ENEMY_BY_ID[id]?.boss) ?? realmGuardians(realm, s.tier)[0];
   const boss = ENEMY_BY_ID[bossId];
   const next =
     realm === 1
-      ? { name: 'Blood Moon Abyss', art: 'realm2_abyss', line: 'Below the bamboo, the Blood Moon Sovereign stirs.' }
+      ? { name: themeFor(s.tier, 2).name, art: themeFor(s.tier, 2).art, line: themeFor(s.tier, 2).teaser }
       : realm === 2
         ? { name: 'The Heavenly Ladder', art: 'realm3_ladder', line: 'An endless climb, every floor deadlier than the last.' }
         : { name: `Floor ${s.floor + 1}`, art: 'realm3_ladder', line: 'The Ladder rises on. Its wardens grow stronger.' };
   const unlocked = realm === 2 ? Math.min(7, meta.value.unlockedTier) : null;
   return (
     <div class={`screen cleared-screen v2 realm-${realm}`}>
-      <div class="cleared-bg" style={{ ['--realm-art' as string]: `url(./assets/art/bg/${REALM_ART[realm]}.jpg)` }} />
+      <div class="cleared-bg" style={{ ['--realm-art' as string]: `url(./assets/art/bg/${arenaFor(realm, s.tier).art}.jpg)` }} />
       <div class="cleared-body v2">
         <BrushBanner title="Rift Sealed" seal="封" tone="gold" size="xl" sub={`${realmName} is safe once more`} />
         <div class="cleared-main">
@@ -77,7 +78,7 @@ export function RealmCleared() {
         <div class="row cleared-actions">
           {realm === 1 && (
             <button class="btn primary big" onClick={() => (audio.sfx('ui_confirm'), act((st) => nextRealm(st)))}>
-              <span class="btn-glyph">进</span> Enter the Blood Moon Abyss
+              <span class="btn-glyph">进</span> Enter the {themeFor(s.tier, 2).name}
             </button>
           )}
           {realm === 2 && (
