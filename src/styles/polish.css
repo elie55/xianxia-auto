@@ -5263,3 +5263,225 @@ input[type='range']:hover::-webkit-slider-thumb {
 .toast {
   top: 178px;
 }
+
+/* ───────── ARENA ROOM: Dao Insights as a medallion row, Treasures in a drawer (C5) ───────── */
+.leftrail.v2 {
+  top: 96px;
+  left: 16px;
+  width: auto;
+  padding: 0;
+  gap: 12px;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  pointer-events: none;
+}
+.leftrail.v2::before {
+  display: none;
+}
+.rail-insights {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 4px;
+  max-width: 560px;
+  pointer-events: auto;
+}
+.rail-insight-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 34px;
+  padding: 0 10px 0 8px;
+  margin-right: 4px;
+  border-radius: 17px;
+  background: linear-gradient(180deg, rgba(20, 34, 34, 0.92), rgba(6, 12, 12, 0.94));
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 75, 0.55), 0 4px 10px rgba(0, 0, 0, 0.45);
+}
+.rail-insight-tag .brush {
+  font-size: 22px;
+  line-height: 1;
+  color: var(--gold-bright);
+}
+.rail-insight-tag b {
+  font-family: var(--font-display);
+  font-size: calc(15px * var(--ts, 1));
+  color: var(--paper);
+}
+.leftrail.v2 .relic-grid {
+  min-height: 0;
+  gap: 0;
+}
+.leftrail.v2 .relic-chip {
+  width: 34px;
+  height: 34px;
+  margin: 5px;
+}
+.rail-drawer {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  pointer-events: auto;
+}
+.drawer-tab {
+  width: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 0 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  background: linear-gradient(180deg, rgba(22, 36, 36, 0.94), rgba(6, 12, 12, 0.96));
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 75, 0.6), 0 6px 14px rgba(0, 0, 0, 0.5);
+  transition: box-shadow 0.15s;
+}
+.drawer-tab:hover {
+  box-shadow: inset 0 0 0 1px var(--gold-bright), 0 0 16px rgba(243, 207, 120, 0.35);
+}
+.drawer-count {
+  font-family: var(--font-display);
+  font-size: calc(14px * var(--ts, 1));
+  color: var(--paper);
+}
+.drawer-arrow {
+  font-size: 18px;
+  line-height: 1;
+  color: var(--gold);
+}
+.drawer-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(7, 14, 15, 0.86);
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 75, 0.4), 0 14px 32px rgba(0, 0, 0, 0.5);
+  animation: drawer-in 0.18s ease-out both;
+}
+@keyframes drawer-in {
+  from {
+    opacity: 0;
+    translate: -14px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+.leftrail.v2.closed .drawer-body {
+  display: none;
+}
+.leftrail.v2 .rail-hint {
+  max-width: 180px;
+}
+
+/* ───────── ENCOUNTER BANNER v2: names the foes, shows them and the reward (C4) ───────── */
+.encounter-banner::before,
+.encounter-banner::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--gold);
+  transform: translateY(-50%) rotate(45deg);
+}
+.encounter-banner.v2 .enc-name {
+  font-size: calc(26px * var(--ts, 1));
+}
+.enc-foes {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 8px 0 2px;
+}
+.enc-foe {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: visible;
+  pointer-events: auto;
+  background: radial-gradient(circle at 50% 35%, #2a3a39, #0a1312 75%);
+  box-shadow: 0 0 0 2px rgba(10, 18, 18, 0.95), 0 0 0 3px rgba(212, 168, 75, 0.55);
+}
+.enc-foe img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top center;
+}
+.enc-foe.elite {
+  box-shadow: 0 0 0 2px rgba(10, 18, 18, 0.95), 0 0 0 3px #c27cff, 0 0 12px rgba(194, 124, 255, 0.5);
+}
+.enc-foe.boss {
+  box-shadow: 0 0 0 2px rgba(10, 18, 18, 0.95), 0 0 0 3px var(--vermilion-bright), 0 0 14px rgba(255, 107, 90, 0.55);
+}
+.enc-foe b {
+  position: absolute;
+  right: -8px;
+  bottom: -4px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  font-size: calc(14px * var(--ts, 1));
+  line-height: 1.2;
+  color: var(--paper);
+  background: rgba(5, 10, 11, 0.95);
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 75, 0.6);
+}
+.encounter-banner.v2 .enc-mod.gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gold-bright);
+}
+.encounter-banner.kind-elite {
+  border-color: rgba(194, 124, 255, 0.6);
+  box-shadow: 0 0 24px rgba(194, 124, 255, 0.18);
+}
+.encounter-banner.kind-elite .enc-kind {
+  color: #d9a8ff;
+}
+.encounter-banner.kind-boss {
+  border-color: rgba(255, 107, 90, 0.6);
+  box-shadow: 0 0 26px rgba(255, 107, 90, 0.2);
+}
+.encounter-banner.kind-boss .enc-kind {
+  color: var(--vermilion-bright);
+}
+
+/* ───────── CHAMPION PICKER v2: below the banner, with HP, Attack and the ability (C7) ───────── */
+.champion-panel {
+  top: 290px;
+}
+.champion-pick.v2 {
+  width: 132px;
+  padding: 12px 8px 10px;
+  gap: 4px;
+  background: rgba(5, 11, 11, 0.55);
+  border-color: rgba(212, 168, 75, 0.25);
+}
+.champion-pick.v2 .pick-name {
+  font-family: var(--font-display);
+  font-size: calc(15px * var(--ts, 1));
+  color: var(--paper);
+}
+.champion-pick.v2 .pick-stats {
+  display: flex;
+  gap: 10px;
+  font-size: calc(14px * var(--ts, 1));
+  font-weight: 700;
+}
+.champion-pick.v2 .pick-stats > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.champion-pick.v2 .pick-ability {
+  font-size: calc(14px * var(--ts, 1));
+  color: var(--gold-bright);
+  text-align: center;
+  line-height: 1.2;
+}

@@ -212,42 +212,71 @@ function TopBar({ s }: { s: RunState }) {
 
 // ───────────────────────── left rail: insights + inventory ─────────────────────────
 
+/** The player's choice for the Treasure drawer (null: automatic, open in the shop and while moving a Treasure). */
+const drawerPref = signal<boolean | null>(null);
+
 function LeftRail({ s }: { s: RunState }) {
   const relics = relicDefs(s);
   const dragging = drag.value;
   const canDropItem = dragging?.payload.kind === 'item' && !!dragging.payload.fromHero;
+  // the drawer opens by itself where Treasures are handled; the player's toggle holds until the next screen
+  useEffect(() => {
+    drawerPref.value = null;
+  }, [s.phase]);
+  const open = drawerPref.value ?? (s.phase === 'shop' || dragging?.payload.kind === 'item');
+  const filled = s.inventory.filter(Boolean).length;
   return (
-    <div class="leftrail" data-tut="leftrail">
-      <div class="rail-title">
-        Dao Insights <span class="faint">{relics.length}</span>
+    <div class={`leftrail v2 ${open ? 'open' : 'closed'}`} data-tut="leftrail">
+      <div class="rail-insights" {...tip(<><h4>Dao Insights {relics.length}</h4><p>Relics that buff the whole sect or unlock quests. Hover one for details.</p></>, 'below')}>
+        <span class="rail-insight-tag">
+          <span class="brush">悟</span>
+          <b>{relics.length}</b>
+        </span>
+        <div class="relic-grid">
+          {s.relics.map((rs) => {
+            const r = RELIC_BY_ID[rs.id];
+            if (!r) return null;
+            return (
+              <div key={rs.id} class={`relic-chip rar-${r.rarity}`} {...tip(<RelicTip relicId={rs.id} progress={rs.questProgress} done={rs.questDone} />)}>
+                <Icon name={`relic_${r.icon}`} size={22} />
+                {r.quest && !rs.questDone && <i class="quest-dot" />}
+              </div>
+            );
+          })}
+        </div>
       </div>
-      <div class="relic-grid">
-        {s.relics.map((rs) => {
-          const r = RELIC_BY_ID[rs.id];
-          if (!r) return null;
-          return (
-            <div key={rs.id} class={`relic-chip rar-${r.rarity}`} {...tip(<RelicTip relicId={rs.id} progress={rs.questProgress} done={rs.questDone} />)}>
-              <Icon name={`relic_${r.icon}`} size={22} />
-              {r.quest && !rs.questDone && <i class="quest-dot" />}
-            </div>
-          );
-        })}
-        {s.relics.length === 0 && <div class="faint rail-empty">No Dao Insights yet.</div>}
+      <div class="rail-drawer">
+        <button
+          class="drawer-tab"
+          onClick={() => {
+            audio.sfx('ui_click', { volume: 0.5 });
+            drawerPref.value = !open;
+          }}
+          {...tip(<><h4>Treasures {filled}/{s.inventorySize}</h4><p>{open ? 'Click to fold the drawer away.' : 'Click to open your Treasures.'} Drag a Treasure onto a disciple to equip it.</p></>, 'right')}
+        >
+          <Icon name="ui_bag" size={22} color="var(--gold-bright)" />
+          <span class="drawer-count">
+            {filled}/{s.inventorySize}
+          </span>
+          <span class="drawer-arrow">{open ? '‹' : '›'}</span>
+        </button>
+        <div class="drawer-body">
+          <div class="rail-title">
+            Treasures <span class="faint">{filled}/{s.inventorySize}</span>
+          </div>
+          <div class={`inventory ${canDropItem ? 'drop-ok' : ''}`} data-drop="inventory">
+            {Array.from({ length: s.inventorySize }).map((_, i) => {
+              const itemId = s.inventory[i];
+              return (
+                <div key={i} class="inv-slot" data-sell={itemId ? `item:${itemId}` : undefined}>
+                  {itemId && <ItemChip itemId={itemId} size={36} draggable onDragStart={(e) => startDrag({ kind: 'item', itemId }, e)} class="clickable" />}
+                </div>
+              );
+            })}
+          </div>
+          <div class="faint rail-hint">Drag a Treasure onto a disciple to equip it.</div>
+        </div>
       </div>
-      <div class="rail-title" style={{ marginTop: 14 }}>
-        Treasures <span class="faint">{s.inventory.length}/{s.inventorySize}</span>
-      </div>
-      <div class={`inventory ${canDropItem ? 'drop-ok' : ''}`} data-drop="inventory">
-        {Array.from({ length: s.inventorySize }).map((_, i) => {
-          const itemId = s.inventory[i];
-          return (
-            <div key={i} class="inv-slot" data-sell={itemId ? `item:${itemId}` : undefined}>
-              {itemId && <ItemChip itemId={itemId} size={36} draggable onDragStart={(e) => startDrag({ kind: 'item', itemId }, e)} class="clickable" />}
-            </div>
-          );
-        })}
-      </div>
-      <div class="faint rail-hint">Drag a Treasure onto a disciple to equip it.</div>
     </div>
   );
 }
