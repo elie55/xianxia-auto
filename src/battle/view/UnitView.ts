@@ -4,6 +4,7 @@ import type { Unit } from '@/battle/sim/unit';
 import { STATUS_COLORS } from './Vfx';
 import { loadSpritePack, type SpriteAnimDef, type SpritePack } from './SpritePack';
 import { loadUnitTexture } from './textures';
+import { teamPalette } from './palette';
 
 /** Status medallion art: painted icons in assets/art/ui/status when present, else the tinted keyword glyph. */
 const STATUS_GLYPH: Record<string, string> = { burn: 'kw_burn', poison: 'kw_poison', frost: 'kw_frost', bleed: 'kw_bleed', taunt: 'kw_taunt', stun: 'kw_lightning' };
@@ -94,7 +95,7 @@ export class UnitView extends Container {
     this.fitShadow();
 
     this.aura = new Graphics();
-    this.auraColor = unit.side === 'ally' ? 0x3fbf9f : 0xd2382c;
+    this.auraColor = unit.side === 'ally' ? teamPalette().allyAura : teamPalette().enemyAura;
     this.drawAura(this.auraColor);
     this.aura.alpha = 0;
     this.addChild(this.aura);
@@ -209,7 +210,7 @@ export class UnitView extends Container {
   }
 
   /** Plays a pack animation if available; returns true when handled. */
-  private playAnim(name: string, opts: { fps?: number; onDone?: () => void } = {}): boolean {
+  private playAnim(name: string, opts: { fps?: number; startFrame?: number; onDone?: () => void } = {}): boolean {
     const a = this.anim;
     const frames = this.pack?.anims[name];
     if (!a || !frames || frames.length === 0) return false;
@@ -219,7 +220,7 @@ export class UnitView extends Container {
     a.textures = frames;
     a.loop = !!def.loop;
     a.onComplete = undefined;
-    a.gotoAndPlay(0);
+    a.gotoAndPlay(Math.min(frames.length - 1, Math.max(0, opts.startFrame ?? 0)));
     if (!def.loop) {
       a.onComplete = () => {
         a.onComplete = undefined;
@@ -343,11 +344,12 @@ export class UnitView extends Container {
     g.clear();
     const plateH = h + (hasQi ? qh + 3 : 0) + 6;
     g.roundRect(left - 3, -h - 3, w + 6, plateH, 4).fill({ color: 0x071012, alpha: 0.9 });
-    g.roundRect(left - 3, -h - 3, w + 6, plateH, 4).stroke({ color: u.side === 'ally' ? 0xd4b060 : 0xc8805c, width: 1.3, alpha: 0.9 });
+    const pal = teamPalette();
+    g.roundRect(left - 3, -h - 3, w + 6, plateH, 4).stroke({ color: u.side === 'ally' ? pal.allyRim : pal.enemyRim, width: 1.3, alpha: 0.9 });
     g.rect(left, -h, w, h).fill({ color: 0x15201f });
     if (trailW > hpW) g.rect(left + hpW, -h, trailW - hpW, h).fill({ color: 0xffe2a6, alpha: 0.85 });
     if (hpW > 0) {
-      g.rect(left, -h, hpW, h).fill({ color: u.side === 'ally' ? 0x4fd36a : 0xe0412f });
+      g.rect(left, -h, hpW, h).fill({ color: u.side === 'ally' ? pal.allyHp : pal.enemyHp });
       g.rect(left, -h, hpW, Math.max(2, h * 0.38)).fill({ color: 0xffffff, alpha: 0.22 });
     }
     if (shieldW > 0) {
@@ -488,12 +490,24 @@ export class UnitView extends Container {
   }
 
   castAnim(): void {
-    // a cast clip (e.g. the dragon's Tidal Breath) is timed so its release, about 55 % in, lands when the ability
-    // resolves at the end of its cast time
+    // A cast clip (a disciple's technique, the dragon's Tidal Breath) is timed so its release frame, where the
+    // technique leaves the hands, lands when the sim resolves the ability: 55 % into its cast time. When that would
+    // need more than 24 fps, the clip starts later instead of playing too fast.
     const def = this.pack?.def.animations.cast;
     const castTime = Math.max(0.3, this.unit.ability?.castTime ?? 0.6);
-    const castFps = def ? Math.min(30, Math.max(def.fps, (def.frames * 0.55) / castTime)) : undefined;
-    if (!this.playAnim('cast', castFps ? { fps: castFps } : {}) && !this.playAnim('attack', { fps: 30 })) {
+    let played = false;
+    if (def) {
+      const lead = castTime * 0.55;
+      const release = Math.min(def.frames - 1, def.releaseFrame ?? Math.round(def.frames * 0.55));
+      let fps = Math.max(def.fps, release / lead);
+      let startFrame = 0;
+      if (fps > 24) {
+        fps = 24;
+        startFrame = Math.max(0, Math.round(release - 24 * lead));
+      }
+      played = this.playAnim('cast', { fps, startFrame });
+    }
+    if (!played && !this.playAnim('attack', { fps: 30 })) {
       const tl = gsap.timeline();
       tl.to(this.body.scale, { y: 1.12, duration: 0.15, ease: 'power2.out' }).to(this.body.scale, { y: 1, duration: 0.25, ease: 'back.out(2)' });
     }
@@ -554,10 +568,24 @@ export class UnitView extends Container {
     this.dead = true;
     this.bars.visible = false;
     const dir = this.body.scale.x >= 0 ? 1 : -1;
-    if (!this.playAnim('death')) gsap.to(this.body, { rotation: -0.35 * dir, y: this.body.y + 10, duration: 0.5, ease: 'power2.in' });
-    gsap.to(this, { alpha: 0, duration: 0.7, delay: 0.5, ease: 'power1.in' });
     gsap.to(this.shadow, { alpha: 0, duration: 0.5 });
     gsap.to(this.aura, { alpha: 0, duration: 0.3 });
+    const def = this.pack?.def.animations.death;
+    const fps = def ? Math.min(24, Math.max(def.fps, def.frames / 1.4)) : 0;
+    if (def && this.playAnim('death', { fps })) {
+      // the body falls in colour; once it lies still it greys and fades (the clip holds its last frame)
+      const fall = def.frames / fps;
+      gsap.delayedCall(fall, () => {
+        if (!this.dead || this.destroyed) return;
+        this.brightness.reset();
+        this.brightness.desaturate();
+        this.brightness.enabled = true;
+      });
+      gsap.to(this, { alpha: 0, duration: 0.8, delay: fall + 0.35, ease: 'power1.in' });
+      return;
+    }
+    gsap.to(this.body, { rotation: -0.35 * dir, y: this.body.y + 10, duration: 0.5, ease: 'power2.in' });
+    gsap.to(this, { alpha: 0, duration: 0.7, delay: 0.5, ease: 'power1.in' });
     this.brightness.reset();
     this.brightness.desaturate();
     this.brightness.enabled = true;

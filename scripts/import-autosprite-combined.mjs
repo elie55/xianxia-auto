@@ -18,15 +18,17 @@ const classify = (raw) => (KNOWN.includes(raw) ? raw : /hurt|hit|damage/.test(ra
 const inbox = join(root, '.autosprite-inbox');
 const ids = [];
 for (const [id, entry] of Object.entries(manifest)) {
-  const png = join(folder, `${prefix}_${id}.png`);
-  if (!existsSync(png)) {
-    console.log('missing', png);
+  // each clip is a region of <prefix>_<id>.png, or of its own `file` (several characters packed in one PNG)
+  const fileOf = (a) => join(folder, a.file ?? `${prefix}_${id}.png`);
+  const missing = entry.anims.map(fileOf).filter((f) => !existsSync(f));
+  if (missing.length) {
+    console.log('missing', [...new Set(missing)].join(', '));
     continue;
   }
   for (const a of entry.anims) {
     const dir = join(inbox, id, classify(String(a.kind).toLowerCase()));
     mkdirSync(dir, { recursive: true });
-    await sharp(png).extract({ left: a.x, top: a.y, width: a.w, height: a.h }).png().toFile(join(dir, 'spritesheet.png'));
+    await sharp(fileOf(a)).extract({ left: a.x, top: a.y, width: a.w, height: a.h }).png().toFile(join(dir, 'spritesheet.png'));
     writeFileSync(join(dir, 'atlas.json'), JSON.stringify(a.atlas));
   }
   ids.push(id);

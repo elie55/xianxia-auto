@@ -13,6 +13,8 @@
 //                 pixels instead of ending on a hard line. Default 40; 0 disables.
 //   --repivot     move the feet pivot to the same spot of the body as the idle clip's pivot.
 //   --hit n       set the attack hit frame (after --keep).
+//   --release n   set a cast clip's release frame (after --keep): the frame where the technique leaves the hands.
+//   --no-size     keep charH / charW (e.g. a normal-framing clip already sized by fix-anim-scale); only cut / fade.
 //
 // Size: the body (largest opaque blob, so detached splashes do not count) is measured as sqrt(opaque pixels), which
 // a camera zoom changes but a pose change barely does. charH = idle.charH x (clip body / idle body), so the body
@@ -38,7 +40,9 @@ const keep = range(opt('--keep'));
 const rest = range(opt('--rest'));
 const feather = Number(opt('--feather') ?? 40);
 const repivot = args.includes('--repivot') || !!keep;
+const noSize = args.includes('--no-size');
 const hit = opt('--hit');
+const release = opt('--release');
 
 const dir = join(root, 'public', 'assets', 'art', 'sprites', id);
 const packPath = join(dir, 'pack.json');
@@ -170,8 +174,12 @@ writeFileSync(join(dir, def.sheet), await sharp(sheet, { raw: { width: W * cols,
 const ratio = m.s / ref.s;
 const old = { charH: def.charH, pivotX: def.pivotX, pivotY: def.pivotY };
 def.frames = frames.length;
-def.charH = Math.round(idleDef.charH * ratio);
-if (idleDef.charW) def.charW = Math.round(idleDef.charW * ratio);
+if (!noSize) {
+  def.charH = Math.round(idleDef.charH * ratio);
+  if (idleDef.charW) def.charW = Math.round(idleDef.charW * ratio);
+}
+if (release !== undefined) def.releaseFrame = Number(release);
+else if (def.releaseFrame !== undefined && keep) def.releaseFrame = Math.max(0, Math.min(frames.length - 1, def.releaseFrame - keep[0]));
 if (repivot) {
   // the same spot of the body as the idle's pivot: relative to the feet band centre and the lowest body pixel
   const offX = (idleDef.pivotX * idleDef.frameW - ref.footX) / ref.w;
@@ -185,5 +193,6 @@ writeFileSync(packPath, JSON.stringify(pack, null, 2) + '\n');
 console.log(
   `${id}/${anim}: frames ${before} -> ${frames.length}, body x${ratio.toFixed(2)} of idle, charH ${old.charH} -> ${def.charH}, ` +
     `pivot ${old.pivotX},${old.pivotY} -> ${def.pivotX},${def.pivotY}, feathered ${feathered} frame(s)` +
-    (def.hitFrame !== undefined ? `, hitFrame ${def.hitFrame}` : ''),
+    (def.hitFrame !== undefined ? `, hitFrame ${def.hitFrame}` : '') +
+    (def.releaseFrame !== undefined ? `, releaseFrame ${def.releaseFrame}` : ''),
 );

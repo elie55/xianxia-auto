@@ -38,7 +38,8 @@
       "pivotY": 0.9757,
       "charH": 345,
       "loop": false,
-      "charW": 417
+      "charW": 417,
+      "releaseFrame": 7
     },
     "walk": {
       "sheet": "walk.png",

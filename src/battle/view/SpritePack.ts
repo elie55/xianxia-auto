@@ -26,6 +26,8 @@ export interface SpriteAnimDef {
   charW?: number;
   loop?: boolean;
   hitFrame?: number;
+  /** Cast clips: the frame where the technique leaves the hands; it is timed to land when the ability resolves. */
+  releaseFrame?: number;
 }
 
 export interface SpritePackDef {

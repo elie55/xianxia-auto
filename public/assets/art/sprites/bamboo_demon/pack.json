@@ -52,6 +52,19 @@
       "charH": 208,
       "loop": true,
       "charW": 160
+    },
+    "death": {
+      "sheet": "death.png",
+      "frames": 25,
+      "cols": 5,
+      "frameW": 256,
+      "frameH": 256,
+      "fps": 10.7,
+      "pivotX": 0.4683,
+      "pivotY": 0.8594,
+      "charH": 186,
+      "loop": false,
+      "charW": 143
     }
   }
 }

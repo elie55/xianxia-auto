@@ -52,6 +52,33 @@
       "charH": 214,
       "loop": true,
       "charW": 143
+    },
+    "cast": {
+      "sheet": "cast.png",
+      "frames": 25,
+      "cols": 5,
+      "frameW": 256,
+      "frameH": 256,
+      "fps": 10.7,
+      "pivotX": 0.4875,
+      "pivotY": 0.8633,
+      "charH": 184,
+      "loop": false,
+      "charW": 123,
+      "releaseFrame": 12
+    },
+    "death": {
+      "sheet": "death.png",
+      "frames": 25,
+      "cols": 5,
+      "frameW": 256,
+      "frameH": 256,
+      "fps": 10.7,
+      "pivotX": 0.489,
+      "pivotY": 0.8633,
+      "charH": 183,
+      "loop": false,
+      "charW": 123
     }
   }
 }
