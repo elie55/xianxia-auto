@@ -218,8 +218,8 @@ Doctrines give the most replay value for the least art. Each one has an upside a
   attachment across runs.
 - **The four heirlooms (built, `src/content/heirlooms.ts`):** each has its own painted icon and an effect no shop
   Treasure has. Shop Treasures only ever help their bearer or hurt foes; heirlooms act for the whole sect.
-  - *Sect Founder's Sword*: Attack and Crit. When an ally falls, the bearer gains +10/12/15% Attack and
-    +10/12/15 Attack Speed for the rest of the fight, up to 3 times. At level 3 each fall also gives 25 Qi.
+  - *Sect Founder's Sword*: Attack and Crit. When an ally falls, the bearer gains +6/8/10% Attack and
+    +6/8/10 Attack Speed for the rest of the fight, up to 3 times. At level 3 each fall also gives 15 Qi.
   - *Ancestral Jade Seal*: Max HP. At the start of each fight every ally gains a Qi Shield worth 5/7/9% of the
     bearer's Max HP for 10 s.
   - *Wandering Elder's Gourd*: Max HP and Spirit. Every 8/7/6 s the most wounded ally (the bearer included) is
@@ -228,6 +228,20 @@ Doctrines give the most replay value for the least art. Each one has an upside a
   - *Storm-Calling Banner*: Spirit (and Attack Speed at level 3). Each time the bearer casts their technique,
     every ally gains +12/16/20 Attack Speed for 4/4/5 s and lightning strikes the bearer's target for
     50/65/80% Spirit.
+- **Balance (decided 2026-11-10):** measured with the run simulator (scripts/sim.ts, with the heirloom carried),
+  on Mortal, 60 runs, every heirloom at level 3. The table gives victories / runs reaching Realm II.
+
+  | Carried | New | Old (stat heirlooms) |
+  |---|---|---|
+  | nothing | 13 / 45 | 13 / 45 |
+  | Founder's Sword | 20 / 51 | 16 / 50 |
+  | Jade Seal | 16 / 51 | 14 / 51 |
+  | Elder's Gourd | 20 / 50 | 16 / 51 |
+  | Storm Banner | 15 / 48 | 15 / 49 |
+
+  In Realm I they help as much as the old ones. The Sword and the Gourd are a little stronger in the long Realm II
+  fights. The Sword first gave +15% per fall and 25 Qi, and won 23 runs. It was lowered to stay a small helping
+  hand.
 
 ### 6.5 Spirit Vein (capped sidegrades)
 

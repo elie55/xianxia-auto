@@ -128,9 +128,9 @@ describe('Heirloom Treasures', () => {
     const bearerDeath = deaths.find((d) => d.id === 1)?.t ?? Infinity;
     const allyFalls = deaths.filter((d) => d.id >= 2 && d.id <= 5 && d.t < bearerDeath);
     expect(allyFalls.length).toBe(4);
-    const resolve = of(events, 'buff').filter((e) => e.id === 1 && e.stat === 'attack' && e.pct === 10);
+    const resolve = of(events, 'buff').filter((e) => e.id === 1 && e.stat === 'attack' && e.pct === 6);
     expect(resolve.map((e) => e.t)).toEqual(allyFalls.slice(0, 3).map((d) => d.t));
-    const speed = of(events, 'buff').filter((e) => e.id === 1 && e.stat === 'attackSpeed' && e.flat === 10);
+    const speed = of(events, 'buff').filter((e) => e.id === 1 && e.stat === 'attackSpeed' && e.flat === 6);
     expect(speed.length).toBe(3);
   });
 });

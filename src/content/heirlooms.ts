@@ -77,9 +77,11 @@ const rally = (as: number, duration: number, spirit: number): ItemDef['effects']
 ];
 
 export const HEIRLOOM_ITEMS: ItemDef[] = [
-  H('founder_sword', 1, { stats: { attack: 10, crit: 5 }, desc: 'When an ally falls, the bearer gains [+10% Attack] and [+10 Attack Speed] for the rest of the fight (up to 3 times).', effects: resolve(10, 10), keywords: ['Crit'] }),
-  H('founder_sword', 2, { stats: { attack: 15, crit: 8 }, desc: 'When an ally falls, the bearer gains [+12% Attack] and [+12 Attack Speed] for the rest of the fight (up to 3 times).', effects: resolve(12, 12), keywords: ['Crit'] }),
-  H('founder_sword', 3, { stats: { attack: 22, crit: 12 }, desc: 'When an ally falls, the bearer gains [25 Qi], and [+15% Attack] and [+15 Attack Speed] for the rest of the fight (up to 3 times).', effects: resolve(15, 15, 25), keywords: ['Crit', 'Qi'] }),
+  // balance (scripts/sim.ts, Mortal, 60 runs, level III): 15/15/25 Qi won 23 runs against 13 without an heirloom and
+  // 16 with the old stat Sword; 10/10/15 wins 20, level with the Gourd
+  H('founder_sword', 1, { stats: { attack: 10, crit: 5 }, desc: 'When an ally falls, the bearer gains [+6% Attack] and [+6 Attack Speed] for the rest of the fight (up to 3 times).', effects: resolve(6, 6), keywords: ['Crit'] }),
+  H('founder_sword', 2, { stats: { attack: 15, crit: 8 }, desc: 'When an ally falls, the bearer gains [+8% Attack] and [+8 Attack Speed] for the rest of the fight (up to 3 times).', effects: resolve(8, 8), keywords: ['Crit'] }),
+  H('founder_sword', 3, { stats: { attack: 22, crit: 12 }, desc: 'When an ally falls, the bearer gains [15 Qi], and [+10% Attack] and [+10 Attack Speed] for the rest of the fight (up to 3 times).', effects: resolve(10, 10, 15), keywords: ['Crit', 'Qi'] }),
   H('jade_seal', 1, { stats: { hp: 150 }, desc: "At the start of each fight, every ally gains a [Qi Shield] worth [5% of the bearer's Max HP] for 10 s.", effects: ward(0.05), keywords: ['Shield'] }),
   H('jade_seal', 2, { stats: { hp: 220 }, desc: "At the start of each fight, every ally gains a [Qi Shield] worth [7% of the bearer's Max HP] for 10 s.", effects: ward(0.07), keywords: ['Shield'] }),
   H('jade_seal', 3, { stats: { hp: 300 }, desc: "At the start of each fight, every ally gains a [Qi Shield] worth [9% of the bearer's Max HP] for 10 s.", effects: ward(0.09), keywords: ['Shield'] }),
