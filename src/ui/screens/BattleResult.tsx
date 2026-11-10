@@ -19,17 +19,16 @@ const BAR = { dealt: '#e8c46a', taken: '#d0505a', heal: '#5fd0a0' };
 
 type UnitRecord = BattleRecord['units'][number];
 
-/** The disciple who carried the fight, and the title earned by their biggest share of the team's work. */
+/** The disciple who carried the fight, and the title for what they led the team in. */
 function pickMvp(allies: UnitRecord[]): { u: UnitRecord; title: string; stat: string; value: number } | null {
   if (!allies.length) return null;
   const heal = (u: UnitRecord) => u.tracker.healing + u.tracker.shielding;
-  const sum = (f: (u: UnitRecord) => number) => Math.max(1, allies.reduce((a, u) => a + f(u), 0));
-  const totals = { dealt: sum((u) => u.tracker.damageDealt), taken: sum((u) => u.tracker.damageTaken), heal: sum(heal) };
-  // damage carries the most weight; soaking hits counts for less (one frontliner often takes nearly all of it)
+  // what each disciple actually did, in HP: damage counts fully, healing and shields half, hits soaked a third
+  // (shares of the team total over-rewarded a lone healer or tank next to a disciple who did most of the damage)
   let best: UnitRecord | null = null;
   let bestScore = -1;
   for (const u of allies) {
-    const score = u.tracker.damageDealt / totals.dealt + (0.45 * u.tracker.damageTaken) / totals.taken + (0.6 * heal(u)) / totals.heal;
+    const score = u.tracker.damageDealt + 0.5 * heal(u) + 0.33 * u.tracker.damageTaken;
     if (score > bestScore) {
       bestScore = score;
       best = u;
@@ -175,18 +174,9 @@ export function BattleResult() {
                       <div key={u.id} class={`result-row ${u.alive ? '' : 'dead'} ${mvp?.u.id === u.id ? 'is-mvp' : ''}`}>
                         <MiniPortrait defId={u.defId} size={44} />
                         <div class="result-bars">
-                          <div class="rbar" title="Damage dealt">
-                            <i style={{ width: `${(u.tracker.damageDealt / maxDmg) * 100}%`, background: BAR.dealt }} />
-                            <span>{fmt(u.tracker.damageDealt)}</span>
-                          </div>
-                          <div class="rbar" title="Damage taken">
-                            <i style={{ width: `${Math.min(100, (u.tracker.damageTaken / maxDmg) * 100)}%`, background: BAR.taken }} />
-                            <span>{fmt(u.tracker.damageTaken)}</span>
-                          </div>
-                          <div class="rbar" title="Healing and shields">
-                            <i style={{ width: `${Math.min(100, ((u.tracker.healing + u.tracker.shielding) / maxDmg) * 100)}%`, background: BAR.heal }} />
-                            <span>{fmt(u.tracker.healing + u.tracker.shielding)}</span>
-                          </div>
+                          <Bar label="Damage dealt" value={u.tracker.damageDealt} max={maxDmg} color={BAR.dealt} />
+                          <Bar label="Damage taken" value={u.tracker.damageTaken} max={maxDmg} color={BAR.taken} />
+                          <Bar label="Healing and shields" value={u.tracker.healing + u.tracker.shielding} max={maxDmg} color={BAR.heal} />
                         </div>
                       </div>
                     ))}
@@ -304,6 +294,20 @@ export function BattleResult() {
           </div>
         </div>
       </Hud>
+    </div>
+  );
+}
+
+/** One tracker bar: the track, then its value in a column of its own (never on top of the fill). */
+function Bar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+  return (
+    <div class={`rbar-row ${value > 0 ? '' : 'zero'}`} title={label}>
+      <div class="rbar">
+        <i style={{ width: `${Math.min(100, (value / max) * 100)}%`, background: color }} />
+      </div>
+      <span class="rbar-val" style={{ ['--c' as string]: color }}>
+        {fmt(value)}
+      </span>
     </div>
   );
 }

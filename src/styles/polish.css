@@ -4716,3 +4716,44 @@ input[type='range']:hover::-webkit-slider-thumb {
     filter: none;
   }
 }
+
+/* ───────── tracker v2: each bar has its value in its own column, never over the fill ───────── */
+.result-wrap.v2 .result-bars {
+  gap: 5px;
+}
+.rbar-row {
+  display: grid;
+  grid-template-columns: 1fr 64px;
+  align-items: center;
+  gap: 10px;
+}
+.rbar-row .rbar {
+  height: 9px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+.rbar-row .rbar i {
+  border-radius: 5px;
+}
+.rbar-val {
+  justify-self: end;
+  font-family: var(--font-body);
+  font-size: calc(14px * var(--ts, 1));
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--c, var(--paper)) 55%, var(--paper));
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+.rbar-row.zero .rbar-val {
+  opacity: 0.35;
+}
+/* the banner's subtitle keeps clear of the panels' ornaments */
+.result-wrap.v2 {
+  margin-top: -96px;
+}
+.result-wrap.v2 .result-columns {
+  margin-top: 30px;
+}
