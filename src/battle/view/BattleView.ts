@@ -1,4 +1,5 @@
 import { Application, Container, Graphics, Sprite, Text, TextStyle, Texture, Assets } from 'pixi.js';
+import { reducedMotion } from '@/app/motion';
 import gsap from 'gsap';
 import { signal } from '@preact/signals';
 import { installAnimationSafety, sweepDeadTweens } from './animSafety';
@@ -128,6 +129,14 @@ export class BattleView {
   private ended = false;
 
   readonly boardOrigin = { x: 0, y: 0 };
+  /**
+   * Battle camera, in design space: zoom z (1 = the whole 16:9 frame) and the visible window's top-left corner.
+   * It frames the living fighters, leans in on techniques and kills (punch), and rests at identity in placement.
+   */
+  private cam = { z: 1, x0: 0, y0: 0, fx: DESIGN_W / 2, fy: DESIGN_H / 2 };
+  private camPunch = 0;
+  private camPunchAt = { x: DESIGN_W / 2, y: DESIGN_H / 2 };
+  private lastPunch = -10;
 
   async mount(parent: HTMLElement): Promise<void> {
     if (this.ready) return;
@@ -169,8 +178,7 @@ export class BattleView {
   }
 
   private applyViewport(v: Viewport): void {
-    this.world.scale.set(v.scale);
-    this.world.position.set(v.offsetX, v.offsetY);
+    this.applyCamera(v);
     this.drawBackground(v);
     this.drawVignette(v);
   }
@@ -387,14 +395,15 @@ export class BattleView {
 
   /** Design-space point → hex (or null when outside the board). */
   hexAtDesign(x: number, y: number): Hex | null {
-    const h = pixelToHex(x - this.boardOrigin.x, y - this.boardOrigin.y);
+    const w = this.camIn(x, y);
+    const h = pixelToHex(w.x - this.boardOrigin.x, w.y - this.boardOrigin.y);
     return inBounds(h) ? h : null;
   }
 
   /** Design-space position of a hex center. */
   hexCenterDesign(h: Hex): { x: number; y: number } {
     const p = hexToPixel(h);
-    return { x: p.x + this.boardOrigin.x, y: p.y + this.boardOrigin.y };
+    return this.camOut(p.x + this.boardOrigin.x, p.y + this.boardOrigin.y);
   }
 
   /** Design-space bounds of the ally placement zone (for tutorial highlights). */
@@ -449,6 +458,11 @@ export class BattleView {
     }
   }
 
+  /** Seconds into the running fight (null outside a battle). */
+  battleTime(): number | null {
+    return this.battle ? this.battle.time : null;
+  }
+
   /** The live sim unit fighting for a hero (by run uid), or null when none is on the board. */
   unitForHero(uid: string): Unit | null {
     for (const v of this.views.values()) if (v.unit.heroUid === uid) return v.unit;
@@ -463,8 +477,9 @@ export class BattleView {
 
   /** Finds any unit (ally or enemy) whose body covers a design-space point. */
   unitAtDesign(x: number, y: number): Unit | null {
-    const lx = x - this.boardOrigin.x;
-    const ly = y - this.boardOrigin.y;
+    const w = this.camIn(x, y);
+    const lx = w.x - this.boardOrigin.x;
+    const ly = w.y - this.boardOrigin.y;
     let best: { u: Unit; d: number } | null = null;
     for (const v of this.views.values()) {
       const u = v.unit;
@@ -638,16 +653,9 @@ export class BattleView {
       this.lastSweep = this.elapsed;
       sweepDeadTweens();
     }
-    // camera shake
-    if (this.shakeAmt > 0.2) {
-      const v = viewport.value;
-      this.world.position.set(v.offsetX + (Math.random() - 0.5) * this.shakeAmt, v.offsetY + (Math.random() - 0.5) * this.shakeAmt * 0.6);
-      this.shakeAmt *= Math.pow(0.001, dt);
-    } else if (this.shakeAmt !== 0) {
-      this.shakeAmt = 0;
-      const v = viewport.value;
-      this.world.position.set(v.offsetX, v.offsetY);
-    }
+    // camera shake decays here; the camera applies it with its own transform at the end of the frame
+    if (this.shakeAmt > 0.2) this.shakeAmt *= Math.pow(0.001, dt);
+    else this.shakeAmt = 0;
 
     const b = this.battle;
     if (b && this.mode === 'battle' && !this.paused && !this.ended) {
@@ -703,11 +711,92 @@ export class BattleView {
     }
     if (b) this.separate(fighting, dt);
     this.occlusion(dt);
+    this.updateCamera(dt, fighting);
     for (const v of this.views.values()) {
       v.bars.position.set(v.x, v.y + v.barsOffsetY);
       v.bars.renderable = v.visible;
       v.bars.alpha = v.alpha;
     }
+  }
+
+  /** Battle camera on? (Settings › Display › Battle camera, and never with Reduce flashes and motion.) */
+  private cameraOn(): boolean {
+    return this.mode === 'battle' && !!this.battle && meta.value.settings.battleCamera !== false && !reducedMotion();
+  }
+
+  /** A short lean toward a technique or a kill (design-space point). */
+  punchCamera(x: number, y: number, amount: number): void {
+    if (!this.cameraOn() || this.elapsed - this.lastPunch < 0.5) return;
+    this.lastPunch = this.elapsed;
+    this.camPunch = Math.max(this.camPunch, amount);
+    this.camPunchAt.x = x;
+    this.camPunchAt.y = y;
+  }
+
+  /** Eases the camera toward the living fighters (slow) and the latest punch (quick), then applies it. */
+  private updateCamera(dt: number, fighting: UnitView[]): void {
+    let tz = 1;
+    let tx = DESIGN_W / 2;
+    let ty = DESIGN_H / 2;
+    if (this.cameraOn()) {
+      let minX = Infinity;
+      let maxX = -Infinity;
+      let minY = Infinity;
+      let maxY = -Infinity;
+      for (const v of fighting) {
+        if (v.dead) continue;
+        const x = v.x + this.boardOrigin.x;
+        const y = v.y + this.boardOrigin.y;
+        minX = Math.min(minX, x - v.halfWidth);
+        maxX = Math.max(maxX, x + v.halfWidth);
+        minY = Math.min(minY, y - v.bodyHeight - 40);
+        maxY = Math.max(maxY, y + 20);
+      }
+      if (minX < maxX) {
+        // leave room for bars, numbers and the HUD around the fight; never closer than 7 %
+        const w = maxX - minX + 420;
+        const h = maxY - minY + 360;
+        tz = Math.max(1, Math.min(1.07, DESIGN_W / w, DESIGN_H / h));
+        tx = (minX + maxX) / 2;
+        ty = (minY + maxY) / 2;
+      }
+    }
+    this.camPunch *= Math.pow(0.04, dt);
+    if (this.camPunch < 0.002) this.camPunch = 0;
+    const lean = Math.min(1, this.camPunch * 14);
+    const z = tz + this.camPunch;
+    const fx = tx + (this.camPunchAt.x - tx) * lean * 0.35;
+    const fy = ty + (this.camPunchAt.y - ty) * lean * 0.35;
+    // slow drift toward the framing, but a punch snaps in
+    const follow = 1 - Math.pow(this.camPunch > 0 ? 0.0005 : 0.25, dt);
+    this.cam.z += (z - this.cam.z) * follow;
+    this.cam.fx += (fx - this.cam.fx) * follow;
+    this.cam.fy += (fy - this.cam.fy) * follow;
+    this.applyCamera(viewport.value);
+  }
+
+  /** Writes the camera (and any shake) into the world transform. The painting always covers the 16:9 frame. */
+  private applyCamera(v: Viewport): void {
+    const z = Math.max(1, this.cam.z);
+    const vw = DESIGN_W / z;
+    const vh = DESIGN_H / z;
+    this.cam.x0 = Math.max(0, Math.min(DESIGN_W - vw, this.cam.fx - vw / 2));
+    this.cam.y0 = Math.max(0, Math.min(DESIGN_H - vh, this.cam.fy - vh / 2));
+    const sx = this.shakeAmt > 0 ? (Math.random() - 0.5) * this.shakeAmt : 0;
+    const sy = this.shakeAmt > 0 ? (Math.random() - 0.5) * this.shakeAmt * 0.6 : 0;
+    this.world.scale.set(v.scale * z);
+    this.world.position.set(v.offsetX - v.scale * z * this.cam.x0 + sx, v.offsetY - v.scale * z * this.cam.y0 + sy);
+  }
+
+  /** Screen-space design point (what toDesign returns) → design point in the world under the camera. */
+  private camIn(x: number, y: number): { x: number; y: number } {
+    const z = Math.max(1, this.cam.z);
+    return { x: this.cam.x0 + x / z, y: this.cam.y0 + y / z };
+  }
+  /** World design point → where it shows on screen (design space). */
+  private camOut(x: number, y: number): { x: number; y: number } {
+    const z = Math.max(1, this.cam.z);
+    return { x: (x - this.cam.x0) * z, y: (y - this.cam.y0) * z };
   }
 
   /** Big units (bosses, elites) fade while a disciple stands behind their body, so nobody disappears behind them. */
@@ -754,18 +843,20 @@ export class BattleView {
   }
 
   shake(amount: number): void {
-    if (!meta.value.settings.screenShake) return;
+    if (!meta.value.settings.screenShake || reducedMotion()) return;
     this.shakeAmt = Math.max(this.shakeAmt, amount);
   }
 
   /** Freezes the simulation for a few milliseconds so a heavy hit "lands". */
   hitStop(ms: number): void {
-    if (!meta.value.settings.screenShake) return;
+    if (!meta.value.settings.screenShake || reducedMotion()) return;
     this.hitStopMs = Math.max(this.hitStopMs, ms);
   }
 
   /** Brief full-screen tint (boss abilities, tribulation strikes). */
   screenFlash(color: number, alpha = 0.25, duration = 0.35): void {
+    // Reduce flashes and motion: only a faint tint, never a bright full-screen flash
+    if (reducedMotion()) alpha = Math.min(alpha, 0.05);
     const g = this.flashOverlay;
     g.clear();
     g.rect(-400, -400, DESIGN_W + 800, DESIGN_H + 800).fill({ color, alpha: 1 });
@@ -845,6 +936,7 @@ export class BattleView {
         const v = this.viewOf(e.id);
         if (!v) break;
         v.castAnim();
+        this.punchCamera(v.x + this.boardOrigin.x, v.y + this.boardOrigin.y - v.bodyHeight * 0.5, v.unit.boss ? 0.045 : 0.03);
         const accent = v.unit.accent ? parseColor(v.unit.accent) : v.unit.side === 'ally' ? 0x6fe3c4 : 0xff6b5a;
         // skill unleash: a beat of freeze-frame, a tinted screen flash, a rising qi pillar and a glyph under the caster
         this.hitStop(v.unit.boss ? 110 : 80);
@@ -997,6 +1089,7 @@ export class BattleView {
         const v = this.viewOf(e.id);
         if (!v) break;
         v.dieAnim();
+        if (v.unit.side === 'enemy' || v.unit.boss) this.punchCamera(v.x + this.boardOrigin.x, v.y + this.boardOrigin.y - v.bodyHeight * 0.5, v.unit.boss ? 0.06 : v.unit.elite ? 0.035 : 0.018);
         const col = v.unit.side === 'ally' ? 0x9fd5ff : 0xff6b5a;
         this.fx.flipbook('fx_death_burst', v.x, v.y + v.chestY, { scale: Math.max(0.9, v.bodyHeight / 170), tint: v.unit.side === 'ally' ? 0xbfe4ff : 0xff8a7a, fps: 22 });
         this.fx.burst(v.x, v.y + v.chestY, v.unit.side === 'ally' ? 0x9fd5ff : 0x8a3a3a, { count: 16, speed: 110, size: 18, life: 0.7, gravity: 30 });
@@ -1309,7 +1402,7 @@ export class BattleView {
   unitHeadDesign(id: number): { x: number; y: number } | null {
     const v = this.viewOf(id);
     if (!v) return null;
-    return { x: v.x + this.boardOrigin.x, y: v.y + v.headY - 30 + this.boardOrigin.y };
+    return this.camOut(v.x + this.boardOrigin.x, v.y + v.headY - 30 + this.boardOrigin.y);
   }
 }
 

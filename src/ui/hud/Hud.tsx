@@ -1,11 +1,14 @@
 import { signal } from '@preact/signals';
-import { act, meta, run, screen, showToast, updateMeta } from '@/app/store';
+import { act, compendiumReturn, meta, run, screen, showToast, updateMeta } from '@/app/store';
+import { useEffect, useState } from 'preact/hooks';
+import { isDesktop, quitGame } from '@/app/desktop';
+import { SettingsPanel } from '@/ui/screens/Settings';
 import { DIFFICULTIES } from '@/content/difficulties';
 import { HERO_BY_ID } from '@/content/heroes';
 import { RELIC_BY_ID } from '@/content/relics';
 import { ITEM_BY_ID } from '@/content/items';
 import { heroAbility, heroItemSlots, heroStats, type HeroState, type TeamContext } from '@/core/builder';
-import { equipItem, heroByUid, moveHero, relicDefs, sellHero, sellItem, teamContext, unequipItem, itemQuestState, type RunState, setPosition } from '@/core/run';
+import { endRun, equipItem, heroByUid, moveHero, relicDefs, sellHero, sellItem, teamContext, unequipItem, itemQuestState, type RunState, setPosition } from '@/core/run';
 import { Icon, STAT_COLOR, STAT_ICON, STAT_LABEL } from '@/ui/components/Icon';
 import { RichText } from '@/ui/components/RichText';
 import { tip } from '@/ui/components/Tooltip';
@@ -20,13 +23,16 @@ import { RANK_NAMES, type NodeKind } from '@/core/types';
 import { REALM_BOSSES, REALM_ELITES, tribulationLevel } from '@/core/encounters';
 import { ENEMY_BY_ID } from '@/content/enemies';
 import { PAINTED_ICONS } from '@/ui/components/paintedIcons';
-import { baseWinStones } from '@/core/run';
+import { baseWinStones, heroSellValue, itemSellValue } from '@/core/run';
+import { stonesHeld } from '@/ui/flourish';
 
 /** Incremented a few times per second during battle so tracker panels refresh. */
 export const battleTick = signal(0);
 export const battleTime = signal(0);
 export const battleSpeed = signal<1 | 2 | 3>(meta.value.settings.battleSpeed);
 export const showMenu = signal(false);
+/** A sale waiting for the player's OK (Settings › Gameplay › Confirm before selling). */
+export const pendingSell = signal<{ payload: DragPayload; label: string; value: number } | null>(null);
 
 const NODE_ICON: Record<NodeKind, string> = {
   fight: 'ui_fight',
@@ -124,6 +130,7 @@ export function Hud({ children, showTracker = true }: { children?: preact.Compon
       {children}
       <DragGhost />
       {showMenu.value && <PauseMenu />}
+      {pendingSell.value && <SellConfirm />}
     </>
   );
 }
@@ -138,8 +145,8 @@ function TopBar({ s }: { s: RunState }) {
   return (
     <div class="topbar" data-tut="topbar">
       <div class="topbar-left">
-        <div class="stones-pill big anim-pop" key={s.stones} {...tip(<><h4 class="gold">Spirit Stones</h4><p>Currency for disciples, Treasures and Dao Insights. Earned after every victory.</p></>)}>
-          <Icon name="stones" size={22} color="var(--gold-bright)" /> {s.stones}
+        <div class="stones-pill big anim-pop" key={s.stones - stonesHeld.value} {...tip(<><h4 class="gold">Spirit Stones</h4><p>Currency for disciples, Treasures and Dao Insights. Earned after every victory.</p></>)}>
+          <Icon name="stones" size={22} color="var(--gold-bright)" /> {s.stones - stonesHeld.value}
         </div>
         <div class="realm-label">
           <span class="brush realm-hanzi">{s.realm === 1 ? '一' : s.realm === 2 ? '二' : '天'}</span>
@@ -387,18 +394,34 @@ function HeroSlot({ s, uid, ctx, drop, dragging, reserve, portrait = 104, sock =
   const chip = reserve ? 20 : sock - 6;
   void battleTick.value; // a disciple can fall (or be reborn) at any moment of a fight
   const fallen = !!h && !reserve && heroFallen(s, h.uid);
+  // during a fight: live HP / shield / Qi under the portrait, and a glow while the disciple casts
+  const live = h && !reserve && s.phase === 'battle' ? getBattleView().unitForHero(h.uid) : null;
+  const casting = !!live && live.alive && live.castUntil > (getBattleView().battleTime() ?? 0);
   return (
     <div class={`hero-slot ${h ? 'filled' : 'empty'} ${over && (acceptsHero || acceptsItem) ? 'drop-ok' : ''} ${reserve ? 'reserve' : ''} ${fallen ? 'fallen' : ''}`} data-drop={h ? `hero:${uid}` : drop} data-sell={h ? `hero:${h.uid}` : undefined} data-hero-def={h?.defId}>
       {h && def && (
         <>
           <div
-            class="slot-portrait"
+            class={`slot-portrait ${casting ? 'casting' : ''}`}
             style={{ width: size + 4, height: size + 4 }}
             onPointerDown={(e) => startDrag({ kind: 'hero', uid: h.uid }, e)}
             {...tip(<HeroSlotTip h={h} s={s} ctx={ctx} />, 'above')}
           >
             <MiniPortrait defId={h.defId} size={size} />
             {fallen && <FallenMark />}
+            {live && live.onBoard && live.alive && (
+              <div class="slot-live" aria-hidden="true">
+                <div class="slot-live-hp">
+                  <i class="hp" style={{ width: `${Math.max(0, Math.min(100, (live.hp / live.maxHp) * 100))}%` }} />
+                  {live.shield > 0 && <i class="sh" style={{ left: `${Math.min(100, (live.hp / live.maxHp) * 100)}%`, width: `${Math.min(100 - Math.min(100, (live.hp / live.maxHp) * 100), (live.shield / live.maxHp) * 100)}%` }} />}
+                </div>
+                {live.maxQi > 0 && (
+                  <div class="slot-live-qi">
+                    <i style={{ width: `${Math.max(0, Math.min(100, (live.qi / live.maxQi) * 100))}%` }} />
+                  </div>
+                )}
+              </div>
+            )}
             <div class="slot-rank">
               <RankGlyph rank={h.rank} size={Math.round(size * 0.3)} />
             </div>
@@ -553,19 +576,55 @@ function DragGhost() {
   );
 }
 
+function sellNow(payload: DragPayload): void {
+  if (payload.kind === 'hero') act((st) => sellHero(st, payload.uid));
+  else act((st) => sellItem(st, payload.itemId, payload.fromHero));
+  audio.sfx('ui_sell');
+}
+
+function SellConfirm() {
+  const p = pendingSell.value!;
+  const close = () => (pendingSell.value = null);
+  return (
+    <div class="modal-backdrop" onClick={close}>
+      <div class="panel modal-panel sell-confirm anim-pop" onClick={(e) => e.stopPropagation()}>
+        <div class="panel-title display">Sell {p.label}?</div>
+        <p class="muted">
+          You receive <b class="gold">{p.value}</b> Spirit Stones. This cannot be undone.
+        </p>
+        <div class="row" style={{ gap: 12, marginTop: 18, justifyContent: 'center' }}>
+          <button class="btn ghost" data-hotkey="back" onClick={close}>
+            Keep
+          </button>
+          <button
+            class="btn danger"
+            onClick={() => {
+              close();
+              sellNow(p.payload);
+            }}
+          >
+            <Icon name="stones" size={18} /> Sell
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** Shared drop resolution for all run screens. */
 export function handleDrop(payload: DragPayload, target: string | null, clientX: number, clientY: number): void {
   const s = run.value!;
   const inShop = s.phase === 'shop';
   if (target === 'sell' && inShop) {
-    if (payload.kind === 'hero') {
-      if (s.roster.length <= 1) return void showToast('You cannot sell your last disciple', 'error');
-      act((st) => sellHero(st, payload.uid));
-      audio.sfx('ui_sell');
-    } else {
-      act((st) => sellItem(st, payload.itemId, payload.fromHero));
-      audio.sfx('ui_sell');
+    if (payload.kind === 'hero' && s.roster.length <= 1) return void showToast('You cannot sell your last disciple', 'error');
+    if (meta.peek().settings.confirmSell) {
+      const hero = payload.kind === 'hero' ? heroByUid(s, payload.uid) : undefined;
+      const label = payload.kind === 'hero' ? (hero ? HERO_BY_ID[hero.defId].name : 'this disciple') : (ITEM_BY_ID[payload.itemId]?.name ?? 'this Treasure');
+      const value = payload.kind === 'hero' ? heroSellValue(s, payload.uid) : itemSellValue(payload.itemId);
+      pendingSell.value = { payload, label, value };
+      return;
     }
+    sellNow(payload);
     return;
   }
   if (payload.kind === 'item') {
@@ -671,34 +730,99 @@ function findSlotOf(s: RunState, uid: string): { kind: 'party' | 'reserve'; inde
 // ───────────────────────── pause menu ─────────────────────────
 
 function PauseMenu() {
-  const m = meta.value;
+  const s = run.value!;
+  const [view, setView] = useState<'main' | 'settings' | 'abandon'>('main');
+  const inBattle = s.phase === 'battle';
+  // the fight holds still while the menu is open
+  useEffect(() => {
+    const v = getBattleView();
+    v.setPaused(true);
+    return () => v.setPaused(false);
+  }, []);
+  const close = () => (showMenu.value = false);
+  if (view === 'settings') {
+    return (
+      <div class="modal-backdrop" onClick={close}>
+        <div class="panel modal-panel pause-settings anim-pop" onClick={(e) => e.stopPropagation()}>
+          <div class="pause-settings-head">
+            <button class="btn small ghost" data-hotkey="back" onClick={() => setView('main')}>
+              ‹ Back
+            </button>
+            <div class="panel-title display">Settings</div>
+            <div style={{ width: 96 }} />
+          </div>
+          <SettingsPanel inRun />
+        </div>
+      </div>
+    );
+  }
   return (
-    <div class="modal-backdrop" onClick={() => (showMenu.value = false)}>
-      <div class="panel modal-panel anim-pop" onClick={(e) => e.stopPropagation()}>
-        <div class="panel-title display">Paused</div>
-        <div class="settings-row">
-          <div class="settings-label display">Music</div>
-          <input type="range" min={0} max={1} step={0.05} value={m.settings.music} style={{ ['--pct' as string]: `${m.settings.music * 100}%` }} onInput={(e) => updateMeta((mm) => (mm.settings.music = parseFloat((e.target as HTMLInputElement).value)))} />
+    <div class="modal-backdrop" onClick={close}>
+      <div class="panel modal-panel pause-menu anim-pop" onClick={(e) => e.stopPropagation()}>
+        <div class="pause-head">
+          <span class="brush pause-glyph">停</span>
+          <div class="panel-title display">Paused</div>
         </div>
-        <div class="settings-row">
-          <div class="settings-label display">Sound</div>
-          <input type="range" min={0} max={1} step={0.05} value={m.settings.sfx} style={{ ['--pct' as string]: `${m.settings.sfx * 100}%` }} onInput={(e) => updateMeta((mm) => (mm.settings.sfx = parseFloat((e.target as HTMLInputElement).value)))} />
-        </div>
-        <div class="col" style={{ marginTop: 18, gap: 10 }}>
-          <button class="btn primary" onClick={() => (showMenu.value = false)}>
-            Resume
-          </button>
-          <button
-            class="btn ghost"
-            onClick={() => {
-              showMenu.value = false;
-              getBattleView().stopBattle();
-              screen.value = 'menu';
-            }}
-          >
-            Save & return to menu
-          </button>
-        </div>
+        {view === 'abandon' ? (
+          <div class="col pause-actions">
+            <p class="muted pause-warning">Abandon this run? Your disciples, Treasures and Dao Insights are lost, and the run counts as a defeat.</p>
+            <button
+              class="btn danger"
+              onClick={() => {
+                audio.sfx('ui_confirm');
+                close();
+                updateMeta((mm) => {
+                  mm.runsPlayed++;
+                });
+                act((st) => endRun(st, false));
+              }}
+            >
+              <Icon name="ui_skull" size={18} /> Abandon the run
+            </button>
+            <button class="btn ghost" data-hotkey="back" onClick={() => setView('main')}>
+              Keep playing
+            </button>
+          </div>
+        ) : (
+          <div class="col pause-actions">
+            <button class="btn primary big" onClick={close}>
+              <Icon name="ui_proceed" size={20} /> Resume
+            </button>
+            <button class="btn" onClick={() => setView('settings')}>
+              <Icon name="ui_settings" size={18} /> Settings
+            </button>
+            <button
+              class="btn"
+              disabled={inBattle}
+              title={inBattle ? 'Available between fights' : undefined}
+              onClick={() => {
+                close();
+                compendiumReturn.value = 'run';
+                screen.value = 'compendium';
+              }}
+            >
+              <Icon name="ui_compendium" size={18} /> Compendium
+            </button>
+            <button
+              class="btn"
+              onClick={() => {
+                close();
+                getBattleView().stopBattle();
+                screen.value = 'menu';
+              }}
+            >
+              <Icon name="ui_home" size={18} /> Save & return to menu
+            </button>
+            <button class="btn danger" onClick={() => setView('abandon')}>
+              <Icon name="ui_skull" size={18} /> Abandon run
+            </button>
+            {isDesktop && (
+              <button class="btn ghost" onClick={() => quitGame()}>
+                <Icon name="ui_quit" size={18} /> Quit to desktop
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

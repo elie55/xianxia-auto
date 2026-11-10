@@ -1,12 +1,51 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import gsap from 'gsap';
 import { act, run, screen, updateMeta, meta } from '@/app/store';
 import { currentRewindCost, endRun, proceedFromResult, rewind, rewindAvailable, type RunState } from '@/core/run';
+import type { BattleResult as BattleRecord } from '@/battle/sim/battle';
+import { HERO_BY_ID } from '@/content/heroes';
 import { Hud, fmt } from '@/ui/hud/Hud';
 import { useArena } from './BoardScreen';
 import { Icon } from '@/ui/components/Icon';
 import { MiniPortrait } from '@/ui/components/MiniPortrait';
+import { BrushBanner } from '@/ui/components/Triumph';
+import { flyStones, stonesHeld } from '@/ui/flourish';
+import { reducedMotion } from '@/app/motion';
 import { audio } from '@/audio/AudioManager';
 import { getBattleView } from '@/battle/view/BattleView';
+
+/** Palette colours for the tracker (gold dealt, crimson taken, jade healing), shared with the legend. */
+const BAR = { dealt: '#e8c46a', taken: '#d0505a', heal: '#5fd0a0' };
+
+type UnitRecord = BattleRecord['units'][number];
+
+/** The disciple who carried the fight, and the title earned by their biggest share of the team's work. */
+function pickMvp(allies: UnitRecord[]): { u: UnitRecord; title: string; stat: string; value: number } | null {
+  if (!allies.length) return null;
+  const heal = (u: UnitRecord) => u.tracker.healing + u.tracker.shielding;
+  const sum = (f: (u: UnitRecord) => number) => Math.max(1, allies.reduce((a, u) => a + f(u), 0));
+  const totals = { dealt: sum((u) => u.tracker.damageDealt), taken: sum((u) => u.tracker.damageTaken), heal: sum(heal) };
+  // damage carries the most weight; soaking hits counts for less (one frontliner often takes nearly all of it)
+  let best: UnitRecord | null = null;
+  let bestScore = -1;
+  for (const u of allies) {
+    const score = u.tracker.damageDealt / totals.dealt + (0.45 * u.tracker.damageTaken) / totals.taken + (0.6 * heal(u)) / totals.heal;
+    if (score > bestScore) {
+      bestScore = score;
+      best = u;
+    }
+  }
+  if (!best) return null;
+  // the title names what they led the team in: damage first, then healing, then holding the line
+  const leads = (f: (u: UnitRecord) => number) => f(best!) > 0 && allies.every((u) => f(u) <= f(best!));
+  const kinds = [
+    { lead: leads((u) => u.tracker.damageDealt), title: best.tracker.kills >= 3 ? 'Reaper of the Field' : 'Blade of the Sect', stat: 'damage dealt', value: best.tracker.damageDealt },
+    { lead: leads(heal), title: 'The Merciful Hand', stat: 'healed and shielded', value: heal(best) },
+    { lead: leads((u) => u.tracker.damageTaken), title: 'The Unmoving Wall', stat: 'damage taken', value: best.tracker.damageTaken },
+  ];
+  const pick = kinds.find((k) => k.lead) ?? kinds[0];
+  return { u: best, title: pick.title, stat: pick.stat, value: pick.value };
+}
 
 export function BattleResult() {
   const s = run.value!;
@@ -14,24 +53,90 @@ export function BattleResult() {
   const r = s.lastResult;
   const won = s.phase === 'result';
   const [tab, setTab] = useState<'tracker' | 'stats'>('tracker');
+  const b = s.lastBreakdown;
+  const calm = reducedMotion();
+  const [shownTotal, setShownTotal] = useState(won && b && !calm ? 0 : b?.total ?? 0);
+  const totalRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     audio.playMusic(won ? (s.realm === 2 ? 'realm2shop' : 'shop') : 'event');
     getBattleView().stopBattle();
+    if (!won || !b) return;
+    if (calm) {
+      stonesHeld.value = 0;
+      return;
+    }
+    // the payout: the total counts up under the banner, then the stones fly to the counter
+    stonesHeld.value = b.total;
+    const n = { v: 0 };
+    const count = gsap.to(n, {
+      v: b.total,
+      duration: 0.9,
+      delay: 0.8,
+      ease: 'power2.out',
+      onStart: () => audio.sfx('stones', { volume: 0.3 }),
+      onUpdate: () => setShownTotal(Math.round(n.v)),
+    });
+    const fly = gsap.delayedCall(1.85, () => flyStones(totalRef.current, b.total));
+    // if the window cannot animate, settle on the final numbers
+    const safety = setTimeout(() => {
+      setShownTotal(b.total);
+      if (stonesHeld.value > 0 && !document.querySelector('.flourish-stone')) stonesHeld.value = 0;
+    }, 4000);
+    return () => {
+      count.kill();
+      fly.kill();
+      clearTimeout(safety);
+      stonesHeld.value = 0;
+    };
   }, []);
   // after a reload from an older save the battle record may be gone: the screen still works, minus the stats
   const allies = r ? r.units.filter((u) => u.side === 'ally' && u.onBoard) : [];
   const enemies = r ? r.units.filter((u) => u.side === 'enemy') : [];
   const maxDmg = Math.max(1, ...allies.map((u) => u.tracker.damageDealt));
-  const b = s.lastBreakdown;
   const cost = currentRewindCost(s);
+  const mvp = won ? pickMvp(allies) : null;
+  const standing = allies.filter((u) => u.alive).length;
+  const cols = [
+    { key: 'dealt', label: 'Dealt', get: (u: UnitRecord) => fmt(u.tracker.damageDealt), any: true },
+    { key: 'taken', label: 'Taken', get: (u: UnitRecord) => fmt(u.tracker.damageTaken), any: true },
+    { key: 'healed', label: 'Healed', get: (u: UnitRecord) => fmt(u.tracker.healing + u.tracker.shielding), any: allies.some((u) => u.tracker.healing + u.tracker.shielding > 0) },
+    { key: 'crits', label: 'Crits', get: (u: UnitRecord) => `${u.tracker.crits}`, any: allies.some((u) => u.tracker.crits > 0) },
+    { key: 'kills', label: 'Kills', get: (u: UnitRecord) => `${u.tracker.kills}`, any: allies.some((u) => u.tracker.kills > 0) },
+    { key: 'casts', label: 'Casts', get: (u: UnitRecord) => `${u.tracker.casts}`, any: allies.some((u) => u.tracker.casts > 0) },
+    { key: 'best', label: 'Best hit', get: (u: UnitRecord) => fmt(u.tracker.bestHit), any: true },
+  ].filter((c) => c.any);
   return (
     <div class="screen">
       <Hud showTracker={false}>
         <div class="modal-backdrop soft">
-          <div class="result-wrap anim-rise">
-            <div class={`result-title display ${won ? 'won' : 'lost'}`}>{won ? 'Battle Won' : 'Disciples Fallen'}</div>
-            <div class="brush result-hanzi">{won ? '胜' : '败'}</div>
-            <div class="result-columns">
+          <div class={`result-wrap v2 ${won ? 'won' : 'lost'}`}>
+            <BrushBanner
+              title={won ? 'Victory' : 'Defeat'}
+              seal={won ? '胜' : '败'}
+              tone={won ? 'won' : 'lost'}
+              sub={
+                r
+                  ? won
+                    ? `${standing} of ${allies.length} disciples standing · ${r.duration.toFixed(1)} s`
+                    : `The sect falls after ${r.duration.toFixed(1)} s`
+                  : undefined
+              }
+            />
+            <div class={`result-columns ${mvp ? 'with-mvp' : ''}`}>
+              {mvp && (
+                <div class="panel mvp-card" key="mvp">
+                  <div class="mvp-ribbon display">MVP</div>
+                  <div class="mvp-medallion">
+                    <MiniPortrait defId={mvp.u.defId} size={150} ring="rgba(243,207,120,0.95)" />
+                    <span class="mvp-crown" aria-hidden="true" />
+                  </div>
+                  <div class="mvp-card-name display">{HERO_BY_ID[mvp.u.defId]?.name ?? mvp.u.name}</div>
+                  <div class="mvp-card-title">{mvp.title}</div>
+                  <div class="mvp-card-stat">
+                    <b>{fmt(mvp.value)}</b> {mvp.stat}
+                  </div>
+                </div>
+              )}
               <div class="panel result-stats">
                 <div class="result-head">
                   <div class="panel-title display" style={{ marginBottom: 0 }}>
@@ -67,19 +172,19 @@ export function BattleResult() {
                     .slice()
                     .sort((a, b2) => b2.tracker.damageDealt - a.tracker.damageDealt)
                     .map((u) => (
-                      <div key={u.id} class={`result-row ${u.alive ? '' : 'dead'}`}>
+                      <div key={u.id} class={`result-row ${u.alive ? '' : 'dead'} ${mvp?.u.id === u.id ? 'is-mvp' : ''}`}>
                         <MiniPortrait defId={u.defId} size={44} />
                         <div class="result-bars">
-                          <div class="rbar">
-                            <i style={{ width: `${(u.tracker.damageDealt / maxDmg) * 100}%`, background: '#ff6b9a' }} />
+                          <div class="rbar" title="Damage dealt">
+                            <i style={{ width: `${(u.tracker.damageDealt / maxDmg) * 100}%`, background: BAR.dealt }} />
                             <span>{fmt(u.tracker.damageDealt)}</span>
                           </div>
-                          <div class="rbar">
-                            <i style={{ width: `${Math.min(100, (u.tracker.damageTaken / maxDmg) * 100)}%`, background: '#ffb347' }} />
+                          <div class="rbar" title="Damage taken">
+                            <i style={{ width: `${Math.min(100, (u.tracker.damageTaken / maxDmg) * 100)}%`, background: BAR.taken }} />
                             <span>{fmt(u.tracker.damageTaken)}</span>
                           </div>
-                          <div class="rbar">
-                            <i style={{ width: `${Math.min(100, ((u.tracker.healing + u.tracker.shielding) / maxDmg) * 100)}%`, background: '#8dff9a' }} />
+                          <div class="rbar" title="Healing and shields">
+                            <i style={{ width: `${Math.min(100, ((u.tracker.healing + u.tracker.shielding) / maxDmg) * 100)}%`, background: BAR.heal }} />
                             <span>{fmt(u.tracker.healing + u.tracker.shielding)}</span>
                           </div>
                         </div>
@@ -90,35 +195,35 @@ export function BattleResult() {
                     <thead>
                       <tr>
                         <th />
-                        <th>Dealt</th>
-                        <th>Taken</th>
-                        <th>Healed</th>
-                        <th>Crits</th>
-                        <th>Kills</th>
-                        <th>Casts</th>
-                        <th>Best hit</th>
+                        {cols.map((c) => (
+                          <th key={c.key}>{c.label}</th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
                       {allies.map((u) => (
-                        <tr key={u.id} class={u.alive ? '' : 'dead'}>
+                        <tr key={u.id} class={`${u.alive ? '' : 'dead'} ${mvp?.u.id === u.id ? 'is-mvp' : ''}`}>
                           <td>
                             <MiniPortrait defId={u.defId} size={30} />
                           </td>
-                          <td>{fmt(u.tracker.damageDealt)}</td>
-                          <td>{fmt(u.tracker.damageTaken)}</td>
-                          <td>{fmt(u.tracker.healing + u.tracker.shielding)}</td>
-                          <td>{u.tracker.crits}</td>
-                          <td>{u.tracker.kills}</td>
-                          <td>{u.tracker.casts}</td>
-                          <td>{fmt(u.tracker.bestHit)}</td>
+                          {cols.map((c) => (
+                            <td key={c.key}>{c.get(u)}</td>
+                          ))}
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 )}
-                <div class="legend faint">
-                  <span style={{ color: '#ff6b9a' }}>■</span> damage dealt <span style={{ color: '#ffb347' }}>■</span> damage taken <span style={{ color: '#8dff9a' }}>■</span> healing & shields
+                <div class="result-legend faint">
+                  <span>
+                    <i style={{ background: BAR.dealt }} /> damage dealt
+                  </span>
+                  <span>
+                    <i style={{ background: BAR.taken }} /> damage taken
+                  </span>
+                  <span>
+                    <i style={{ background: BAR.heal }} /> healing & shields
+                  </span>
                 </div>
               </div>
               <div class="panel result-rewards" data-tut={won ? 'rewards' : 'fate'}>
@@ -137,7 +242,9 @@ export function BattleResult() {
                           <Line key={q.name} label={`Quest · ${q.name}`} value={q.amount} icon="ui_check" />
                         ))}
                         <div class="hairline" style={{ margin: '14px 0' }} />
-                        <Line label="Total earned" value={b.total} big />
+                        <div ref={totalRef}>
+                          <Line label="Total earned" value={shownTotal} big />
+                        </div>
                       </>
                     )}
                     <button

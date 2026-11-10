@@ -1,6 +1,11 @@
 import gsap from 'gsap';
+import { signal } from '@preact/signals';
 import { toDesign } from '@/app/scale';
+import { reducedMotion } from '@/app/motion';
 import { audio } from '@/audio/AudioManager';
+
+/** Spirit Stones already earned but still flying to the HUD counter: the counter shows stones − held. */
+export const stonesHeld = signal(0);
 
 /** Everything that plays the soft hover tick. */
 const HOVER =
@@ -44,6 +49,54 @@ export function burstAt(x: number, y: number, color = 'var(--gold-bright)'): voi
   b.style.setProperty('--c', color);
   layer().appendChild(b);
   setTimeout(() => b.remove(), 700);
+}
+
+/**
+ * Victory payout: Spirit Stone crystals arc one by one from `source` (the results total) to the HUD counter; each
+ * arrival releases its share of `amount` from stonesHeld, so the counter climbs as the stones land.
+ */
+export function flyStones(source: Element | null, amount: number, opts: { count?: number } = {}): void {
+  const target = document.querySelector('.stones-pill.big');
+  if (!source || !target || amount <= 0 || reducedMotion()) {
+    stonesHeld.value = 0;
+    return;
+  }
+  const from = centre(source);
+  const to = centre(target);
+  const n = opts.count ?? Math.max(4, Math.min(12, Math.round(amount / 3)));
+  const share = Math.floor(amount / n);
+  for (let i = 0; i < n; i++) {
+    const coin = document.createElement('div');
+    coin.className = 'flourish-stone';
+    const jx = (Math.random() - 0.5) * 70;
+    const jy = (Math.random() - 0.5) * 26;
+    coin.style.left = `${from.x - 18 + jx}px`;
+    coin.style.top = `${from.y - 18 + jy}px`;
+    layer().appendChild(coin);
+    const dx = to.x - (from.x + jx);
+    const dy = to.y - (from.y + jy);
+    const peak = Math.min(0, dy) - 50 - Math.random() * 70;
+    const last = i === n - 1;
+    let landed = false;
+    const land = () => {
+      if (landed) return;
+      landed = true;
+      coin.remove();
+      stonesHeld.value = last ? 0 : Math.max(0, stonesHeld.value - share);
+      audio.sfx('stones', { volume: last ? 0.4 : 0.18, throttleMs: 50 });
+      if (last) burstAt(to.x, to.y);
+    };
+    const delay = i * 0.075;
+    gsap
+      .timeline({ delay, onComplete: land })
+      .fromTo(coin, { scale: 0.2, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.16, ease: 'back.out(3)' }, 0)
+      .to(coin, { x: dx, duration: 0.68, ease: 'power1.in' }, 0.12)
+      .to(coin, { y: peak, duration: 0.28, ease: 'power2.out' }, 0.12)
+      .to(coin, { y: dy, duration: 0.4, ease: 'power2.in' }, 0.4)
+      .to(coin, { scale: 0.5, rotation: 160, duration: 0.68, ease: 'power1.in' }, 0.12);
+    // never leave a crystal behind (or the counter short) if the timeline cannot tick
+    setTimeout(land, (delay + 1.6) * 1000);
+  }
 }
 
 /**

@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'preact/hooks';
 import { clearSavedRun, meta, run, screen, setRun, updateMeta } from '@/app/store';
-import { endlessScore, heroByUid, teamContext } from '@/core/run';
+import { endlessScore, heroByUid, teamContext, type FightRecord } from '@/core/run';
 import { HERO_BY_ID } from '@/content/heroes';
+import { ENEMY_BY_ID } from '@/content/enemies';
+import { BrushBanner, StarPips } from '@/ui/components/Triumph';
+import { PAINTED_ICONS } from '@/ui/components/paintedIcons';
 import { DIFFICULTIES } from '@/content/difficulties';
 import { HeroCard } from '@/ui/components/HeroCard';
 import { Icon } from '@/ui/components/Icon';
@@ -41,16 +44,15 @@ export function RunEnd() {
   const minutes = Math.round((s.stats.elapsedMs || Date.now() - s.stats.startedAt) / 60000);
   return (
     <div class={`screen runend-screen ${s.victory ? 'won' : 'lost'}`}>
-      <div class="runend-bg">
-        <div class="runend-giant display">{s.victory ? 'Victorious' : 'Fallen'}</div>
-      </div>
-      <div class="runend-top">
-        <div class="brush" style={{ fontSize: 30, color: 'var(--gold)' }}>
-          {s.victory ? '功成' : '陨落'}
-        </div>
-        <div class="display" style={{ fontSize: 18, letterSpacing: '0.3em', color: 'var(--paper-dim)' }}>
-          {DIFFICULTIES[s.tier].name} contract · {s.realm === 3 ? `Ladder floor ${endlessScore(s)}` : `Realm ${s.realm}`}
-        </div>
+      <div class="runend-bg" />
+      <div class="runend-top v2">
+        <BrushBanner
+          title={s.victory ? 'Ascended' : 'Fallen'}
+          seal={s.victory ? '功' : '陨'}
+          tone={s.victory ? 'won' : 'lost'}
+          size="xl"
+          sub={`${DIFFICULTIES[s.tier].name} contract · ${s.realm === 3 ? `Ladder floor ${endlessScore(s)}` : `Realm ${s.realm}`}${minutes > 0 ? ` · ${minutes} min` : ""}`}
+        />
       </div>
       {!summary && (
         <div class="mvp-row stagger">
@@ -59,21 +61,18 @@ export function RunEnd() {
               <div key={m.title} class="mvp">
                 <HeroCard defId={m.x.h!.defId} rank={m.x.h!.rank} hero={m.x.h!} ctx={ctx} size="lg" showStats={false} />
                 <div class="mvp-plate panel">
-                  <div class="mvp-name display">{HERO_BY_ID[m.x.h!.defId].name}</div>
                   <div class="mvp-title">{m.title}</div>
                   <div class="mvp-stat">
                     {m.stat} <b>{fmt(m.value)}</b>
                   </div>
-                  <div class="mvp-stars">
-                    {'★'.repeat(Math.min(3, 1 + m.x.h!.rank))}
-                    <span class="faint">{'★'.repeat(Math.max(0, 2 - m.x.h!.rank))}</span>
-                  </div>
+                  <StarPips count={Math.min(3, 1 + m.x.h!.rank)} />
                 </div>
               </div>
             ) : null,
           )}
         </div>
       )}
+      {!summary && (s.history?.length ?? 0) > 0 && <RunTimeline history={s.history!} />}
       {summary && (
         <div class="panel summary-panel anim-pop">
           <div class="panel-title display">Run Summary</div>
@@ -129,6 +128,44 @@ export function RunEnd() {
       <div class="faint" style={{ position: 'absolute', right: 30, bottom: 24, fontSize: 14 }}>
         Runs {meta.value.runsPlayed} · Wins {meta.value.runsWon}
       </div>
+    </div>
+  );
+}
+
+/** The run at a glance: every fight as a node medallion, grouped by realm; the hardest-hitting victory is starred. */
+function RunTimeline({ history }: { history: FightRecord[] }) {
+  const best = history.reduce((a, h, i) => (h.won && h.dealt > (history[a]?.dealt ?? -1) ? i : a), -1);
+  const groups: { key: string; label: string; items: { h: FightRecord; i: number }[] }[] = [];
+  history.forEach((h, i) => {
+    const key = h.realm === 3 ? `3-${h.floor}` : `${h.realm}`;
+    let g = groups[groups.length - 1];
+    if (!g || g.key !== key) {
+      g = { key, label: h.realm === 1 ? '一' : h.realm === 2 ? '二' : '天', items: [] };
+      groups.push(g);
+    }
+    g.items.push({ h, i });
+  });
+  return (
+    <div class="run-timeline anim-rise">
+      {groups.map((g) => (
+        <div key={g.key} class="rt-group">
+          <span class="rt-realm brush">{g.label}</span>
+          {g.items.map(({ h, i }) => {
+            const kind = h.kind === 'single' ? 'challenge' : h.kind;
+            const foe = h.foe ? ENEMY_BY_ID[h.foe]?.name : undefined;
+            return (
+              <div
+                key={i}
+                class={`rt-node ${h.won ? 'won' : 'lost'} ${i === best ? 'best' : ''} kind-${kind}`}
+                title={`${h.won ? 'Won' : 'Lost'} · ${foe ?? 'Fight'} · ${fmt(h.dealt)} damage${h.stones ? ` · ${h.stones} Spirit Stones` : ''}`}
+              >
+                <Icon name={PAINTED_ICONS.has(`node_${kind}`) ? `node_${kind}` : 'node_fight'} size={40} />
+                <span class="rt-mark" />
+              </div>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 }

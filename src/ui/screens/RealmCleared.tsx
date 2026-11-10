@@ -1,9 +1,16 @@
 import { useEffect } from 'preact/hooks';
 import { act, meta, run, updateMeta } from '@/app/store';
 import { endRun, nextRealm } from '@/core/run';
+import { REALM_BOSSES } from '@/core/encounters';
+import { ENEMY_BY_ID } from '@/content/enemies';
 import { Icon } from '@/ui/components/Icon';
+import { BrushBanner } from '@/ui/components/Triumph';
+import { bossEpithet } from '@/ui/hud/Boss';
+import { fmt } from '@/ui/hud/Hud';
 import { audio } from '@/audio/AudioManager';
 import { getBattleView } from '@/battle/view/BattleView';
+
+const REALM_ART: Record<1 | 2 | 3, string> = { 1: 'realm1_bamboo', 2: 'realm2_abyss', 3: 'realm3_ladder' };
 
 export function RealmCleared() {
   const s = run.value!;
@@ -18,29 +25,61 @@ export function RealmCleared() {
       });
     }
   }, []);
-  const realmName = s.realm === 1 ? 'Azure Bamboo Province' : s.realm === 2 ? 'Blood Moon Abyss' : `Heavenly Ladder · Floor ${s.floor}`;
+  const realm = s.realm;
+  const realmName = realm === 1 ? 'Azure Bamboo Province' : realm === 2 ? 'Blood Moon Abyss' : `Heavenly Ladder · Floor ${s.floor}`;
+  // the guardian that was just beaten (from the boss fight), else the realm's usual guardian
+  const bossId = s.currentEncounter?.enemies.map((e) => e.defId).find((id) => ENEMY_BY_ID[id]?.boss) ?? REALM_BOSSES[realm][0];
+  const boss = ENEMY_BY_ID[bossId];
+  const next =
+    realm === 1
+      ? { name: 'Blood Moon Abyss', art: 'realm2_abyss', line: 'Below the bamboo, the Blood Moon Sovereign stirs.' }
+      : realm === 2
+        ? { name: 'The Heavenly Ladder', art: 'realm3_ladder', line: 'An endless climb, every floor deadlier than the last.' }
+        : { name: `Floor ${s.floor + 1}`, art: 'realm3_ladder', line: 'The Ladder rises on. Its wardens grow stronger.' };
+  const unlocked = realm === 2 ? Math.min(7, meta.value.unlockedTier) : null;
   return (
-    <div class={`screen cleared-screen realm-${s.realm === 1 ? 1 : s.realm === 2 ? 2 : 3}`}>
-      <div class="cleared-bg" style={{ ['--realm-art' as string]: `url(./assets/art/bg/${s.realm === 1 ? 'realm1_bamboo' : s.realm === 2 ? 'realm2_abyss' : 'realm3_ladder'}.jpg)` }} />
-      <div class="cleared-body anim-rise">
-        <div class="brush cleared-glyph">封</div>
-        <div class="display cleared-title">Rift Sealed</div>
-        <div class="cleared-sub">{realmName} is safe once more</div>
-        <div class="cleared-stats panel">
-          <Stat label="Fights won" value={`${s.stats.wins}`} />
-          <Stat label="Spirit Stones earned" value={`${s.stats.stonesEarned}`} />
-          <Stat label="Damage dealt" value={Math.round(s.stats.damage).toLocaleString()} />
-          <Stat label="Best hit" value={Math.round(s.stats.bestHit).toLocaleString()} />
-          <Stat label="Time reversals" value={`${s.stats.rewinds}`} />
-          <Stat label="Disciples" value={`${s.roster.length}`} />
+    <div class={`screen cleared-screen v2 realm-${realm}`}>
+      <div class="cleared-bg" style={{ ['--realm-art' as string]: `url(./assets/art/bg/${REALM_ART[realm]}.jpg)` }} />
+      <div class="cleared-body v2">
+        <BrushBanner title="Rift Sealed" seal="封" tone="gold" size="xl" sub={`${realmName} is safe once more`} />
+        <div class="cleared-main">
+          <div class="sealed-guardian">
+            <div class="sealed-medallion">
+              <img src={`./assets/art/sprites/${boss?.sprite ?? bossId}.png`} alt="" draggable={false} />
+            </div>
+            <div class="sealed-talisman" aria-hidden="true">
+              <span class="brush">封</span>
+              <span class="brush small">镇</span>
+            </div>
+            <div class="sealed-name display">{boss?.name ?? 'The Guardian'}</div>
+            <div class="sealed-epithet">{bossEpithet(s)} · sealed</div>
+            {unlocked !== null && (
+              <div class="sealed-reward">
+                <Icon name="ui_trophy" size={18} color="var(--gold-bright)" /> Contract {unlocked} unlocked
+              </div>
+            )}
+          </div>
+          <div class="cleared-medals">
+            <Medal icon="node_fight" label="Fights won" value={`${s.stats.wins}`} />
+            <Medal icon="stones" label="Spirit Stones" value={`${s.stats.stonesEarned}`} />
+            <Medal icon="ui_damage" label="Damage dealt" value={fmt(s.stats.damage)} />
+            <Medal icon="kw_crit" label="Best hit" value={fmt(s.stats.bestHit)} />
+            <Medal icon="ui_rewind" label="Time reversals" value={`${s.stats.rewinds}`} />
+            <Medal icon="ui_party" label="Disciples" value={`${s.roster.length}`} />
+          </div>
+          <div class="next-realm" style={{ ['--next-art' as string]: `url(./assets/art/bg/${next.art}.jpg)` }}>
+            <div class="next-label">Next</div>
+            <div class="next-name display">{next.name}</div>
+            <div class="next-line">{next.line}</div>
+          </div>
         </div>
-        <div class="row" style={{ gap: 16, marginTop: 10 }}>
-          {s.realm === 1 && (
+        <div class="row cleared-actions">
+          {realm === 1 && (
             <button class="btn primary big" onClick={() => (audio.sfx('ui_confirm'), act((st) => nextRealm(st)))}>
               <span class="btn-glyph">进</span> Enter the Blood Moon Abyss
             </button>
           )}
-          {s.realm === 2 && (
+          {realm === 2 && (
             <>
               <button
                 class="btn gold big"
@@ -60,29 +99,26 @@ export function RealmCleared() {
               </button>
             </>
           )}
-          {s.realm === 3 && (
+          {realm === 3 && (
             <button class="btn primary big" onClick={() => (audio.sfx('ui_confirm'), act((st) => nextRealm(st)))}>
               <span class="btn-glyph">升</span> Climb to floor {s.floor + 1}
             </button>
           )}
         </div>
-        {s.realm === 2 && <div class="muted" style={{ fontSize: 14 }}>The Ladder is endless. Each floor grows deadlier; your defeat records a score. Unlocked contract: {Math.min(7, meta.value.unlockedTier)}.</div>}
+        {realm === 2 && <div class="muted cleared-note">The Ladder is endless. Each floor grows deadlier; your defeat records a score.</div>}
       </div>
     </div>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Medal({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
-    <div class="cleared-stat">
-      <div class="faint" style={{ fontSize: 14, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-        {label}
+    <div class="cleared-medal">
+      <div class="medal-disc">
+        <Icon name={icon} size={34} color="var(--gold-bright)" />
       </div>
-      <div class="display" style={{ fontSize: 24, color: 'var(--gold-bright)' }}>
-        {value}
-      </div>
+      <div class="medal-value display">{value}</div>
+      <div class="medal-label">{label}</div>
     </div>
   );
 }
-
-export { Icon };

@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import { PAINTED_ICONS } from '@/ui/components/paintedIcons';
-import { screen } from '@/app/store';
+import { compendiumReturn, screen } from '@/app/store';
 import { HEROES } from '@/content/heroes';
 import { ENEMIES } from '@/content/enemies';
 import { ITEMS } from '@/content/items';
@@ -45,7 +45,8 @@ export function Compendium() {
           data-hotkey="back"
           onClick={() => {
             audio.sfx('ui_back');
-            screen.value = 'menu';
+            screen.value = compendiumReturn.value;
+            compendiumReturn.value = 'menu';
           }}
         >
           ‹ Back

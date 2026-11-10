@@ -157,6 +157,18 @@ function applyScene(s: RunState, scene: string): void {
       s.stats.damage = 180400;
       s.stats.bestHit = 3120;
       for (const h of s.roster) s.heroTotals[h.uid] = { dealt: 20000 + Math.random() * 30000, taken: 8000 + Math.random() * 9000, healed: Math.random() * 6000, kills: Math.floor(Math.random() * 20), crits: Math.floor(Math.random() * 60), bestHit: 800 + Math.random() * 2000, fights: 26 };
+      // a sample run for the timeline: two realms of fights, one lost and reversed, ending on each guardian
+      s.history = [];
+      for (const realm of [1, 2]) {
+        const kinds = ['fight', 'fight', 'event', 'elite', 'fight', 'challenge', 'fight', 'trial', 'fight', 'elite', 'fight', 'boss'];
+        kinds.forEach((kind, node) => {
+          if (kind === 'event') return;
+          const foe = kind === 'boss' ? (realm === 1 ? 'flood_dragon' : 'blood_moon_sovereign') : kind === 'elite' ? (realm === 1 ? 'moss_golem' : 'demon_general') : realm === 1 ? 'bamboo_demon' : 'demon_soldier';
+          const dealt = Math.round((1500 + node * 700) * realm * (kind === 'boss' ? 1.8 : 1));
+          if (realm === 2 && node === 9) s.history!.push({ realm, floor: 0, node, kind, won: false, dealt: Math.round(dealt * 0.6), stones: 0, foe });
+          s.history!.push({ realm, floor: 0, node, kind, won: true, dealt, stones: 8 + node, foe });
+        });
+      }
       s.phase = 'runEnd';
       break;
     default:

@@ -103,6 +103,19 @@ export interface PendingPick {
   title: string;
 }
 
+/** One fight of the run, for the run-end timeline. */
+export interface FightRecord {
+  realm: number;
+  floor: number;
+  node: number;
+  kind: string;
+  won: boolean;
+  dealt: number;
+  stones: number;
+  /** The toughest foe of the fight (boss, elite, else the first enemy). */
+  foe?: string;
+}
+
 export interface HeroTotals {
   dealt: number;
   taken: number;
@@ -161,6 +174,8 @@ export interface RunState {
   endlessScore: number;
   log: string[];
   heroTotals: Record<string, HeroTotals>;
+  /** Every fight of the run in order (older saves have none). */
+  history?: FightRecord[];
   resultWasSingle?: boolean;
 }
 
@@ -292,6 +307,7 @@ export function newRun(tier: number, seed: number): RunState {
     endlessScore: 0,
     log: [],
     heroTotals: {},
+    history: [],
   };
   rollDraft(s, rng);
   commit(s, rng);
@@ -1070,6 +1086,12 @@ export function finishBattle(s: RunState, result: BattleResult): void {
   s.stats.damage += result.quest.damage;
   for (const u of result.units) if (u.side === 'ally' && u.tracker.bestHit > s.stats.bestHit) s.stats.bestHit = u.tracker.bestHit;
 
+  const enc0 = s.currentEncounter;
+  const foe = enc0?.enemies.map((e) => e.defId).sort((a, b) => foeRank(b) - foeRank(a))[0];
+  const record: FightRecord = { realm: s.realm, floor: s.floor, node: s.nodeIndex, kind: enc0?.kind ?? 'fight', won: result.winner === 'ally', dealt: result.quest.damage, stones: 0, foe };
+  (s.history ??= []).push(record);
+  if (s.history.length > 120) s.history.shift();
+
   if (result.winner !== 'ally') {
     s.phase = 'defeat';
     return;
@@ -1129,7 +1151,14 @@ export function finishBattle(s: RunState, result: BattleResult): void {
   s.stones += breakdown.base + breakdown.survivors + breakdown.relicBonus + breakdown.battleBonus + breakdown.bounty + breakdown.challenge;
   s.stats.stonesEarned += breakdown.total;
   s.lastBreakdown = breakdown;
+  record.stones = breakdown.total;
   s.phase = 'result';
+}
+
+/** How notable an enemy is, to name a fight by its toughest foe. */
+function foeRank(defId: string): number {
+  const d = ENEMY_BY_ID[defId];
+  return d?.boss ? 3 : d?.elite ? 2 : 1;
 }
 
 // module-level quest progress for item quests (per run; reset on new run via resetItemQuests)

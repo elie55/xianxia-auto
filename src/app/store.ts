@@ -10,7 +10,32 @@ export interface MetaSave {
   bestEndless: number;
   bestTierCleared: number;
   leaderboard: { name: string; score: number; tier: number; date: number }[];
-  settings: { music: number; sfx: number; autoBattle: boolean; battleSpeed: 1 | 2 | 3; screenShake: boolean; showDamage: boolean; fullscreen?: boolean; textScale?: number };
+  settings: {
+    music: number;
+    sfx: number;
+    autoBattle: boolean;
+    battleSpeed: 1 | 2 | 3;
+    screenShake: boolean;
+    showDamage: boolean;
+    fullscreen?: boolean;
+    textScale?: number;
+    /** Master volume (0–1), applied on top of music and effects. */
+    master?: number;
+    /** Silence the game while its window is in the background. */
+    muteUnfocused?: boolean;
+    /** Hover delay before a tooltip opens, in ms. */
+    tooltipDelay?: number;
+    /** Ask before selling a disciple or a Treasure. */
+    confirmSell?: boolean;
+    /** Colour-vision palette for teams, rarities and damage types. */
+    palette?: 'default' | 'deutan' | 'tritan';
+    /** Fewer flashes, shakes and moving effects. Unset: follow the operating system's setting. */
+    reduceMotion?: boolean;
+    /** The battle camera follows the fight and leans in on techniques and kills (default on). */
+    battleCamera?: boolean;
+    /** Frame-rate cap for the battle renderer (0 = uncapped). */
+    frameCap?: 0 | 30 | 60;
+  };
   seenTutorial: boolean;
   /** Tutorial chapters already shown (by id). */
   tutorialSeen: string[];
@@ -46,6 +71,8 @@ function loadMeta(): MetaSave {
 
 export const meta = signal<MetaSave>(loadMeta());
 export const screen = signal<Screen>('menu');
+/** Where the Compendium's Back button leads (the pause menu opens it from a run). */
+export const compendiumReturn = signal<Screen>('menu');
 export const run = signal<RunState | null>(null);
 export const toast = signal<{ id: number; text: string; kind: 'info' | 'error' | 'gold' } | null>(null);
 export const hasSavedRun = signal<boolean>(!!localStorage.getItem(RUN_KEY));

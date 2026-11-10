@@ -2,6 +2,7 @@ import { signal } from '@preact/signals';
 import type { ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { toDesign, DESIGN_W, DESIGN_H } from '@/app/scale';
+import { meta } from '@/app/store';
 
 interface TipState {
   x: number;
@@ -12,22 +13,41 @@ interface TipState {
 
 export const tooltip = signal<TipState | null>(null);
 
+let pending: ReturnType<typeof setTimeout> | null = null;
+
+/** Opens a tooltip after the player's Tooltip delay setting (immediately when a tooltip is already open). */
+function open(state: TipState): void {
+  if (pending) clearTimeout(pending);
+  pending = null;
+  const delay = meta.peek().settings.tooltipDelay ?? 0;
+  if (delay <= 0 || tooltip.peek()) {
+    tooltip.value = state;
+    return;
+  }
+  pending = setTimeout(() => {
+    pending = null;
+    tooltip.value = state;
+  }, delay);
+}
+
 export function showTooltip(e: MouseEvent | PointerEvent, content: ComponentChildren, anchor: TipState['anchor'] = 'right'): void {
   const el = e.currentTarget as HTMLElement | null;
   if (!el) return;
   const r = el.getBoundingClientRect();
   const tl = toDesign(r.left, r.top);
   const br = toDesign(r.right, r.bottom);
-  tooltip.value = { x: anchor === 'left' ? tl.x : anchor === 'right' ? br.x : (tl.x + br.x) / 2, y: anchor === 'below' ? br.y : anchor === 'above' ? tl.y : tl.y, content, anchor };
+  open({ x: anchor === 'left' ? tl.x : anchor === 'right' ? br.x : (tl.x + br.x) / 2, y: anchor === 'below' ? br.y : anchor === 'above' ? tl.y : tl.y, content, anchor });
 }
 
 export function hideTooltip(): void {
+  if (pending) clearTimeout(pending);
+  pending = null;
   tooltip.value = null;
 }
 
 /** Shows a tooltip anchored at a design-space point (used for canvas units). */
 export function showTooltipAtDesign(x: number, y: number, content: ComponentChildren, anchor: TipState['anchor'] = 'above'): void {
-  tooltip.value = { x, y, content, anchor };
+  open({ x, y, content, anchor });
 }
 
 /** Props helper: spread onto an element to attach a tooltip. */
