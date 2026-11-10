@@ -11,6 +11,8 @@ import { Compendium } from '@/ui/screens/Compendium';
 import { TooltipLayer } from '@/ui/components/Tooltip';
 import { TutorialLayer, useTutorialDriver } from '@/ui/tutorial/Tutorial';
 import { LoadingVeil } from '@/ui/components/LoadingVeil';
+import { AchievementToast } from '@/ui/components/AchievementToast';
+import { RenownScreen } from '@/ui/screens/Renown';
 
 export function App() {
   const scr = screen.value;
@@ -27,6 +29,7 @@ export function App() {
         {scr === 'settings' && <Settings />}
         {scr === 'credits' && <Credits />}
         {scr === 'compendium' && <Compendium />}
+        {scr === 'renown' && <RenownScreen />}
       </ScreenGuard>
       {t && (
         <div key={t.id} class={`toast ${t.kind}`}>
@@ -34,6 +37,7 @@ export function App() {
         </div>
       )}
       <InkTransition />
+      <AchievementToast />
       <TutorialLayer />
       <TooltipLayer />
       <LoadingVeil />

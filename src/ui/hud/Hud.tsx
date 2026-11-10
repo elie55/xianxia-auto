@@ -8,7 +8,8 @@ import { HERO_BY_ID } from '@/content/heroes';
 import { RELIC_BY_ID } from '@/content/relics';
 import { ITEM_BY_ID } from '@/content/items';
 import { heroAbility, heroItemSlots, heroStats, type HeroState, type TeamContext } from '@/core/builder';
-import { endRun, equipItem, equipItemAt, heroByUid, moveHero, relicDefs, sellHero, sellItem, teamContext, unequipItem, itemQuestState, type RunState, setPosition } from '@/core/run';
+import { concludeRun } from '@/meta/runtime';
+import { equipItem, equipItemAt, heroByUid, moveHero, relicDefs, sellHero, sellItem, teamContext, unequipItem, itemQuestState, type RunState, setPosition } from '@/core/run';
 import { Icon, STAT_COLOR, STAT_ICON, STAT_LABEL } from '@/ui/components/Icon';
 import { RichText } from '@/ui/components/RichText';
 import { tip } from '@/ui/components/Tooltip';
@@ -820,10 +821,7 @@ function PauseMenu() {
               onClick={() => {
                 audio.sfx('ui_confirm');
                 close();
-                updateMeta((mm) => {
-                  mm.runsPlayed++;
-                });
-                act((st) => endRun(st, false));
+                concludeRun(false);
               }}
             >
               <Icon name="ui_skull" size={18} /> Abandon the run

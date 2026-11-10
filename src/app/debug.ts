@@ -49,9 +49,9 @@ export function applyDebugQuery(): boolean {
   if (import.meta.env.DEV) (window as unknown as { __nh: unknown }).__nh = { getBattleView, viewport, run };
   // ?noanim freezes CSS entrance animations so QA screenshots are deterministic
   if (params.has('noanim')) document.body.classList.add('no-anim');
-  // ?screen=compendium|settings|credits|newRun jumps straight to a menu screen
+  // ?screen=compendium|settings|credits|newRun|renown jumps straight to a menu screen
   const scr = params.get('screen');
-  if (scr === 'compendium' || scr === 'settings' || scr === 'credits' || scr === 'newRun') {
+  if (scr === 'compendium' || scr === 'settings' || scr === 'credits' || scr === 'newRun' || scr === 'renown') {
     screen.value = scr;
     return true;
   }

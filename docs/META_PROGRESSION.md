@@ -4,6 +4,19 @@ Proposal, written 2026-11-10 from the brainstorm on account levels, a sect-build
 Every number below is a starting value to tune in playtests. Today the only progress between runs is the contract
 unlock, the Ladder leaderboard, run counters and the Compendium's discovery lists (`MetaSave` in `src/app/store.ts`).
 
+**Status (2026-11-10): phase 1 is built** (section 13, step 1):
+- Sect Renown with the curve and payout of sections 4–5 (`src/meta/renown.ts`).
+- A phase-1 reward track of cosmetics only (`src/meta/cosmetics.ts`): 24 seal avatars, 16 disciple avatars (clear
+  both realms with that disciple), 2 foe avatars, 20 titles, 7 card frames, 8 banners.
+- 41 achievements (`src/meta/achievementDefs.ts`). "Mountain-Splitting Strike" asks for 2,000 damage in one hit,
+  not 5,000: simulated runs top out near 2,150.
+- Save version 2 with migration (`src/meta/migrate.ts`).
+- The Sect Rewards step at the end of every run, the sect plate on the menu, and the Sect Renown screen (track,
+  achievements, profile and records).
+- Ladder records shown as real floors.
+
+Phases 2–5 are not started.
+
 ---
 
 ## 1. Summary

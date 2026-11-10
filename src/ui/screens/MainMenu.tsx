@@ -3,6 +3,8 @@ import { resetItemQuests } from '@/core/run';
 import { audio } from '@/audio/AudioManager';
 import { useEffect, useRef } from 'preact/hooks';
 import { isDesktop, quitGame } from '@/app/desktop';
+import { SectPlate } from '@/ui/components/MetaBits';
+import { ladderFloorOf } from '@/core/run';
 
 
 /** Falling cherry petals: position, timing, drift and spin per petal (deterministic so it never reshuffles). */
@@ -51,11 +53,13 @@ export function MainMenu() {
     screen.value = 'run';
     audio.sfx('ui_confirm');
   };
-  const go = (to: 'newRun' | 'compendium' | 'settings' | 'credits', sfx = 'ui_click') => {
+  const go = (to: 'newRun' | 'compendium' | 'settings' | 'credits' | 'renown', sfx = 'ui_click') => {
     audio.sfx(sfx);
     screen.value = to;
   };
   const saved = hasSavedRun.value;
+  // the Ladder record as a floor (older saves only kept the score, which counts nodes)
+  const bestFloor = m.lifetime?.bestFloor || (m.leaderboard.length ? ladderFloorOf(m.bestEndless) : 0);
   return (
     <div class="screen menu-screen v2" ref={rootRef} onPointerMove={onMove}>
       <div class="menu-bg">
@@ -86,6 +90,8 @@ export function MainMenu() {
         </div>
         <div class="menu-shade" />
       </div>
+
+      <SectPlate class="menu-plate" onClick={() => go('renown')} />
 
       <div class="menu-logo-wrap">
         <div class="menu-logo-halo" />
@@ -134,7 +140,7 @@ export function MainMenu() {
           Victories <b>{m.runsWon}</b>
         </span>
         <span>
-          Best Ladder floor <b>{m.bestEndless}</b>
+          Best Ladder floor <b>{bestFloor || 'None'}</b>
         </span>
       </div>
       <div class="menu-version">v0.1.0 · pre-alpha</div>

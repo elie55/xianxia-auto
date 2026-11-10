@@ -1,7 +1,37 @@
 import { computed, signal } from '@preact/signals';
 import type { RunState } from '@/core/run';
 
-export type Screen = 'menu' | 'newRun' | 'run' | 'settings' | 'compendium' | 'credits';
+export type Screen = 'menu' | 'newRun' | 'run' | 'settings' | 'compendium' | 'credits' | 'renown';
+
+/** The player's sect as shown on the menu and the Renown screen (docs/META_PROGRESSION.md). */
+export interface MetaProfile {
+  sectName: string;
+  /** Cosmetic ids (src/meta/cosmetics.ts). */
+  avatar: string;
+  title: string;
+  frame: string;
+  banner: string;
+}
+
+/** Totals over every run, for the Records tab and for achievements that span runs. */
+export interface LifetimeStats {
+  runs: number;
+  wins: number;
+  fights: number;
+  fightsWon: number;
+  kills: number;
+  crits: number;
+  damage: number;
+  bestHit: number;
+  stonesEarned: number;
+  /** Highest Heavenly Ladder floor reached (0: never climbed). */
+  bestFloor: number;
+  playMs: number;
+  /** Challenge ids won at least once. */
+  challengesWon: string[];
+  /** Disciple ids that were in the party when both realms were cleared. */
+  winnersWith: string[];
+}
 
 export interface MetaSave {
   unlockedTier: number;
@@ -9,7 +39,8 @@ export interface MetaSave {
   runsWon: number;
   bestEndless: number;
   bestTierCleared: number;
-  leaderboard: { name: string; score: number; tier: number; date: number }[];
+  /** score counts Ladder nodes, (floor − 1) × 12 + node; floor is stored from save version 2 on. */
+  leaderboard: { name: string; score: number; tier: number; date: number; floor?: number }[];
   settings: {
     music: number;
     sfx: number;
@@ -43,6 +74,14 @@ export interface MetaSave {
   tutorialDisabled: boolean;
   /** Compendium discovery: ids of the disciples, Treasures, Dao Insights and foes met in any run. */
   seen?: { heroes: string[]; items: string[]; relics: string[]; enemies: string[] };
+  /** Save version: 2 adds Sect Renown, achievements, the profile and lifetime stats (src/meta/migrate.ts). */
+  version?: number;
+  profile?: MetaProfile;
+  /** Sect Renown: total XP earned; the level is derived from it (src/meta/renown.ts). */
+  renown?: { xp: number };
+  /** Achievement id → unlock time (ms). */
+  achievements?: Record<string, number>;
+  lifetime?: LifetimeStats;
 }
 
 const META_KEY = 'nine-heavens:meta';

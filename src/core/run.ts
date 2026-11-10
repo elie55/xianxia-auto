@@ -12,6 +12,7 @@ import { EVENT_BY_ID, RANDOM_EVENTS } from '@/content/events';
 import { BLESSINGS, DIFFICULTIES } from '@/content/difficulties';
 import { classInsights } from '@/content/classes';
 import { ALLY_MAX_COL, BOARD_ROWS, hexKey, offsetToAxial } from '@/battle/sim/hex';
+import { emitRunEvent } from '@/core/runEvents';
 
 export type Phase =
   | 'chooseHero'
@@ -177,9 +178,28 @@ export interface RunState {
   /** Every fight of the run in order (older saves have none). */
   history?: FightRecord[];
   resultWasSingle?: boolean;
+  /** Compendium entries first seen during this run (src/app/discovery.ts). */
+  discovered?: number;
+  /** Achievements earned during this run; their Renown XP is paid with the run (src/meta). */
+  achievementsEarned?: string[];
+  /** Disciples fallen in the fights of the current realm (resets each realm). */
+  realmDeaths?: number;
+  /** Set once the run's Sect Renown has been paid, so it never pays twice. */
+  metaPaid?: boolean;
+  /** What the run paid, for the run-end rewards view. */
+  payout?: RunPayout;
 }
 
-const CHALLENGES: ChallengeOffer[] = [
+/** The Sect Renown a finished run paid (src/meta/runtime.ts finishRunMeta). */
+export interface RunPayout {
+  xpBefore: number;
+  xpAfter: number;
+  total: number;
+  lines: { key: string; label: string; count?: number; xp: number; icon: string }[];
+  achievements: string[];
+}
+
+export const CHALLENGES: ChallengeOffer[] = [
   { id: 'decay', name: 'Decay', desc: 'Disciples have 20% decreased basic stats.', rewardDesc: 'Choose 1 of 3 epic Dao Insights.' },
   { id: 'improvidence', name: 'Improvidence', desc: 'Each second, enemies heal 4% Max HP.', rewardDesc: 'Choose 1 of 3 epic Treasures.' },
   { id: 'haste', name: 'Haste', desc: 'Enemies have +40 Attack Speed.', rewardDesc: 'Gain 30 Spirit Stones.' },
@@ -468,10 +488,12 @@ export function itemSellValue(itemId: string): number {
 
 export function sellHero(s: RunState, uid: string): boolean {
   if (s.roster.length <= 1) return false;
+  const sold = heroByUid(s, uid);
   const v = heroSellValue(s, uid);
   removeHero(s, uid);
   s.stones += v;
   log(s, `Sold a disciple for ${v} stones.`);
+  if (sold) emitRunEvent({ type: 'sellHero', s, defId: sold.defId, rank: sold.rank });
   return true;
 }
 
@@ -592,6 +614,7 @@ export function rankUpHero(s: RunState, uid: string): boolean {
   if (!h || h.rank >= 3) return false;
   h.rank = (h.rank + 1) as Rank;
   queueRankUp(s, uid);
+  emitRunEvent({ type: 'rankUp', s, uid, rank: h.rank });
   log(s, `${HERO_BY_ID[h.defId].name} broke through to a new realm.`);
   return true;
 }
@@ -778,6 +801,7 @@ export function shopReroll(s: RunState): boolean {
   const n = s.rerollsThisShop + 1;
   rollShop(s, false);
   s.rerollsThisShop = n;
+  emitRunEvent({ type: 'reroll', s });
   return true;
 }
 
@@ -868,6 +892,7 @@ export function advanceNode(s: RunState): void {
   if (node.kind === 'boss' && s.lastResult?.winner === 'ally' && s.currentEncounter?.kind === 'boss') {
     // boss was just beaten → realm cleared
     s.phase = 'realmCleared';
+    emitRunEvent({ type: 'realmCleared', s });
     return;
   }
   s.nodeIndex++;
@@ -1122,9 +1147,11 @@ export function finishBattle(s: RunState, result: BattleResult): void {
   const record: FightRecord = { realm: s.realm, floor: s.floor, node: s.nodeIndex, kind: enc0?.kind ?? 'fight', won: result.winner === 'ally', dealt: result.quest.damage, stones: 0, foe };
   (s.history ??= []).push(record);
   if (s.history.length > 120) s.history.shift();
+  s.realmDeaths = (s.realmDeaths ?? 0) + result.units.filter((u) => u.side === 'ally' && u.heroUid && u.onBoard && !u.alive).length;
 
   if (result.winner !== 'ally') {
     s.phase = 'defeat';
+    emitRunEvent({ type: 'fightEnd', s, result, record });
     return;
   }
   s.stats.wins++;
@@ -1161,6 +1188,7 @@ export function finishBattle(s: RunState, result: BattleResult): void {
       rs.questDone = true;
       const gained = applyRunActions(s, def.quest.reward);
       breakdown.quests.push({ name: def.name, amount: gained });
+      emitRunEvent({ type: 'questDone', s, name: def.name });
     }
   }
   for (const h of s.roster) {
@@ -1174,6 +1202,7 @@ export function finishBattle(s: RunState, result: BattleResult): void {
         itemQuestDone.add(key);
         const gained = applyRunActions(s, it.quest.reward);
         breakdown.quests.push({ name: it.name, amount: gained });
+        emitRunEvent({ type: 'questDone', s, name: it.name });
       }
     }
   }
@@ -1184,6 +1213,7 @@ export function finishBattle(s: RunState, result: BattleResult): void {
   s.lastBreakdown = breakdown;
   record.stones = breakdown.total;
   s.phase = 'result';
+  emitRunEvent({ type: 'fightEnd', s, result, record });
 }
 
 /** How notable an enemy is, to name a fight by its toughest foe. */
@@ -1356,13 +1386,15 @@ export function rewind(s: RunState): boolean {
 }
 
 export function endRun(s: RunState, victory: boolean): void {
-  s.victory = victory;
+  // a run that reached the Heavenly Ladder already cleared both realms: falling on the Ladder keeps it a victory
+  s.victory = victory || s.victory;
   s.stats.elapsedMs = Date.now() - s.stats.startedAt;
   s.phase = 'runEnd';
 }
 
 /** From realmCleared: go to next realm or endless. */
 export function nextRealm(s: RunState): void {
+  s.realmDeaths = 0;
   if (s.realm === 1) {
     s.realm = 2;
     s.nodeIndex = 0;
@@ -1385,6 +1417,11 @@ export function nextRealm(s: RunState): void {
 export function endlessScore(s: RunState): number {
   if (s.realm !== 3) return 0;
   return (s.floor - 1) * 12 + s.nodeIndex;
+}
+
+/** The Ladder floor a score was set on (scores count nodes: 12 per floor). */
+export function ladderFloorOf(score: number): number {
+  return Math.floor(Math.max(0, score) / 12) + 1;
 }
 
 /** Hero summary helper for UI. */

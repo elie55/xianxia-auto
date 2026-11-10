@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import type { ComponentChildren } from 'preact';
 import { meta, screen, setRun } from '@/app/store';
 import { DIFFICULTIES } from '@/content/difficulties';
-import { newRun, resetItemQuests } from '@/core/run';
+import { ladderFloorOf, newRun, resetItemQuests } from '@/core/run';
 import { randomSeed } from '@/core/rng';
 import { Icon } from '@/ui/components/Icon';
 import { tip } from '@/ui/components/Tooltip';
@@ -182,7 +182,7 @@ export function NewRun() {
                 {m.runsWon}
               </Best>
               <Best icon="ui_star" label="Best floor">
-                {m.bestEndless || 'None'}
+                {m.lifetime?.bestFloor || (m.leaderboard.length ? ladderFloorOf(m.bestEndless) : 'None')}
               </Best>
               <Best icon="ui_rank" label="Highest cleared">
                 {m.bestTierCleared >= 0 ? (
@@ -221,7 +221,7 @@ export function NewRun() {
                     {DIFFICULTIES[e.tier]?.hanzi}
                   </span>
                   <span class="board-name">{e.name}</span>
-                  <span class="gold">Floor {e.score}</span>
+                  <span class="gold">Floor {e.floor ?? ladderFloorOf(e.score)}</span>
                 </div>
               ))
             )}

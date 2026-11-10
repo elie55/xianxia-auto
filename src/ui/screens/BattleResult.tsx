@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import gsap from 'gsap';
-import { act, run, screen, updateMeta, meta } from '@/app/store';
-import { currentRewindCost, endRun, proceedFromResult, rewind, rewindAvailable, type RunState } from '@/core/run';
+import { act, run, screen, meta } from '@/app/store';
+import { currentRewindCost, proceedFromResult, rewind, rewindAvailable, type RunState } from '@/core/run';
+import { concludeRun } from '@/meta/runtime';
 import type { BattleResult as BattleRecord } from '@/battle/sim/battle';
 import { HERO_BY_ID } from '@/content/heroes';
 import { Hud, fmt } from '@/ui/hud/Hud';
@@ -310,12 +311,7 @@ export function BattleResult() {
                     <button
                       class="btn danger"
                       style={{ marginTop: 12, width: '100%' }}
-                      onClick={() => {
-                        updateMeta((m) => {
-                          m.runsPlayed++;
-                        });
-                        act((st) => endRun(st, false));
-                      }}
+                      onClick={() => concludeRun(false)}
                     >
                       Accept fate
                     </button>

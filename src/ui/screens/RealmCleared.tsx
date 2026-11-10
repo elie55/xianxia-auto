@@ -1,6 +1,7 @@
 import { useEffect } from 'preact/hooks';
 import { act, meta, run, updateMeta } from '@/app/store';
-import { endRun, nextRealm } from '@/core/run';
+import { nextRealm } from '@/core/run';
+import { concludeRun } from '@/meta/runtime';
 import { REALM_BOSSES } from '@/core/encounters';
 import { ENEMY_BY_ID } from '@/content/enemies';
 import { Icon } from '@/ui/components/Icon';
@@ -85,11 +86,7 @@ export function RealmCleared() {
                 class="btn gold big"
                 onClick={() => {
                   audio.sfx('ui_confirm');
-                  updateMeta((m) => {
-                    m.runsWon++;
-                    m.runsPlayed++;
-                  });
-                  act((st) => endRun(st, true));
+                  concludeRun(true);
                 }}
               >
                 <span class="btn-glyph">归</span> Return victorious

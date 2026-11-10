@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'preact/hooks';
-import { clearSavedRun, meta, run, screen, setRun, updateMeta } from '@/app/store';
-import { endlessScore, heroByUid, teamContext, type FightRecord } from '@/core/run';
+import { act, clearSavedRun, meta, run, screen, setRun } from '@/app/store';
+import { heroByUid, teamContext, type FightRecord } from '@/core/run';
+import { finishRunMeta } from '@/meta/runtime';
+import { RunRewards } from './RunRewards';
 import { HERO_BY_ID } from '@/content/heroes';
 import { ENEMY_BY_ID } from '@/content/enemies';
 import { BrushBanner, StarPips } from '@/ui/components/Triumph';
@@ -15,19 +17,14 @@ import { fmt } from '@/ui/hud/Hud';
 export function RunEnd() {
   const s = run.value!;
   const [summary, setSummary] = useState(false);
+  // champions first, then the Sect Rewards the run paid
+  const [step, setStep] = useState<'champions' | 'rewards'>('champions');
   useEffect(() => {
     getBattleView().stopBattle();
     getBattleView().setVisible(false);
     audio.playMusic(s.victory ? 'victory' : 'event');
-    const score = endlessScore(s);
-    if (s.realm === 3) {
-      updateMeta((m) => {
-        m.bestEndless = Math.max(m.bestEndless, score);
-        m.leaderboard.push({ name: `Run ${m.runsPlayed + 1}`, score, tier: s.tier, date: Date.now() });
-        m.leaderboard.sort((a, b) => b.score - a.score);
-        m.leaderboard = m.leaderboard.slice(0, 20);
-      });
-    }
+    // every run-ending button pays the run (concludeRun); this catches any other way here
+    if (!s.metaPaid) act((st) => finishRunMeta(st));
     clearSavedRun();
     return () => getBattleView().setVisible(true);
   }, []);
@@ -51,10 +48,11 @@ export function RunEnd() {
           seal={s.victory ? '功' : '陨'}
           tone={s.victory ? 'won' : 'lost'}
           size="xl"
-          sub={`${DIFFICULTIES[s.tier].name} contract · ${s.realm === 3 ? `Ladder floor ${endlessScore(s)}` : `Realm ${s.realm}`}${minutes > 0 ? ` · ${minutes} min` : ""}`}
+          sub={`${DIFFICULTIES[s.tier].name} contract · ${s.realm === 3 ? `Ladder floor ${s.floor}` : `Realm ${s.realm}`}${minutes > 0 ? ` · ${minutes} min` : ''}`}
         />
       </div>
-      {!summary && (
+      {step === 'rewards' && s.payout && <RunRewards payout={s.payout} />}
+      {step === 'champions' && !summary && (
         <div class="mvp-row stagger">
           {mvps.map((m) =>
             m.x ? (
@@ -72,8 +70,8 @@ export function RunEnd() {
           )}
         </div>
       )}
-      {!summary && (s.history?.length ?? 0) > 0 && <RunTimeline history={s.history!} />}
-      {summary && (
+      {step === 'champions' && !summary && (s.history?.length ?? 0) > 0 && <RunTimeline history={s.history!} />}
+      {step === 'champions' && summary && (
         <div class="panel summary-panel anim-pop">
           <div class="panel-title display">Run Summary</div>
           <div class="summary-grid">
@@ -101,29 +99,46 @@ export function RunEnd() {
         </div>
       )}
       <div class="runend-footer">
-        <button
-          class="btn ghost"
-          onClick={() => {
-            audio.sfx('ui_back');
-            setRun(null);
-            screen.value = 'menu';
-          }}
-        >
-          Quit to menu
-        </button>
-        <button class="btn" onClick={() => setSummary(!summary)}>
-          {summary ? 'Champions' : 'Summary'}
-        </button>
-        <button
-          class="btn primary big"
-          onClick={() => {
-            audio.sfx('ui_confirm');
-            setRun(null);
-            screen.value = 'newRun';
-          }}
-        >
-          <span class="btn-glyph">再</span> New Run
-        </button>
+        {step === 'champions' ? (
+          <>
+            <button class="btn" onClick={() => setSummary(!summary)}>
+              {summary ? 'Champions' : 'Summary'}
+            </button>
+            <button
+              class="btn primary big"
+              data-hotkey="proceed"
+              onClick={() => {
+                audio.sfx('ui_confirm');
+                setStep('rewards');
+              }}
+            >
+              <span class="btn-glyph">宗</span> Sect Rewards
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              class="btn ghost"
+              onClick={() => {
+                audio.sfx('ui_back');
+                setRun(null);
+                screen.value = 'menu';
+              }}
+            >
+              Main Menu
+            </button>
+            <button
+              class="btn primary big"
+              onClick={() => {
+                audio.sfx('ui_confirm');
+                setRun(null);
+                screen.value = 'newRun';
+              }}
+            >
+              <span class="btn-glyph">再</span> New Run
+            </button>
+          </>
+        )}
       </div>
       <div class="faint" style={{ position: 'absolute', right: 30, bottom: 24, fontSize: 14 }}>
         Runs {meta.value.runsPlayed} · Wins {meta.value.runsWon}

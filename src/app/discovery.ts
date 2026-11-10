@@ -44,7 +44,10 @@ export function installDiscovery(): void {
     const found = seenIn(s);
     const cur = untracked(() => meta.value.seen) ?? emptySeen();
     const add = SEEN_KINDS.map((k) => [...found[k]].filter((id) => !cur[k].includes(id)));
-    if (add.every((a) => a.length === 0)) return;
+    const fresh = add.reduce((n, a) => n + a.length, 0);
+    if (!fresh) return;
+    // first sightings pay Renown with the run (src/meta/renown.ts); the run is saved right after this effect
+    s.discovered = (s.discovered ?? 0) + fresh;
     untracked(() =>
       updateMeta((m) => {
         const seen = (m.seen ??= emptySeen());
