@@ -308,6 +308,8 @@ export interface ItemDef {
   quest?: QuestDef;
   price?: number;
   keywords?: Keyword[];
+  /** Heirloom Treasures are crafted in the sect's Artifact Forge and brought into a run (recipe id, src/content/heirlooms.ts). */
+  heirloom?: string;
 }
 
 export interface RelicDef {
@@ -336,6 +338,8 @@ export interface RelicDef {
   keywords?: Keyword[];
   /** Appears only in the team-size section of the shop. */
   teamSize?: boolean;
+  /** Locked until this Scripture Pavilion study is researched (src/meta/sect.ts); never offered before. */
+  research?: string;
 }
 
 /** A recolour applied to a sprite: hue rotation in degrees, saturation and brightness as factors (1 = unchanged). */

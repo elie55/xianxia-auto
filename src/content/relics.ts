@@ -275,8 +275,69 @@ export const RELICS: RelicDef[] = [
   { id: 'storage_ring', name: 'Storage Ring', rarity: 'epic', icon: 'storage_ring', desc: 'All disciples gain [+1 Treasure slot].', run: { itemSlots: 1 } },
   { id: 'inner_court', name: 'Inner Court Expansion', rarity: 'epic', icon: 'inner_court', desc: '[+1 Party slot] on the board.', run: { partySize: 1 }, teamSize: true, price: 40 },
   { id: 'outer_court', name: 'Outer Court Expansion', rarity: 'rare', icon: 'outer_court', desc: '[+1 Reserve slot].', run: { reserveSize: 1 }, teamSize: true, price: 25 },
+
+  // ───── researched in the sect's Scripture Pavilion (src/meta/sect.ts); never offered before ─────
+  // Scrolls of the Five Phases
+  {
+    id: 'ember_lotus_scroll',
+    name: 'Ember Lotus Scroll',
+    rarity: 'common',
+    icon: 'scripture_fire',
+    research: 'five_phases',
+    desc: 'When a disciple slays a foe, the nearest enemy [Burns] for [20] per second for 4 s.',
+    effects: [{ id: 'ember_lotus', desc: 'Kills spread fire.', trigger: { on: 'kill' }, scope: 'team', actions: [{ do: 'status', target: 'nearestEnemy', status: 'burn', scale: { base: 20 }, duration: 4 }] }],
+    keywords: ['Burn'],
+  },
+  {
+    id: 'glacier_heart_sutra',
+    name: 'Glacier Heart Sutra',
+    rarity: 'rare',
+    icon: 'covenant_ice',
+    research: 'five_phases',
+    desc: "A disciple's [Crit] also applies [6 Frost].",
+    effects: [{ id: 'glacier_heart', desc: 'Crits freeze.', trigger: { on: 'crit' }, scope: 'team', actions: [{ do: 'status', target: 'triggerTarget', status: 'frost', stacks: 6 }] }],
+    keywords: ['Crit', 'Frost'],
+  },
+  {
+    id: 'five_phases_cycle',
+    name: 'Cycle of the Five Phases',
+    rarity: 'epic',
+    icon: 'prism',
+    research: 'five_phases',
+    desc: 'Every 5 s, each disciple applies [2 Poison] to their target and gains [5 Qi].',
+    effects: [{ id: 'five_phases', desc: 'Poison and Qi every 5 s.', trigger: { on: 'interval', every: 5, after: 1 }, scope: 'team', actions: [{ do: 'status', target: 'target', status: 'poison', stacks: 2 }, { do: 'qi', target: 'self', amount: 5 }] }],
+    keywords: ['Poison', 'Qi'],
+  },
+  // Treatises of the Iron Body
+  { id: 'copper_bell_mantra', name: 'Copper Bell Mantra', rarity: 'common', icon: 'guardian', research: 'iron_body', desc: 'Front-row disciples gain [12 Defense].', teamStats: { row: 'front', stats: { defense: 12 } } },
+  {
+    id: 'turtle_breath',
+    name: 'Turtle Breath Technique',
+    rarity: 'rare',
+    icon: 'mountain',
+    research: 'iron_body',
+    desc: 'Once per fight, a disciple below [50% HP] gains a [Qi Shield] of [15% Max HP].',
+    effects: [{ id: 'turtle_breath', desc: 'Shield when wounded.', trigger: { on: 'hpBelow', pct: 50 }, once: true, scope: 'team', actions: [{ do: 'shield', target: 'self', scale: { maxHp: 0.15 }, duration: 6 }] }],
+    keywords: ['Shield'],
+  },
+  { id: 'diamond_body_scripture', name: 'Diamond Body Scripture', rarity: 'epic', icon: 'jade_body', research: 'iron_body', desc: 'All disciples gain [10% Max HP] and [6 Defense].', teamStats: { statsPct: { hp: 10 }, stats: { defense: 6 } } },
+  // Ledgers of the Wandering Merchant
+  { id: 'abacus_of_plenty', name: 'Abacus of Plenty', rarity: 'common', icon: 'ledger', research: 'merchant', desc: 'Earn [+2 Spirit Stones] after every combat.', run: { stonesPerFight: 2 } },
+  { id: 'merchant_writ', name: "Wandering Merchant's Writ", rarity: 'rare', icon: 'merchant', research: 'merchant', desc: 'The shop offers [+1 Treasure], and rerolls cost [1] less (minimum 1).', run: { shopItems: 1, rerollDiscount: 1 } },
+  {
+    id: 'golden_toad',
+    name: 'Golden Toad Charm',
+    rarity: 'epic',
+    icon: 'vessel',
+    research: 'merchant',
+    desc: "Each disciple's first kill in a fight pays [+2 Spirit Stones].",
+    effects: [{ id: 'golden_toad', desc: 'First kill pays.', trigger: { on: 'kill' }, once: true, scope: 'team', actions: [{ do: 'stones', amount: 2 }] }],
+  },
 ];
 
 export const RELIC_BY_ID: Record<string, RelicDef> = Object.fromEntries(RELICS.map((r) => [r.id, r]));
-export const SHOP_RELICS = RELICS.filter((r) => !r.teamSize);
+/** Dao Insights the shop and rewards may offer from the start (researched ones join through the run's sect setup). */
+export const SHOP_RELICS = RELICS.filter((r) => !r.teamSize && !r.research);
+/** Dao Insights locked behind a Scripture Pavilion study. */
+export const RESEARCH_RELICS = RELICS.filter((r) => r.research);
 export const TEAM_SIZE_RELICS = RELICS.filter((r) => r.teamSize);

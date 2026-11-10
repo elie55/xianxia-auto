@@ -6,7 +6,8 @@ import { generateEncounter, type Encounter } from '@/core/encounters';
 import type { BattleConfig, BattleResult } from '@/battle/sim/battle';
 import { HEROES, HERO_BY_ID } from '@/content/heroes';
 import { ITEM_BY_ID, SHOP_ITEMS } from '@/content/items';
-import { RELIC_BY_ID, SHOP_RELICS, TEAM_SIZE_RELICS } from '@/content/relics';
+import { RELIC_BY_ID, RESEARCH_RELICS, SHOP_RELICS, TEAM_SIZE_RELICS } from '@/content/relics';
+import { heirloomItemId } from '@/content/heirlooms';
 import { ENEMY_BY_ID } from '@/content/enemies';
 import { EVENT_BY_ID, RANDOM_EVENTS } from '@/content/events';
 import { BLESSINGS, DIFFICULTIES } from '@/content/difficulties';
@@ -188,6 +189,20 @@ export interface RunState {
   metaPaid?: boolean;
   /** What the run paid, for the run-end rewards view. */
   payout?: RunPayout;
+  /** What the sect brought to this run: Scripture Pavilion seals and studies, the heirloom carried (src/meta/sect.ts). */
+  sect?: RunSect;
+  /** Event and Sect Rest nodes completed, for the Spirit Herbs the run pays. */
+  nodes?: { events: number; rests: number };
+}
+
+/** The sect's part in a run, fixed when it starts. */
+export interface RunSect {
+  /** Treasures and Dao Insights never offered this run. */
+  seals: string[];
+  /** Scripture Pavilion studies done: their Dao Insights may be offered. */
+  research: string[];
+  /** The heirloom Treasure carried, if any. */
+  heirloom?: { id: string; level: number };
 }
 
 /** The Sect Renown a finished run paid (src/meta/runtime.ts finishRunMeta). */
@@ -197,6 +212,12 @@ export interface RunPayout {
   total: number;
   lines: { key: string; label: string; count?: number; xp: number; icon: string }[];
   achievements: string[];
+  /** Sect Funds and materials paid (src/meta/sect.ts). */
+  purse?: { funds: number; herbs: number; cores: number; jade: number };
+  /** Bounty Board bounties this run met. */
+  bounties?: string[];
+  /** The carried heirloom grew a level with this victory. */
+  heirloomUp?: { id: string; level: number };
 }
 
 export const CHALLENGES: ChallengeOffer[] = [
@@ -232,6 +253,21 @@ export function difficultyMods(s: RunState) {
     if (m.bossExtraAbility) mods.bossExtraAbility = true;
   }
   return mods;
+}
+
+/** Treasures this run may offer (shop, events, rewards): everything sellable but what the sect has sealed. */
+export function itemPool(s: RunState): ItemDef[] {
+  const sealed = new Set(s.sect?.seals ?? []);
+  const pool = SHOP_ITEMS.filter((i) => !sealed.has(i.id));
+  return pool.length ? pool : SHOP_ITEMS;
+}
+
+/** Dao Insights this run may offer: the base ones and those the sect has researched, minus the sealed ones. */
+export function relicPool(s: RunState): RelicDef[] {
+  const sealed = new Set(s.sect?.seals ?? []);
+  const studied = new Set(s.sect?.research ?? []);
+  const pool = [...SHOP_RELICS, ...RESEARCH_RELICS.filter((r) => studied.has(r.research!))].filter((r) => !sealed.has(r.id));
+  return pool.length ? pool : SHOP_RELICS;
 }
 
 export function relicDefs(s: RunState): RelicDef[] {
@@ -280,7 +316,7 @@ export function makeTimeline(realm: number): NodeDef[] {
 
 // ───────────────────────── run creation & draft ─────────────────────────
 
-export function newRun(tier: number, seed: number): RunState {
+export function newRun(tier: number, seed: number, sect?: RunSect): RunState {
   const rng = new Rng(seed);
   const s: RunState = {
     version: 1,
@@ -328,7 +364,11 @@ export function newRun(tier: number, seed: number): RunState {
     log: [],
     heroTotals: {},
     history: [],
+    sect,
+    nodes: { events: 0, rests: 0 },
   };
+  // the heirloom the sect sends along starts in the inventory
+  if (sect?.heirloom) s.inventory.push(heirloomItemId(sect.heirloom.id, sect.heirloom.level));
   rollDraft(s, rng);
   commit(s, rng);
   return s;
@@ -752,8 +792,9 @@ export function rollShop(s: RunState, keepFrozen = false): void {
       continue;
     }
     const rarity = rng.weighted(['common', 'rare', 'epic'] as Rarity[], [rw.common, rw.rare, rw.epic]);
-    const pool = SHOP_ITEMS.filter((it) => it.rarity === rarity);
-    const it = rng.pick(pool);
+    const offered = itemPool(s);
+    const ofRarity = offered.filter((it) => it.rarity === rarity);
+    const it = rng.pick(ofRarity.length ? ofRarity : offered);
     const sale = rng.chance(15);
     items.push({ key: `si${s.stats.fights}-${i}-${rng.int(0, 9999)}`, itemId: it.id, price: price(s, it.price ?? ITEM_PRICE_BY_RARITY[it.rarity], sale), sale });
   }
@@ -765,8 +806,9 @@ export function rollShop(s: RunState, keepFrozen = false): void {
       continue;
     }
     const rarity = rng.weighted(['common', 'rare', 'epic'] as Rarity[], [rw.common, rw.rare, rw.epic * 0.8]);
-    let pool = SHOP_RELICS.filter((r) => r.rarity === rarity && !owned.has(r.id));
-    if (pool.length === 0) pool = SHOP_RELICS.filter((r) => !owned.has(r.id));
+    const offered = relicPool(s);
+    let pool = offered.filter((r) => r.rarity === rarity && !owned.has(r.id));
+    if (pool.length === 0) pool = offered.filter((r) => !owned.has(r.id));
     if (pool.length === 0) {
       relicOffers.push(null);
       continue;
@@ -975,13 +1017,15 @@ export function eventContext(s: RunState) {
     rankUpHero: (uid: string) => void rankUpHero(s, uid),
     heroes: s.roster.map((h) => ({ uid: h.uid, name: HERO_BY_ID[h.defId].name, rank: h.rank, classes: heroClasses(h) })),
     rollItems: (count: number, rarity?: Rarity) => {
-      const pool = SHOP_ITEMS.filter((i) => !rarity || i.rarity === rarity);
-      return rng.pickN(pool.length ? pool : SHOP_ITEMS, count);
+      const offered = itemPool(s);
+      const pool = offered.filter((i) => !rarity || i.rarity === rarity);
+      return rng.pickN(pool.length ? pool : offered, count);
     },
     rollRelics: (count: number, rarity?: Rarity) => {
       const owned = new Set(s.relics.map((r) => r.id));
-      let pool = SHOP_RELICS.filter((r) => !owned.has(r.id) && (!rarity || r.rarity === rarity));
-      if (pool.length < count) pool = SHOP_RELICS.filter((r) => !owned.has(r.id));
+      const offered = relicPool(s);
+      let pool = offered.filter((r) => !owned.has(r.id) && (!rarity || r.rarity === rarity));
+      if (pool.length < count) pool = offered.filter((r) => !owned.has(r.id));
       return rng.pickN(pool, count);
     },
   };
@@ -1049,6 +1093,13 @@ export function finishEvent(s: RunState): void {
   if (s.nodeIndex === 0 && s.stats.fights === 0 && !s.currentEncounter) {
     enterNode(s);
     return;
+  }
+  // an event or a Sect Rest is done (the Spirit Herbs the run pays count them)
+  const kind = currentNode(s)?.kind;
+  if (kind === 'event' || kind === 'rest') {
+    const n = (s.nodes ??= { events: 0, rests: 0 });
+    if (kind === 'rest') n.rests++;
+    else n.events++;
   }
   advanceNode(s);
 }
@@ -1287,8 +1338,9 @@ export function proceedFromResult(s: RunState): void {
   // trial item reward
   if (wasSingle && s.fightReward && !s.fightReward.actions) {
     const rng = rngOf(s);
-    const pool = SHOP_ITEMS.filter((i) => i.rarity === 'rare');
-    s.pendingPick = { kind: 'item', items: rng.pickN(pool, 3), count: 1, title: 'Trial Reward: choose a Treasure' };
+    const offered = itemPool(s);
+    const pool = offered.filter((i) => i.rarity === 'rare');
+    s.pendingPick = { kind: 'item', items: rng.pickN(pool.length >= 3 ? pool : offered, 3), count: 1, title: 'Trial Reward: choose a Treasure' };
     commit(s, rng);
   }
   s.fightReward = null;
@@ -1312,12 +1364,14 @@ export function afterResultContinue(s: RunState): void {
     const rng = rngOf(s);
     const owned = new Set(s.relics.map((r) => r.id));
     if (s.activeChallenge?.id === 'improvidence') {
-      const pool = SHOP_ITEMS.filter((i) => i.rarity === 'epic');
-      s.pendingPick = { kind: 'item', items: rng.pickN(pool, 3), count: 1, title: 'Challenge Reward: choose a Treasure' };
+      const offered = itemPool(s);
+      const pool = offered.filter((i) => i.rarity === 'epic');
+      s.pendingPick = { kind: 'item', items: rng.pickN(pool.length >= 3 ? pool : offered, 3), count: 1, title: 'Challenge Reward: choose a Treasure' };
     } else {
       const rarity: Rarity = s.activeChallenge?.id === 'storm' ? 'rare' : 'epic';
-      let pool = SHOP_RELICS.filter((r) => r.rarity === rarity && !owned.has(r.id));
-      if (pool.length < 3) pool = SHOP_RELICS.filter((r) => !owned.has(r.id));
+      const offered = relicPool(s);
+      let pool = offered.filter((r) => r.rarity === rarity && !owned.has(r.id));
+      if (pool.length < 3) pool = offered.filter((r) => !owned.has(r.id));
       s.pendingReward = rng.pickN(pool, 3);
     }
     commit(s, rng);

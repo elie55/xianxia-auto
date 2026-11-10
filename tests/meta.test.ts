@@ -290,6 +290,8 @@ describe('Run events from a played run', () => {
       expect(clears).toBe((s.history ?? []).filter((h) => h.won && h.kind === 'boss').length);
       const pay = computeRunRenown(s);
       expect(pay.total).toBeGreaterThan(0);
+      // event and Sect Rest nodes are counted for the Spirit Herbs the sect gets
+      expect((s.nodes?.events ?? 0) + (s.nodes?.rests ?? 0)).toBeGreaterThan(0);
       expect(pay.total).toBe(pay.lines.reduce((a, l) => a + l.xp, 0));
       // every achievement an event earns is a real one
       for (const e of events) for (const id of earnedBy(e, baseMeta())) expect(ACH_BY_ID[id]).toBeTruthy();

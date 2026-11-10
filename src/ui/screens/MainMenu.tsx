@@ -4,6 +4,7 @@ import { audio } from '@/audio/AudioManager';
 import { useEffect, useRef } from 'preact/hooks';
 import { isDesktop, quitGame } from '@/app/desktop';
 import { SectPlate } from '@/ui/components/MetaBits';
+import { isOpen, sectHasNews } from '@/meta/sect';
 import { ladderFloorOf } from '@/core/run';
 
 
@@ -53,7 +54,7 @@ export function MainMenu() {
     screen.value = 'run';
     audio.sfx('ui_confirm');
   };
-  const go = (to: 'newRun' | 'compendium' | 'settings' | 'credits' | 'renown', sfx = 'ui_click') => {
+  const go = (to: 'newRun' | 'compendium' | 'settings' | 'credits' | 'renown' | 'sect', sfx = 'ui_click') => {
     audio.sfx(sfx);
     screen.value = to;
   };
@@ -115,6 +116,12 @@ export function MainMenu() {
           </button>
         </div>
         <div class="menu-secondary stagger">
+          {isOpen('hall', m.renown?.xp ?? 0) && (
+            <button class="btn small menu-sect-btn" onClick={() => go('sect')}>
+              <span class="btn-glyph">宗</span> The Sect
+              {sectHasNews(m) && <i class="menu-news-dot" aria-label="Something can be built" />}
+            </button>
+          )}
           <button class="btn small" onClick={() => go('compendium')}>
             <span class="btn-glyph">典</span> Compendium
           </button>

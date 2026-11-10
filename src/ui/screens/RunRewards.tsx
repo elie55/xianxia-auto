@@ -10,6 +10,8 @@ import { AchievementMedal, Avatar, CosmeticPreview, RenownBar, cosmeticLine } fr
 import { CountUp } from '@/ui/components/Triumph';
 import { Icon } from '@/ui/components/Icon';
 import { audio } from '@/audio/AudioManager';
+import { BOUNTY_BY_ID, CURRENCIES } from '@/meta/sect';
+import { HEIRLOOM_RECIPES } from '@/content/heirlooms';
 
 /**
  * Sect Rewards, the second step of the run-end screen: what the run paid in Renown, line by line, then the Renown bar
@@ -122,6 +124,7 @@ export function RunRewards({ payout }: { payout: RunPayout }) {
               })}
             </div>
           )}
+          {payout.purse && <SectShare payout={payout} />}
           {payout.achievements.length > 0 && (
             <div class="rr-achs">
               <div class="rr-sub">Achievements this run</div>
@@ -147,6 +150,56 @@ export function RunRewards({ payout }: { payout: RunPayout }) {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+const ROMAN = ['', 'I', 'II', 'III'];
+const fmtCost = (c: Partial<Record<string, number>>) =>
+  CURRENCIES.filter((x) => c[x.key])
+    .map((x) => `+${c[x.key]} ${x.name}`)
+    .join(', ');
+
+/** The sect's share of a run: Funds and materials, the bounties it met and the heirloom that grew. */
+function SectShare({ payout }: { payout: RunPayout }) {
+  const purse = payout.purse!;
+  const any = CURRENCIES.some((c) => purse[c.key] > 0);
+  const up = payout.heirloomUp;
+  const upName = up ? HEIRLOOM_RECIPES.find((r) => r.id === up.id)?.name : '';
+  return (
+    <div class="rr-sect">
+      <div class="rr-sub">For the sect</div>
+      <div class="rr-purse">
+        {CURRENCIES.map((c) => (
+          <span key={c.key} class={`rr-coin ${purse[c.key] > 0 ? '' : 'none'}`} title={c.name}>
+            <Icon name={c.icon} size={30} />
+            <b>+{purse[c.key]}</b>
+            <span class="rr-coin-name">{c.name}</span>
+          </span>
+        ))}
+      </div>
+      {!any && <p class="rr-empty">Spirit Stones earned, events, elites and guardians pay the sect.</p>}
+      {(payout.bounties ?? []).map((id) => {
+        const b = BOUNTY_BY_ID[id];
+        if (!b) return null;
+        return (
+          <div key={id} class="rr-ach bounty">
+            <span class="rr-bounty-seal brush">榜</span>
+            <span class="rr-ach-name">
+              Bounty met: <b>{b.name}</b>
+            </span>
+            <span class="rr-ach-xp new">{fmtCost(b.reward)}</span>
+          </div>
+        );
+      })}
+      {up && (
+        <div class="rr-ach heirloom">
+          <Icon name={`item_${HEIRLOOM_RECIPES.find((r) => r.id === up.id)?.icon ?? 'pouch'}`} size={40} />
+          <span class="rr-ach-name">
+            {upName} grew to <b>level {ROMAN[up.level]}</b>
+          </span>
+        </div>
+      )}
     </div>
   );
 }

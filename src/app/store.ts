@@ -1,7 +1,7 @@
 import { computed, signal } from '@preact/signals';
 import type { RunState } from '@/core/run';
 
-export type Screen = 'menu' | 'newRun' | 'run' | 'settings' | 'compendium' | 'credits' | 'renown';
+export type Screen = 'menu' | 'newRun' | 'run' | 'settings' | 'compendium' | 'credits' | 'renown' | 'sect';
 
 /** The player's sect as shown on the menu and the Renown screen (docs/META_PROGRESSION.md). */
 export interface MetaProfile {
@@ -82,6 +82,16 @@ export interface MetaSave {
   /** Achievement id → unlock time (ms). */
   achievements?: Record<string, number>;
   lifetime?: LifetimeStats;
+  /** The Sect (src/meta/sect.ts, read through sectOf): Funds and materials, building levels, studies, seals, heirlooms, bounties. */
+  sect?: {
+    purse?: { funds: number; herbs: number; cores: number; jade: number };
+    buildings?: { pavilion: number; forge: number };
+    research?: string[];
+    seals?: string[];
+    heirlooms?: { id: string; level: number }[];
+    bounties?: { active?: string[]; done?: string[] };
+    carry?: string;
+  };
 }
 
 const META_KEY = 'nine-heavens:meta';

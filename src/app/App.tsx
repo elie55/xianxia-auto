@@ -13,6 +13,7 @@ import { TutorialLayer, useTutorialDriver } from '@/ui/tutorial/Tutorial';
 import { LoadingVeil } from '@/ui/components/LoadingVeil';
 import { AchievementToast } from '@/ui/components/AchievementToast';
 import { RenownScreen } from '@/ui/screens/Renown';
+import { SectScreen } from '@/ui/screens/Sect';
 
 export function App() {
   const scr = screen.value;
@@ -30,6 +31,7 @@ export function App() {
         {scr === 'credits' && <Credits />}
         {scr === 'compendium' && <Compendium />}
         {scr === 'renown' && <RenownScreen />}
+        {scr === 'sect' && <SectScreen />}
       </ScreenGuard>
       {t && (
         <div key={t.id} class={`toast ${t.kind}`}>

@@ -1,4 +1,5 @@
 import type { ItemDef } from '@/core/types';
+import { HEIRLOOM_ITEMS } from './heirlooms';
 
 /** Treasures (法宝). 3 slots per disciple. */
 export const ITEMS: ItemDef[] = [
@@ -289,6 +290,7 @@ export const ITEMS: ItemDef[] = [
   },
 ];
 
-export const ITEM_BY_ID: Record<string, ItemDef> = Object.fromEntries(ITEMS.map((i) => [i.id, i]));
+/** Every Treasure by id, heirlooms included (they live outside ITEMS: never offered, never in the Compendium count). */
+export const ITEM_BY_ID: Record<string, ItemDef> = Object.fromEntries([...ITEMS, ...HEIRLOOM_ITEMS].map((i) => [i.id, i]));
 export const SHOP_ITEMS = ITEMS.filter((i) => i.rarity !== 'unique');
 export const UNIQUE_ITEMS = ITEMS.filter((i) => i.rarity === 'unique');

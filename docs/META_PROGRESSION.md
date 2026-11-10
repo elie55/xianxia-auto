@@ -15,7 +15,17 @@ unlock, the Ladder leaderboard, run counters and the Compendium's discovery list
   achievements, profile and records).
 - Ladder records shown as real floors.
 
-Phases 2–5 are not started.
+**Phase 2 is built too** (section 13, step 2):
+- Every run pays Sect Funds and three materials (`computeRunPurse` in `src/meta/sect.ts`).
+- The Sect screen (`src/ui/screens/Sect.tsx`) has the Main Hall, the Scripture Pavilion, the Artifact Forge and the
+  Bounty Board.
+  - Pavilion: 3 studies of 3 new Dao Insights, and seals.
+  - Forge: 4 heirloom recipes with 3 levels each, carried from the New Run screen.
+  - Bounty Board: 12 bounties, checked when a run ends.
+- Phase 2 reuses existing art: the old key art for the sect and existing painted icons for the new Insights and
+  heirlooms. Dedicated art can come later.
+
+Phases 3–5 are not started.
 
 ---
 
@@ -48,7 +58,7 @@ One story (you are the Sect Master), one hub, one level, and a small set of curr
 
 | Decision | Recommended default | Why |
 | --- | --- | --- |
-| Do sect upgrades make runs easier? | Options first. Power is capped at about one contract tier, and a **Pure run** toggle switches all sect bonuses off. | Contracts stay the difficulty dial. Veterans can still prove themselves. |
+| Do sect upgrades make runs easier? | **Decided (2026-11-10):** options first, plus a small helping hand capped at about one contract tier. The help is economic (Spirit Stones, rerolls, Time Reversal, one heirloom), not raw stats, and it is front-loaded. A **Pure run** toggle switches all sect bonuses off. | Contracts stay the difficulty dial. Struggling players get a little help. Veterans can still prove themselves. |
 | Steam only, or cross-save with Android? | Steam only for launch. Keep the save as one JSON file so a cloud service can be added for Android later. | Steam Cloud covers PC with no server. |
 | How long is the meta? | 60–80 runs, about 50 hours, to finish. | Long enough to matter, short enough to finish. |
 
@@ -384,13 +394,18 @@ New hooks are needed for:
 
 ## 10. Balance
 
-- **Power budget:**
-  - Spirit Vein, doctrines and heirlooms together are worth about one contract tier, about +12% team strength.
+- **Power budget (decided 2026-11-10):**
+  - Spirit Vein, doctrines and heirlooms together are worth about one contract tier, about +12% team strength
+    (roughly Foundation's "+20% enemy HP" in reverse).
+  - The help is economic, not stats: a few extra starting Spirit Stones, a free first reroll per shop, a cheaper
+    Time Reversal, one heirloom Treasure. It smooths bad luck without changing fight maths.
+  - It is front-loaded: the first Spirit Vein points are the help, later ones are sidegrades (pick one of two).
   - Contracts stay the difficulty dial.
   - Renown levels never add raw stats.
 - **Pure runs:**
   - the toggle switches off the Spirit Vein, doctrines and heirlooms
   - unlocked pool content stays, because it adds options, not power
+  - a Pure run pays +20% Renown, so purists are not penalised
   - the Ladder records the flag, and Steam gets two Ladder leaderboards: Pure and Sect
 - **Pool dilution:** every new Treasure or Insight makes a specific build harder to find. Seals in the Scripture
   Pavilion are the answer, and a reason to visit it.

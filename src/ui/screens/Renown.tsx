@@ -6,6 +6,7 @@ import { BANNERS, FRAMES, FOE_AVATARS, HERO_AVATARS, KIND_LABEL, RENOWN_TRACK, S
 import { defaultLifetime, defaultProfile } from '@/meta/migrate';
 import { cumulativeXp, levelOf, rankOf, SECT_RANKS, MAX_RENOWN } from '@/meta/renown';
 import { howToUnlock, unlockedCosmetics } from '@/meta/unlocks';
+import { BUILDINGS, SECT_OPENS } from '@/meta/sect';
 import { AchievementMedal, Avatar, CosmeticPreview, RenownBar, SectPlate } from '@/ui/components/MetaBits';
 import { Icon } from '@/ui/components/Icon';
 import { tip } from '@/ui/components/Tooltip';
@@ -130,6 +131,11 @@ function TrackTab() {
               </span>
               <span class="track-name">{c?.name}</span>
               <span class="track-kind">{newRank ? newRank.name : KIND_LABEL[r.kind]}</span>
+              {(r.level === SECT_OPENS || BUILDINGS.some((b) => b.unlock === r.level && b.unlock !== SECT_OPENS)) && (
+                <span class="track-unlock">
+                  Opens {r.level === SECT_OPENS ? 'the Sect' : `the ${BUILDINGS.find((b) => b.unlock === r.level)!.name}`}
+                </span>
+              )}
               {state === 'locked' && <Icon name="ui_lock" size={14} class="track-lock" />}
             </div>
           );

@@ -932,3 +932,573 @@
 .kind-title .picker-item.locked {
   padding-right: 26px;
 }
+
+/* ───────── THE SECT (phase 2): the mountain sect, its buildings and their panels ───────── */
+.sect-screen {
+  overflow: hidden;
+}
+.sect-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(5, 10, 11, 0.55) 0%, rgba(5, 10, 11, 0.08) 22%, rgba(5, 10, 11, 0.12) 70%, rgba(5, 10, 11, 0.7) 100%), url('/assets/art/bg/menu_keyart.jpg') center / cover no-repeat;
+}
+.sect-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  z-index: 3;
+}
+.sect-header .sect-back {
+  justify-self: start;
+}
+.purse-bar {
+  justify-self: end;
+  display: flex;
+  gap: 8px;
+}
+.purse-coin {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 14px 0 8px;
+  border-radius: 21px;
+  font-size: calc(17px * var(--ts, 1));
+  color: var(--paper);
+  background: linear-gradient(180deg, rgba(14, 28, 30, 0.92), rgba(5, 10, 11, 0.94));
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 75, 0.45), 0 6px 14px rgba(0, 0, 0, 0.45);
+}
+.purse-coin b {
+  font-family: var(--font-display);
+  color: var(--gold-bright);
+}
+.sect-map {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.sect-building {
+  position: absolute;
+  translate: -50% -50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+  font: inherit;
+  color: inherit;
+  transition: transform var(--dur-fast) var(--ease-out), filter var(--dur-fast);
+}
+.sect-building:hover:not(.locked) {
+  transform: translateY(-4px);
+}
+.sect-building.locked {
+  cursor: default;
+  filter: grayscale(0.85) brightness(0.7);
+}
+.sect-medal {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, rgba(63, 191, 159, 0.28), rgba(5, 10, 11, 0.94) 72%);
+  box-shadow: 0 0 0 2px rgba(243, 207, 120, 0.9), 0 0 0 7px rgba(5, 10, 11, 0.85), 0 0 0 8px rgba(212, 168, 75, 0.5), 0 0 34px rgba(243, 207, 120, 0.3), 0 14px 30px rgba(0, 0, 0, 0.6);
+  transition: box-shadow var(--dur-fast);
+}
+.sect-building:hover:not(.locked) .sect-medal,
+.sect-building.on .sect-medal {
+  box-shadow: 0 0 0 2px #fff1c2, 0 0 0 7px rgba(5, 10, 11, 0.85), 0 0 0 8px #f3cf78, 0 0 48px rgba(243, 207, 120, 0.55), 0 14px 30px rgba(0, 0, 0, 0.6);
+}
+.sect-medal.small {
+  width: 88px;
+  height: 88px;
+  flex: none;
+}
+.sect-lock {
+  position: absolute;
+  color: var(--paper);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.8));
+}
+.sect-dot {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff1c2, #f3cf78 45%, #b07a22);
+  box-shadow: 0 0 0 2px rgba(5, 10, 11, 0.9), 0 0 14px rgba(243, 207, 120, 0.9);
+  animation: news-pulse 1.6s ease-in-out infinite;
+}
+@keyframes news-pulse {
+  50% {
+    scale: 1.2;
+  }
+}
+.sect-plaque {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px 6px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  font-size: calc(16px * var(--ts, 1));
+  letter-spacing: 0.08em;
+  color: var(--paper);
+  background: linear-gradient(180deg, rgba(14, 28, 30, 0.94), rgba(5, 10, 11, 0.95));
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 75, 0.55), 0 8px 18px rgba(0, 0, 0, 0.55);
+}
+.sect-plaque-hanzi {
+  font-size: 24px;
+  line-height: 1;
+  color: var(--gold-bright);
+}
+.sect-level {
+  font-family: var(--font-display);
+  font-size: calc(14px * var(--ts, 1));
+  color: var(--jade-bright);
+}
+.sect-drawer {
+  position: absolute;
+  right: 40px;
+  top: 104px;
+  bottom: 28px;
+  z-index: 4;
+  width: 640px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(15, 30, 32, 0.97), rgba(5, 10, 11, 0.98));
+  box-shadow: 0 0 0 1px #6d5320, 0 0 0 2px rgba(230, 194, 106, 0.7), 0 0 0 5px rgba(8, 14, 15, 0.92), 0 0 0 6px rgba(212, 168, 75, 0.35), -18px 0 40px rgba(0, 0, 0, 0.55);
+  animation: codex-drawer-in 0.32s var(--ease-out) both;
+  overflow: hidden;
+}
+.sect-drawer-scroll {
+  height: 100%;
+  overflow-y: auto;
+  padding: 24px 28px 28px;
+  animation: fade-in 0.25s ease-out both;
+}
+.sect-head {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-right: 40px;
+}
+.sect-head-name {
+  font-size: calc(26px * var(--ts, 1));
+  letter-spacing: 0.06em;
+  color: var(--paper);
+}
+.sect-head-level {
+  margin-left: 8px;
+  font-size: calc(16px * var(--ts, 1));
+  color: var(--jade-bright);
+}
+.sect-head-desc {
+  margin: 4px 0 0;
+  font-size: calc(15px * var(--ts, 1));
+  line-height: 1.45;
+  color: var(--paper-dim);
+}
+.sect-level-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 75, 0.2);
+}
+.sect-level-row .btn {
+  margin-left: auto;
+}
+.sect-level-pips {
+  display: flex;
+  gap: 6px;
+}
+.sect-level-pips i {
+  width: 12px;
+  height: 12px;
+  rotate: 45deg;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+.sect-level-pips i.open {
+  box-shadow: inset 0 0 0 1px rgba(243, 207, 120, 0.7);
+}
+.sect-level-pips i.lit {
+  background: linear-gradient(135deg, #fff1c2, #f3cf78 50%, #a7741f);
+  box-shadow: 0 0 8px rgba(243, 207, 120, 0.7);
+}
+.sect-note {
+  margin: 6px 0 0;
+  font-size: calc(14px * var(--ts, 1));
+  line-height: 1.45;
+  color: var(--paper-faint);
+}
+.sect-cost {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: calc(15px * var(--ts, 1));
+  font-weight: 700;
+  color: var(--paper);
+}
+.sect-cost > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.sect-cost > span.short {
+  color: var(--vermilion-bright);
+}
+.sect-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+.sect-card {
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(20, 38, 40, 0.92), rgba(7, 14, 15, 0.94));
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 75, 0.25);
+}
+.sect-card.done {
+  background: linear-gradient(180deg, rgba(30, 64, 58, 0.92), rgba(7, 15, 16, 0.95));
+  box-shadow: inset 0 0 0 1px rgba(111, 227, 196, 0.45);
+}
+.sect-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sect-card-name {
+  font-size: calc(16px * var(--ts, 1));
+  letter-spacing: 0.06em;
+  color: var(--paper);
+}
+.sect-badge {
+  margin-left: auto;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: calc(14px * var(--ts, 1));
+  font-weight: 700;
+  color: var(--jade-bright);
+  background: rgba(63, 191, 159, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(111, 227, 196, 0.4);
+}
+.sect-badge.faint {
+  color: var(--paper-faint);
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+.sect-card-blurb,
+.sect-card-effect {
+  margin: 6px 0 0;
+  font-size: calc(14px * var(--ts, 1));
+  line-height: 1.45;
+  color: var(--paper-dim);
+}
+.sect-card-effect {
+  color: var(--paper);
+}
+.sect-card-relics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.sect-relic {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 20px;
+  font-size: calc(14px * var(--ts, 1));
+  color: var(--rar);
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rar) 45%, transparent);
+}
+.sect-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+}
+.sect-card-foot .btn {
+  margin-left: auto;
+}
+.sect-card-row {
+  display: flex;
+  gap: 14px;
+}
+.sect-card-text {
+  flex: 1;
+  min-width: 0;
+}
+.sect-item {
+  flex: none;
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--rar) 26%, transparent), rgba(6, 14, 16, 0.9) 72%);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--rar) 70%, transparent), 0 0 18px color-mix(in srgb, var(--rar) 25%, transparent);
+}
+.sect-hall-plate .sect-plate {
+  width: 100%;
+  margin-top: 16px;
+}
+.sect-ranks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.sect-rank {
+  display: grid;
+  grid-template-columns: 32px 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: calc(14px * var(--ts, 1));
+  color: var(--paper-dim);
+  background: rgba(0, 0, 0, 0.28);
+}
+.sect-rank .brush {
+  font-size: 22px;
+  color: var(--paper-faint);
+}
+.sect-rank.past .brush,
+.sect-rank.on .brush {
+  color: var(--gold-bright);
+}
+.sect-rank.on {
+  color: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--gold-bright);
+  background: rgba(212, 168, 75, 0.12);
+}
+.sect-rank-name {
+  font-weight: 700;
+}
+.sect-rank-cap {
+  color: var(--jade-bright);
+}
+.sect-coin-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.seal-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.seal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 6px;
+  border-radius: 20px;
+  font-size: calc(14px * var(--ts, 1));
+  color: #ffd9d2;
+  background: rgba(130, 24, 18, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(255, 107, 90, 0.6);
+}
+.seal-x {
+  color: #ffd9d2;
+}
+.seal-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+.seal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.seal-pick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px 6px 6px;
+  border-radius: 8px;
+  text-align: left;
+  font: inherit;
+  color: var(--paper);
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rar) 35%, transparent);
+}
+.seal-pick:hover {
+  box-shadow: inset 0 0 0 1px var(--rar);
+}
+.seal-pick.on {
+  background: rgba(130, 24, 18, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(255, 107, 90, 0.7);
+}
+.seal-pick-name {
+  font-size: calc(14px * var(--ts, 1));
+  line-height: 1.25;
+}
+.seal-stamp {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  translate: 0 -50%;
+  rotate: -8deg;
+  padding: 0 4px;
+  border-radius: 4px;
+  font-size: 22px;
+  line-height: 1.2;
+  color: #ffe9dc;
+  background: radial-gradient(circle at 34% 28%, #c63a2a, #7d1510 72%);
+}
+.sect-bounty-seal,
+.rr-bounty-seal {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  rotate: -6deg;
+  font-size: 22px;
+  line-height: 1;
+  color: #ffe9dc;
+  background: radial-gradient(circle at 34% 28%, #c63a2a, #7d1510 72%);
+}
+.sect-reward {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: calc(14px * var(--ts, 1));
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--paper-faint);
+}
+.sect-reward > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: calc(15px * var(--ts, 1));
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--jade-bright);
+}
+
+/* New Run: the heirloom carried into the run */
+.heirloom-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.heirloom-pick-label {
+  font-size: calc(14px * var(--ts, 1));
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.heirloom-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 58px;
+  height: 58px;
+  padding: 4px 8px;
+  border-radius: 10px;
+  font-size: calc(14px * var(--ts, 1));
+  font-weight: 700;
+  color: var(--paper-dim);
+  background: rgba(5, 10, 11, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 75, 0.35);
+}
+.heirloom-chip.on {
+  color: var(--paper);
+  background: rgba(36, 98, 82, 0.6);
+  box-shadow: inset 0 0 0 2px var(--jade-bright), 0 0 14px rgba(111, 227, 196, 0.4);
+}
+.heirloom-pips {
+  display: flex;
+  gap: 3px;
+}
+.heirloom-pips i {
+  width: 6px;
+  height: 6px;
+  rotate: 45deg;
+  background: rgba(255, 255, 255, 0.15);
+}
+.heirloom-pips i.lit {
+  background: #f3cf78;
+  box-shadow: 0 0 5px rgba(243, 207, 120, 0.8);
+}
+
+/* main menu: the Sect plaque and its news dot */
+.menu-sect-btn {
+  position: relative;
+}
+.menu-news-dot {
+  position: absolute;
+  right: 18px;
+  top: -4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff1c2, #f3cf78 45%, #b07a22);
+  box-shadow: 0 0 0 2px rgba(5, 10, 11, 0.9), 0 0 12px rgba(243, 207, 120, 0.9);
+  animation: news-pulse 1.6s ease-in-out infinite;
+}
+
+/* Renown track: the buildings a level opens */
+.track-unlock {
+  grid-column: 1 / -1;
+  margin-top: 6px;
+  font-size: calc(14px * var(--ts, 1));
+  font-weight: 700;
+  color: var(--jade-bright);
+}
+
+/* Sect Rewards: the sect's share */
+.rr-sect {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rr-purse {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rr-coin {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px 4px 6px;
+  border-radius: 20px;
+  font-size: calc(15px * var(--ts, 1));
+  background: rgba(0, 0, 0, 0.32);
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 75, 0.3);
+}
+.rr-coin b {
+  color: var(--gold-bright);
+}
+.rr-coin-name {
+  font-size: calc(14px * var(--ts, 1));
+  color: var(--paper-dim);
+}
+.rr-coin.none {
+  opacity: 0.45;
+}

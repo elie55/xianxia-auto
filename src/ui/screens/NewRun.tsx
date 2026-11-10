@@ -7,6 +7,10 @@ import { ladderFloorOf, newRun, resetItemQuests } from '@/core/run';
 import { randomSeed } from '@/core/rng';
 import { Icon } from '@/ui/components/Icon';
 import { tip } from '@/ui/components/Tooltip';
+import { HEIRLOOM_RECIPES, heirloomItemId } from '@/content/heirlooms';
+import { isOpen, runSectFor, sectOf } from '@/meta/sect';
+import { setCarry } from '@/meta/sectActions';
+import { ItemTip } from '@/ui/components/HeroCard';
 import { audio } from '@/audio/AudioManager';
 
 /** Each contract's colour, from the calm jade of the mortal road to the crimson of the Tribulation. */
@@ -25,10 +29,16 @@ export function NewRun() {
   const [tier, setTier] = useState(Math.min(m.unlockedTier, MAX_TIER));
   const [seedText, setSeedText] = useState('');
   const [advanced, setAdvanced] = useState(false);
+  // the heirloom the sect sends along (src/meta/sect.ts): the last one picked, if it still exists
+  const sect = sectOf(m);
+  const forgeOpen = isOpen('forge', m.renown?.xp ?? 0);
+  const owned = forgeOpen ? sect.heirlooms : [];
+  const [carry, setCarryState] = useState(owned.some((h) => h.id === sect.carry) ? sect.carry : '');
   const start = () => {
     const seed = seedText.trim() ? hashSeed(seedText.trim()) : randomSeed();
     resetItemQuests();
-    setRun(newRun(tier, seed));
+    if (carry !== sect.carry) setCarry(carry);
+    setRun(newRun(tier, seed, runSectFor(meta.value, carry)));
     screen.value = 'run';
     audio.sfx('ui_confirm');
   };
@@ -142,6 +152,43 @@ export function NewRun() {
             <div class="seal-sub">
               {active.length === 0 ? 'No modifiers' : `${active.length} modifier${active.length > 1 ? 's' : ''}`} <span class="faint">·</span> Ladder bonus <b class="gold">+{tier * 2}</b>
             </div>
+            {owned.length > 0 && (
+              <div class="heirloom-pick">
+                <span class="heirloom-pick-label">Heirloom</span>
+                <button
+                  class={`heirloom-chip ${carry === '' ? 'on' : ''}`}
+                  onClick={() => {
+                    audio.sfx('ui_click', { volume: 0.5 });
+                    setCarryState('');
+                  }}
+                  {...tip('Start the run without an heirloom.', 'below')}
+                >
+                  None
+                </button>
+                {owned.map((h) => {
+                  const r = HEIRLOOM_RECIPES.find((x) => x.id === h.id);
+                  if (!r) return null;
+                  return (
+                    <button
+                      key={h.id}
+                      class={`heirloom-chip ${carry === h.id ? 'on' : ''}`}
+                      onClick={() => {
+                        audio.sfx('ui_click', { volume: 0.5 });
+                        setCarryState(h.id);
+                      }}
+                      {...tip(<ItemTip itemId={heirloomItemId(h.id, h.level)} />, 'below')}
+                    >
+                      <Icon name={`item_${r.icon}`} size={30} />
+                      <span class="heirloom-pips">
+                        {[1, 2, 3].map((i) => (
+                          <i key={i} class={i <= h.level ? 'lit' : ''} />
+                        ))}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <div class="seed-adv">
               <button
                 class={`adv-toggle ${advanced ? 'open' : ''}`}

@@ -4,7 +4,8 @@ import { endRun, endlessScore, type RunState } from '@/core/run';
 import { onRunEvent, type RunEvent } from '@/core/runEvents';
 import { ACH_BY_ID, achievementXp, earnedBy } from '@/meta/achievementDefs';
 import { defaultLifetime, migrateMeta } from '@/meta/migrate';
-import { computeRunRenown } from '@/meta/renown';
+import { computeRunRenown, levelOf } from '@/meta/renown';
+import { BOUNTY_BY_ID, SECT_OPENS, addPurse, computeRunPurse, nextHeirloomLevel, refillBounties, sectOf } from '@/meta/sect';
 
 /** Achievements earned but not shown yet: the toast layer shows them one by one. */
 export const achievementToasts = signal<string[]>([]);
@@ -61,6 +62,14 @@ function onEvent(e: RunEvent): void {
 export function installMeta(): void {
   updateMeta((m) => {
     migrateMeta(m);
+    // an open Sect always shows three bounties
+    if (levelOf(m.renown?.xp ?? 0).level >= SECT_OPENS) {
+      const sect = sectOf(m);
+      if (sect.bounties.active.length < 3) {
+        sect.bounties = refillBounties(sect.bounties.active, sect.bounties.done);
+        m.sect = sect;
+      }
+    }
   });
   onRunEvent(onEvent);
   // facts of the live run (Spirit Stones held, a Nascent Soul disciple)
@@ -88,6 +97,14 @@ export function finishRunMeta(s: RunState): void {
   const before = meta.peek().renown?.xp ?? 0;
   const won = !!s.victory;
   const totals = Object.values(s.heroTotals ?? {});
+  // the sect's share: Funds and materials, the bounties met (only those already on the board), the heirloom's growth
+  const purse = computeRunPurse(s);
+  const sect0 = sectOf(meta.peek());
+  const boardOpen = levelOf(before).level >= SECT_OPENS;
+  const met = boardOpen ? sect0.bounties.active.filter((id) => BOUNTY_BY_ID[id]?.met(s)) : [];
+  const carried = s.sect?.heirloom;
+  const owned = carried && sect0.heirlooms.find((h) => h.id === carried.id);
+  const heirloomUp = won && owned && owned.level < nextHeirloomLevel(owned.level) ? { id: owned.id, level: nextHeirloomLevel(owned.level) } : undefined;
   updateMeta((m) => {
     m.runsPlayed++;
     if (won) m.runsWon++;
@@ -111,8 +128,15 @@ export function finishRunMeta(s: RunState): void {
       m.leaderboard = m.leaderboard.slice(0, 20);
     }
     m.renown = { xp: before + pay.total };
+    const sect = sectOf(m);
+    sect.purse = addPurse(sect.purse, purse);
+    for (const id of met) sect.purse = addPurse(sect.purse, BOUNTY_BY_ID[id].reward);
+    if (heirloomUp) sect.heirlooms = sect.heirlooms.map((h) => (h.id === heirloomUp.id ? { ...h, level: heirloomUp.level } : h));
+    // the board fills once the Sect is open (new bounties wait for the next run)
+    if (levelOf(m.renown.xp).level >= SECT_OPENS) sect.bounties = refillBounties(sect.bounties.active.filter((id) => !met.includes(id)), [...sect.bounties.done, ...met]);
+    m.sect = sect;
   });
-  s.payout = { xpBefore: before, xpAfter: before + pay.total, total: pay.total, lines: pay.lines, achievements: earned.slice() };
+  s.payout = { xpBefore: before, xpAfter: before + pay.total, total: pay.total, lines: pay.lines, achievements: earned.slice(), purse, bounties: met, heirloomUp };
 }
 
 /** Ends the run (victory or defeat) and pays it: every run-ending button goes through here. */

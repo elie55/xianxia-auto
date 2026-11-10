@@ -1,0 +1,255 @@
+import type { MetaSave } from '@/app/store';
+import type { RunSect, RunState } from '@/core/run';
+import { RESEARCH_RELICS } from '@/content/relics';
+import { HEIRLOOM_MAX_LEVEL, HEIRLOOM_RECIPES } from '@/content/heirlooms';
+import { contractMultiplier, levelOf, rankOf } from '@/meta/renown';
+
+/**
+ * The Sect (docs/META_PROGRESSION.md, section 6), phase 2: Sect Funds and three materials paid by every run, the Main
+ * Hall, the Scripture Pavilion (studies and seals), the Artifact Forge (heirlooms) and the Bounty Board. Pure data and
+ * rules, so they are unit tested; src/meta/sectActions.ts applies them to the save.
+ */
+export type MaterialKey = 'herbs' | 'cores' | 'jade';
+export type Purse = { funds: number } & Record<MaterialKey, number>;
+
+export const CURRENCIES: { key: keyof Purse; name: string; icon: string; desc: string }[] = [
+  { key: 'funds', name: 'Sect Funds', icon: 'item_pouch', desc: 'A quarter of the Spirit Stones a run earns. Every building, study and craft costs Funds.' },
+  { key: 'herbs', name: 'Spirit Herbs', icon: 'item_lotus_ice', desc: 'Gathered at events (2) and at the Sect Rest (3). The Scripture Pavilion studies with them.' },
+  { key: 'cores', name: 'Beast Cores', icon: 'item_core', desc: 'Taken from elites (2), challenges and trials (1). The Artifact Forge works them.' },
+  { key: 'jade', name: 'Heavenly Jade', icon: 'item_pendant', desc: 'Left by realm guardians (3, 4 from Nascent Soul up) and Ladder floors (2). High building levels need it.' },
+];
+
+export const emptyPurse = (): Purse => ({ funds: 0, herbs: 0, cores: 0, jade: 0 });
+
+/** What a finished run pays the sect, all × the contract multiplier and rounded down. */
+export function computeRunPurse(s: RunState): Purse {
+  const mult = contractMultiplier(s.tier);
+  const won = (s.history ?? []).filter((h) => h.won);
+  const n = (pred: (h: (typeof won)[number]) => boolean) => won.filter(pred).length;
+  const elites = n((h) => h.kind === 'elite');
+  const trials = n((h) => h.kind === 'challenge' || h.kind === 'single' || h.kind === 'trial');
+  const guardians = n((h) => h.kind === 'boss' && h.realm <= 2);
+  const floors = n((h) => h.kind === 'boss' && h.realm === 3);
+  const events = s.nodes?.events ?? 0;
+  const rests = s.nodes?.rests ?? 0;
+  const jadePerGuardian = s.tier >= 4 ? 4 : 3;
+  return {
+    funds: Math.floor(s.stats.stonesEarned * 0.25 * mult),
+    herbs: Math.floor((events * 2 + rests * 3) * mult),
+    cores: Math.floor((elites * 2 + trials) * mult),
+    jade: Math.floor((guardians * jadePerGuardian + floors * 2) * mult),
+  };
+}
+
+// ───────────────────────── buildings ─────────────────────────
+
+export type BuildingId = 'hall' | 'pavilion' | 'forge' | 'bounty';
+
+export interface BuildingDef {
+  id: BuildingId;
+  name: string;
+  hanzi: string;
+  icon: string;
+  desc: string;
+  /** Renown level that opens it. */
+  unlock: number;
+  /** Material its upgrades use (bought buildings only). */
+  material?: MaterialKey;
+  /** Upgradable with Funds and materials (the Main Hall rises with the sect's rank instead). */
+  upgradable: boolean;
+}
+
+/** The Sect itself (and the Main Hall and Bounty Board) opens at Renown 2. */
+export const SECT_OPENS = 2;
+
+export const BUILDINGS: BuildingDef[] = [
+  { id: 'hall', name: 'Main Hall', hanzi: '殿', icon: 'relic_inner_court', desc: "The sect's seat. It rises with the sect's rank, and the rank caps every other building's level.", unlock: SECT_OPENS, upgradable: false },
+  { id: 'pavilion', name: 'Scripture Pavilion', hanzi: '经', icon: 'relic_library', desc: 'Studies add new Dao Insights to what runs can offer. Seals keep chosen Treasures and Insights out of every shop and reward.', unlock: 3, material: 'herbs', upgradable: true },
+  { id: 'forge', name: 'Artifact Forge', hanzi: '炉', icon: 'relic_furnace', desc: 'Crafts heirloom Treasures. One heirloom can be carried into a run, and it grows with each victory.', unlock: 5, material: 'cores', upgradable: true },
+  { id: 'bounty', name: 'Bounty Board', hanzi: '榜', icon: 'relic_ledger', desc: 'Three standing bounties. A run that meets one pays its reward, and a new bounty takes its place.', unlock: SECT_OPENS, upgradable: false },
+];
+export const BUILDING_BY_ID = Object.fromEntries(BUILDINGS.map((b) => [b.id, b])) as Record<BuildingId, BuildingDef>;
+export const MAX_BUILDING_LEVEL = 5;
+
+/** What it costs to raise a building to `level` (2–5). */
+export function levelCost(level: number, material: MaterialKey): Partial<Purse> {
+  const table: Record<number, [number, number, number]> = { 2: [100, 10, 0], 3: [250, 25, 0], 4: [450, 45, 5], 5: [700, 70, 12] };
+  const [funds, mat, jade] = table[level] ?? [0, 0, 0];
+  const cost: Partial<Purse> = { funds, [material]: mat };
+  if (jade) cost.jade = (cost.jade ?? 0) + jade;
+  return cost;
+}
+
+/** The highest level the sect's rank allows: 1 as a Humble Sect, up to 5 as a Holy Land. */
+export function levelCap(renownXp: number): number {
+  return Math.min(MAX_BUILDING_LEVEL, 1 + rankOf(levelOf(renownXp).level).index);
+}
+
+export function isOpen(b: BuildingId, renownXp: number): boolean {
+  return levelOf(renownXp).level >= BUILDING_BY_ID[b].unlock;
+}
+
+// ───────────────────────── Scripture Pavilion ─────────────────────────
+
+export interface StudyDef {
+  id: string;
+  name: string;
+  /** Pavilion level needed. */
+  level: number;
+  cost: Partial<Purse>;
+  blurb: string;
+}
+
+export const STUDIES: StudyDef[] = [
+  { id: 'five_phases', name: 'Scrolls of the Five Phases', level: 1, cost: { funds: 60, herbs: 8 }, blurb: 'Fire on kills, frost on crits, poison and Qi on a rhythm.' },
+  { id: 'iron_body', name: 'Treatises of the Iron Body', level: 2, cost: { funds: 120, herbs: 15 }, blurb: 'Defense for the front row, shields when wounded, more Max HP for all.' },
+  { id: 'merchant', name: 'Ledgers of the Wandering Merchant', level: 3, cost: { funds: 200, herbs: 25 }, blurb: 'Spirit Stones after fights and on kills, a richer shop.' },
+];
+export const studyRelics = (study: string) => RESEARCH_RELICS.filter((r) => r.research === study);
+
+/** Seals the Pavilion allows: one per level. */
+export const sealSlots = (pavilionLevel: number) => Math.max(0, pavilionLevel);
+
+// ───────────────────────── Artifact Forge ─────────────────────────
+
+export interface RecipeState {
+  id: string;
+  level: number;
+}
+
+/** Forge level that teaches each recipe, and what crafting it costs. */
+export const RECIPE_TERMS: Record<string, { forge: number; cost: Partial<Purse> }> = {
+  founder_sword: { forge: 1, cost: { funds: 80, cores: 6 } },
+  jade_seal: { forge: 1, cost: { funds: 100, cores: 8 } },
+  elder_gourd: { forge: 2, cost: { funds: 160, cores: 14 } },
+  storm_banner: { forge: 3, cost: { funds: 220, cores: 20, jade: 2 } },
+};
+export const RECIPES = HEIRLOOM_RECIPES.map((r) => ({ ...r, ...RECIPE_TERMS[r.id] }));
+
+/** From Forge level 4, new heirlooms start at level 2 and older level-1 heirlooms are raised to it. */
+export const heirloomStartLevel = (forgeLevel: number) => (forgeLevel >= 4 ? 2 : 1);
+export const nextHeirloomLevel = (level: number) => Math.min(HEIRLOOM_MAX_LEVEL, level + 1);
+
+// ───────────────────────── Bounty Board ─────────────────────────
+
+export interface BountyDef {
+  id: string;
+  name: string;
+  desc: string;
+  reward: Partial<Purse>;
+  /** Met by a finished run? */
+  met: (s: RunState) => boolean;
+}
+
+const wins = (s: RunState, kind: string, realm?: number) => (s.history ?? []).filter((h) => h.won && h.kind === kind && (realm === undefined || h.realm === realm)).length;
+
+export const BOUNTIES: BountyDef[] = [
+  { id: 'win_six', name: 'Proving Ground', desc: 'Win 6 fights in one run.', reward: { funds: 40, herbs: 4 }, met: (s) => s.stats.wins >= 6 },
+  { id: 'two_elites', name: 'Elite Hunt', desc: 'Defeat 2 elites in one run.', reward: { funds: 50, cores: 4 }, met: (s) => wins(s, 'elite') >= 2 },
+  { id: 'realm_one', name: 'Calm the Jade River', desc: 'Defeat the guardian of Realm I.', reward: { funds: 60, jade: 2 }, met: (s) => wins(s, 'boss', 1) >= 1 },
+  { id: 'challenge', name: 'Tempered by Hardship', desc: 'Win a Challenge fight.', reward: { funds: 40, cores: 3 }, met: (s) => wins(s, 'challenge') >= 1 },
+  { id: 'trial', name: 'Duel on the Peak', desc: 'Win the Heavenly Trial.', reward: { funds: 40, cores: 3 }, met: (s) => wins(s, 'single') + wins(s, 'trial') >= 1 },
+  { id: 'coffers', name: 'Full Coffers', desc: 'Earn 300 Spirit Stones in one run.', reward: { funds: 60, herbs: 5 }, met: (s) => s.stats.stonesEarned >= 300 },
+  { id: 'seeker', name: 'Seeker of Knowledge', desc: 'Meet 4 new Compendium entries in one run.', reward: { funds: 40, herbs: 6 }, met: (s) => (s.discovered ?? 0) >= 4 },
+  { id: 'golden_core', name: 'A Golden Core', desc: 'Raise a disciple to Golden Core.', reward: { funds: 50, herbs: 4 }, met: (s) => s.roster.some((h) => h.rank >= 2) },
+  { id: 'no_reversal', name: 'No Second Chances', desc: 'Defeat the guardian of Realm I without a Time Reversal.', reward: { funds: 70, jade: 2 }, met: (s) => wins(s, 'boss', 1) >= 1 && !s.stats.rewinds },
+  { id: 'cuts', name: 'Ten Thousand Cuts', desc: 'Deal 60,000 damage in one run.', reward: { funds: 50, cores: 4 }, met: (s) => s.stats.damage >= 60000 },
+  { id: 'library', name: 'Patron of the Library', desc: 'End a run holding 4 Dao Insights.', reward: { funds: 50, herbs: 5 }, met: (s) => s.relics.length >= 4 },
+  { id: 'above_mortals', name: 'Above Mortal Ground', desc: 'Reach Realm II on Qi Condensation or a harder contract.', reward: { funds: 80, jade: 3 }, met: (s) => s.realm >= 2 && s.tier >= 1 },
+];
+export const BOUNTY_BY_ID = Object.fromEntries(BOUNTIES.map((b) => [b.id, b])) as Record<string, BountyDef>;
+export const BOUNTY_SLOTS = 3;
+
+/** Fills the board to three: the next bounties not on it and not done yet; once every bounty is done, the cycle restarts. */
+export function refillBounties(active: string[], done: string[]): { active: string[]; done: string[] } {
+  const a = active.filter((id) => BOUNTY_BY_ID[id]);
+  let d = done.filter((id) => BOUNTY_BY_ID[id]);
+  while (a.length < BOUNTY_SLOTS) {
+    let next = BOUNTIES.find((b) => !a.includes(b.id) && !d.includes(b.id));
+    if (!next) {
+      d = [];
+      next = BOUNTIES.find((b) => !a.includes(b.id));
+      if (!next) break;
+    }
+    a.push(next.id);
+  }
+  return { active: a, done: d };
+}
+
+// ───────────────────────── the save ─────────────────────────
+
+export interface SectState {
+  purse: Purse;
+  buildings: Record<'pavilion' | 'forge', number>;
+  research: string[];
+  seals: string[];
+  heirlooms: RecipeState[];
+  bounties: { active: string[]; done: string[] };
+  /** The heirloom picked on the New Run screen last time ('' for none). */
+  carry: string;
+}
+
+export const emptySect = (): SectState => ({
+  purse: emptyPurse(),
+  buildings: { pavilion: 1, forge: 1 },
+  research: [],
+  seals: [],
+  heirlooms: [],
+  bounties: { active: [], done: [] },
+  carry: '',
+});
+
+/** The sect part of a save, with defaults for older saves. */
+export function sectOf(m: MetaSave): SectState {
+  const base = emptySect();
+  const s = m.sect;
+  if (!s) return base;
+  return {
+    purse: { ...base.purse, ...(s.purse ?? {}) },
+    buildings: { ...base.buildings, ...(s.buildings ?? {}) },
+    research: s.research ?? [],
+    seals: s.seals ?? [],
+    heirlooms: s.heirlooms ?? [],
+    bounties: { active: s.bounties?.active ?? [], done: s.bounties?.done ?? [] },
+    carry: s.carry ?? '',
+  };
+}
+
+export const canAfford = (purse: Purse, cost: Partial<Purse>) => (Object.keys(cost) as (keyof Purse)[]).every((k) => purse[k] >= (cost[k] ?? 0));
+export function spend(purse: Purse, cost: Partial<Purse>): Purse {
+  const out = { ...purse };
+  for (const k of Object.keys(cost) as (keyof Purse)[]) out[k] -= cost[k] ?? 0;
+  return out;
+}
+export function addPurse(a: Purse, b: Partial<Purse>): Purse {
+  const out = { ...a };
+  for (const k of Object.keys(b) as (keyof Purse)[]) out[k] += b[k] ?? 0;
+  return out;
+}
+
+/** What the sect sends into a new run: its seals, its studies and the chosen heirloom (none while the Forge is closed). */
+export function runSectFor(m: MetaSave, heirloom: string): RunSect {
+  const s = sectOf(m);
+  const xp = m.renown?.xp ?? 0;
+  const h = isOpen('forge', xp) ? s.heirlooms.find((x) => x.id === heirloom) : undefined;
+  return {
+    seals: isOpen('pavilion', xp) ? s.seals.slice() : [],
+    research: s.research.slice(),
+    heirloom: h ? { id: h.id, level: h.level } : undefined,
+  };
+}
+
+/** Anything the player can do in the sect right now (a dot on the menu's Sect plaque). */
+export function sectHasNews(m: MetaSave): boolean {
+  const xp = m.renown?.xp ?? 0;
+  if (!isOpen('hall', xp)) return false;
+  const s = sectOf(m);
+  const cap = levelCap(xp);
+  for (const id of ['pavilion', 'forge'] as const) {
+    const lvl = s.buildings[id];
+    if (isOpen(id, xp) && lvl < cap && canAfford(s.purse, levelCost(lvl + 1, BUILDING_BY_ID[id].material!))) return true;
+  }
+  if (isOpen('pavilion', xp) && STUDIES.some((st) => !s.research.includes(st.id) && st.level <= s.buildings.pavilion && canAfford(s.purse, st.cost))) return true;
+  if (isOpen('forge', xp) && RECIPES.some((r) => !s.heirlooms.some((h) => h.id === r.id) && r.forge <= s.buildings.forge && canAfford(s.purse, r.cost))) return true;
+  return false;
+}
