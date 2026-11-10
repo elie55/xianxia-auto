@@ -3,6 +3,8 @@ import { PAINTED_ICONS } from './paintedIcons';
 
 /** Below this size a painted icon turns to mush; the crisp tinted glyph is used instead. */
 const PAINTED_MIN = 20;
+/** Painted icons drawn to stay readable down to 16 px (stats, back arrow, bullet, star, rank up, shield). */
+const SMALL_OK = new Set(['ui_back', 'ui_bullet', 'ui_star', 'ui_rank', 'kw_shield']);
 
 export interface IconProps extends Omit<JSX.HTMLAttributes<HTMLSpanElement>, 'size'> {
   name: string;
@@ -17,7 +19,7 @@ export interface IconProps extends Omit<JSX.HTMLAttributes<HTMLSpanElement>, 'si
 export function Icon({ name, size, color, style, class: cls, ...rest }: IconProps) {
   const s = typeof size === 'number' ? `${size}px` : size;
   // the Spirit Stone is the currency: its painted crystal stays readable down to 14 px
-  const min = name === 'stones' ? 14 : PAINTED_MIN;
+  const min = name === 'stones' ? 14 : SMALL_OK.has(name) || name.startsWith('stat_') ? 16 : PAINTED_MIN;
   if (PAINTED_ICONS.has(name) && (typeof size !== 'number' || size >= min)) {
     return (
       <span

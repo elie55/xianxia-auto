@@ -41,7 +41,7 @@ export function Settings() {
             screen.value = 'menu';
           }}
         >
-          ‹ Back
+          <Icon name="ui_back" size={20} /> Back
         </button>
         <div class="display newrun-title">Settings</div>
         <div style={{ width: 120 }} />

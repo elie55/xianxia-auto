@@ -34,7 +34,7 @@ export function NewRun() {
             screen.value = 'menu';
           }}
         >
-          ‹ Back
+          <Icon name="ui_back" size={20} /> Back
         </button>
         <div class="display newrun-title">New Run</div>
         <div style={{ width: 120 }} />

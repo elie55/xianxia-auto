@@ -49,7 +49,7 @@ export function Compendium() {
             compendiumReturn.value = 'menu';
           }}
         >
-          ‹ Back
+          <Icon name="ui_back" size={20} /> Back
         </button>
         <div class="display newrun-title">Compendium</div>
         <div style={{ width: 120 }} />

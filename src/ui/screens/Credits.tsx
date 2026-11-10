@@ -1,4 +1,5 @@
 import { screen } from '@/app/store';
+import { Icon } from '@/ui/components/Icon';
 import { audio } from '@/audio/AudioManager';
 
 export function Credits() {
@@ -14,7 +15,7 @@ export function Credits() {
             screen.value = 'menu';
           }}
         >
-          ‹ Back
+          <Icon name="ui_back" size={20} /> Back
         </button>
         <div class="display newrun-title">Credits</div>
         <div style={{ width: 120 }} />

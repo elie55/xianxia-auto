@@ -5678,3 +5678,34 @@ textarea {
     translate: 0 6px;
   }
 }
+
+/* ───────── painted ornaments replace the last text symbols (A3) ───────── */
+.shop-section-title::before {
+  content: '';
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  margin-right: 4px;
+  vertical-align: -5px;
+  background: url('/assets/icons/painted/ui_bullet.png') center / contain no-repeat;
+}
+.encounter-banner::before,
+.encounter-banner::after {
+  width: 18px;
+  height: 18px;
+  background: url('/assets/icons/painted/ui_bullet.png') center / contain no-repeat;
+  transform: translateY(-50%);
+}
+.star-pip {
+  width: 28px;
+  height: 28px;
+  clip-path: none;
+  background: url('/assets/icons/painted/ui_star.png') center / contain no-repeat;
+  filter: grayscale(1) brightness(0.45);
+  opacity: 0.55;
+}
+.star-pip.on {
+  background: url('/assets/icons/painted/ui_star.png') center / contain no-repeat;
+  filter: drop-shadow(0 0 6px rgba(243, 207, 120, 0.55));
+  opacity: 1;
+}

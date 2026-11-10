@@ -190,7 +190,7 @@ export function ShopScreen() {
                   return (
                     <div key={o ? o.key : `sold${i}`} class="shop-card-wrap" data-offer={o?.key}>
                       <div class={`rankup-ribbon ${owned ? '' : 'hidden'}`} {...(owned ? tip(<><h4>Rank Up</h4><p>You already own this disciple. Buying the card again raises their rank.</p></>) : {})}>
-                        <Icon name="ui_rank" size={15} /> Rank Up
+                        <Icon name="ui_rank" size={18} /> Rank Up
                       </div>
                       {o ? (
                         <HeroCard defId={o.defId} rank={o.rank} price={o.price} sale={o.sale} owned={owned} onClick={() => onBuyHero(o.key)} ctx={ctx} compact />

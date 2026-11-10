@@ -795,7 +795,7 @@ function PauseMenu() {
         <div class="panel modal-panel pause-settings anim-pop" onClick={(e) => e.stopPropagation()}>
           <div class="pause-settings-head">
             <button class="btn small ghost" data-hotkey="back" onClick={() => setView('main')}>
-              ‹ Back
+              <Icon name="ui_back" size={20} /> Back
             </button>
             <div class="panel-title display">Settings</div>
             <div style={{ width: 96 }} />
