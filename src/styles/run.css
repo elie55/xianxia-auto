@@ -288,6 +288,16 @@
   letter-spacing: 0.14em;
   color: var(--gold-bright);
 }
+/* a choice's Spirit Stone cost: a compact chip on the label's line (the shop's big price plaque overlapped the line below) */
+.choice-label .price-inline {
+  padding: 1px 8px;
+  gap: 4px;
+  font-size: calc(14px * var(--ts, 1));
+  line-height: 1.25;
+  letter-spacing: 0.04em;
+  border-radius: 4px;
+  box-shadow: none;
+}
 .choice-desc {
   font-size: calc(15px * var(--ts, 1));
   color: var(--paper-dim);

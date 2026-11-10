@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
 import { PAINTED_ICONS } from './paintedIcons';
+import { cssUrl } from '@/ui/assetUrl';
 
 /** Below this size a painted icon turns to mush; the crisp tinted glyph is used instead. */
 const PAINTED_MIN = 20;
@@ -33,7 +34,8 @@ export function Icon({ name, size, color, style, class: cls, ...rest }: IconProp
     <span
       class={`icon ${cls ?? ''}`}
       style={{
-        ['--icon' as string]: `url(./assets/icons/${name}.svg)`,
+        // absolute: a relative url() here would resolve against the built stylesheet and miss (see assetUrl.ts)
+        ['--icon' as string]: cssUrl(`assets/icons/${name}.svg`),
         width: s,
         height: s,
         color,

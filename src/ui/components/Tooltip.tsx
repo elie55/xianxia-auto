@@ -15,10 +15,44 @@ export const tooltip = signal<TipState | null>(null);
 
 let pending: ReturnType<typeof setTimeout> | null = null;
 
+/**
+ * The element the open tooltip belongs to, and where the pointer last was. A tooltip closes on mouseleave, but when its
+ * element is removed or covered while the pointer rests on it (the breakthrough screen opening over the party bar, a
+ * screen change after a click) no mouseleave ever fires and the tooltip stayed stuck on screen. While a tooltip is
+ * open, a light watch closes it once its element is gone or no longer under the pointer.
+ */
+let anchorEl: Element | null = null;
+let lastPointer: { x: number; y: number } | null = null;
+let watch: ReturnType<typeof setInterval> | null = null;
+if (typeof window !== 'undefined') {
+  window.addEventListener('pointermove', (e) => (lastPointer = { x: e.clientX, y: e.clientY }), { passive: true, capture: true });
+}
+
+function stillHovered(): boolean {
+  if (!anchorEl) return true;
+  if (!anchorEl.isConnected) return false;
+  if (!lastPointer) return true;
+  const hit = document.elementFromPoint(lastPointer.x, lastPointer.y);
+  return !!hit && (hit === anchorEl || anchorEl.contains(hit));
+}
+
+function startWatch(): void {
+  if (watch) return;
+  watch = setInterval(() => {
+    if (!tooltip.peek() && !pending) {
+      clearInterval(watch!);
+      watch = null;
+      return;
+    }
+    if (!stillHovered()) hideTooltip();
+  }, 150);
+}
+
 /** Opens a tooltip after the player's Tooltip delay setting (immediately when a tooltip is already open). */
 function open(state: TipState): void {
   if (pending) clearTimeout(pending);
   pending = null;
+  startWatch();
   const delay = meta.peek().settings.tooltipDelay ?? 0;
   if (delay <= 0 || tooltip.peek()) {
     tooltip.value = state;
@@ -26,13 +60,16 @@ function open(state: TipState): void {
   }
   pending = setTimeout(() => {
     pending = null;
-    tooltip.value = state;
+    // the element may have gone during the delay
+    if (stillHovered()) tooltip.value = state;
   }, delay);
 }
 
 export function showTooltip(e: MouseEvent | PointerEvent, content: ComponentChildren, anchor: TipState['anchor'] = 'right'): void {
   const el = e.currentTarget as HTMLElement | null;
   if (!el) return;
+  anchorEl = el;
+  lastPointer = { x: e.clientX, y: e.clientY };
   const r = el.getBoundingClientRect();
   const tl = toDesign(r.left, r.top);
   const br = toDesign(r.right, r.bottom);
@@ -42,11 +79,13 @@ export function showTooltip(e: MouseEvent | PointerEvent, content: ComponentChil
 export function hideTooltip(): void {
   if (pending) clearTimeout(pending);
   pending = null;
+  anchorEl = null;
   tooltip.value = null;
 }
 
-/** Shows a tooltip anchored at a design-space point (used for canvas units). */
+/** Shows a tooltip anchored at a design-space point (used for canvas units): it belongs to whatever is under the pointer. */
 export function showTooltipAtDesign(x: number, y: number, content: ComponentChildren, anchor: TipState['anchor'] = 'above'): void {
+  anchorEl = lastPointer ? document.elementFromPoint(lastPointer.x, lastPointer.y) : null;
   open({ x, y, content, anchor });
 }
 

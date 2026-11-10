@@ -12,6 +12,7 @@ import { isOpen, runSectFor, sectOf } from '@/meta/sect';
 import { setCarry } from '@/meta/sectActions';
 import { ItemTip } from '@/ui/components/HeroCard';
 import { audio } from '@/audio/AudioManager';
+import { cssUrl } from '@/ui/assetUrl';
 
 /** Each contract's colour, from the calm jade of the mortal road to the crimson of the Tribulation. */
 const TIER_COLOR = ['#9fd8c4', '#6fe3c4', '#8fd5ff', '#f3cf78', '#ffb347', '#ff7a5a', '#c27cff', '#ff3d5a'];
@@ -21,7 +22,7 @@ const MAX_TIER = DIFFICULTIES.length - 1;
 /** A contract's own Realm I battlefield, painted behind its seal once that battlefield exists. */
 const fieldArt = (tier: number) => {
   const t = THEMES.find((th) => th.tier === tier && th.realm === 1 && th.ready);
-  return t ? `url(./assets/art/bg/${t.art}.jpg)` : undefined;
+  return t ? cssUrl(`assets/art/bg/${t.art}.jpg`) : undefined;
 };
 
 export function NewRun() {

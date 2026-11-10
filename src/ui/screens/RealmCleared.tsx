@@ -11,6 +11,7 @@ import { bossEpithet } from '@/ui/hud/Boss';
 import { fmt } from '@/ui/hud/Hud';
 import { audio } from '@/audio/AudioManager';
 import { getBattleView } from '@/battle/view/BattleView';
+import { cssUrl } from '@/ui/assetUrl';
 
 
 export function RealmCleared() {
@@ -41,7 +42,7 @@ export function RealmCleared() {
   const unlocked = realm === 2 ? Math.min(7, meta.value.unlockedTier) : null;
   return (
     <div class={`screen cleared-screen v2 realm-${realm}`}>
-      <div class="cleared-bg" style={{ ['--realm-art' as string]: `url(./assets/art/bg/${arenaFor(realm, s.tier).art}.jpg)` }} />
+      <div class="cleared-bg" style={{ ['--realm-art' as string]: cssUrl(`assets/art/bg/${arenaFor(realm, s.tier).art}.jpg`) }} />
       <div class="cleared-body v2">
         <BrushBanner title="Rift Sealed" seal="封" tone="gold" size="xl" sub={`${realmName} is safe once more`} />
         <div class="cleared-main">
@@ -69,7 +70,7 @@ export function RealmCleared() {
             <Medal icon="ui_rewind" label="Time reversals" value={`${s.stats.rewinds}`} />
             <Medal icon="ui_party" label="Disciples" value={`${s.roster.length}`} />
           </div>
-          <div class="next-realm" style={{ ['--next-art' as string]: `url(./assets/art/bg/${next.art}.jpg)` }}>
+          <div class="next-realm" style={{ ['--next-art' as string]: cssUrl(`assets/art/bg/${next.art}.jpg`) }}>
             <div class="next-label">Next</div>
             <div class="next-name display">{next.name}</div>
             <div class="next-line">{next.line}</div>

@@ -21,6 +21,7 @@ import { RichText } from '@/ui/components/RichText';
 import { SpriteClip, useSpritePack } from '@/ui/components/SpriteClip';
 import { tip } from '@/ui/components/Tooltip';
 import { audio } from '@/audio/AudioManager';
+import { cssUrl } from '@/ui/assetUrl';
 
 type Tab = 'disciples' | 'classes' | 'enemies' | 'treasures' | 'insights';
 type Kind = 'hero' | 'item' | 'relic' | 'enemy';
@@ -467,7 +468,7 @@ const realmLabel = (e: EnemyDef) => (e.realm === 'any' ? 'Both realms' : `Realm 
 function EnemyCard({ e, unseen }: { e: EnemyDef; unseen?: boolean }) {
   return (
     <>
-      <div class="codex-enemy-art" style={{ ['--plate' as string]: `url(./assets/art/bg/${realmPlate(e)}.jpg)` }}>
+      <div class="codex-enemy-art" style={{ ['--plate' as string]: cssUrl(`assets/art/bg/${realmPlate(e)}.jpg`) }}>
         {/* an unseen foe keeps the silhouette filter from CSS; a seen variant shows its recolour */}
         <img src={`./assets/art/sprites/${e.sprite}.png`} alt="" draggable={false} style={unseen ? undefined : { filter: lookFilter(e.look) }} />
       </div>
@@ -665,7 +666,7 @@ function Stage({ sprite, plate, height, look }: { sprite: string; plate: string;
   const [clip, setClip] = useState({ anim: 'idle', n: 0 });
   const clips = ['idle', 'attack', 'cast'].filter((k) => def?.animations[k]);
   return (
-    <div class="drawer-stage" style={{ ['--plate' as string]: `url(./assets/art/bg/${plate}.jpg)` }}>
+    <div class="drawer-stage" style={{ ['--plate' as string]: cssUrl(`assets/art/bg/${plate}.jpg`) }}>
       <div class="drawer-ground" style={{ filter: lookFilter(look) }}>
         <SpriteClip id={sprite} anim={clip.anim} nonce={clip.n} height={height} onDone={() => setClip((c) => ({ anim: 'idle', n: c.n + 1 }))} />
       </div>
