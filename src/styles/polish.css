@@ -458,6 +458,12 @@
   z-index: 60;
   pointer-events: none;
 }
+/* a dialog that interrupts play (pause menu, its settings, sell confirmation) hides the tutorial until it closes: the
+   tutorial card used to sit on top of it and cover its buttons. Soft backdrops are phase screens (battle result,
+   challenge, reward) that the tutorial points at, so it stays there. */
+#ui-root:has(.modal-backdrop:not(.soft)) > .tut-layer {
+  display: none;
+}
 .tut-dim {
   position: absolute;
   inset: 0;
