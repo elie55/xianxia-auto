@@ -41,6 +41,55 @@ function escape(): boolean {
   return press('back') || press('menu');
 }
 
+/** The buttons the arrow keys move between: those of the topmost open dialog, else of the current screen. */
+function focusables(): HTMLElement[] {
+  const dialogs = [...document.querySelectorAll<HTMLElement>('.modal-backdrop')].filter((d) => d.offsetParent !== null);
+  const root = dialogs.at(-1) ?? document.getElementById('ui-root') ?? document.body;
+  return [...root.querySelectorAll<HTMLElement>('button:not(:disabled), [role="button"], [tabindex="0"]')].filter((el) => {
+    const r = el.getBoundingClientRect();
+    return el.offsetParent !== null && r.width > 0 && r.height > 0;
+  });
+}
+
+/** Focuses a button from the keyboard and marks it, so the gold focus ring shows whatever the browser decides. */
+function ring(el: HTMLElement): void {
+  el.focus({ focusVisible: true } as FocusOptions);
+  el.classList.add('kb-focus');
+  el.addEventListener('blur', () => el.classList.remove('kb-focus'), { once: true });
+}
+
+/** Arrow keys: focus the nearest button in that direction (the first one if nothing is focused yet). Enter clicks it. */
+function moveFocus(dir: 'up' | 'down' | 'left' | 'right'): boolean {
+  const list = focusables();
+  if (!list.length) return false;
+  const cur = document.activeElement as HTMLElement | null;
+  if (!cur || !list.includes(cur)) {
+    ring(list[0]);
+    return true;
+  }
+  const r = cur.getBoundingClientRect();
+  const cx = r.left + r.width / 2;
+  const cy = r.top + r.height / 2;
+  let best: HTMLElement | null = null;
+  let bestScore = Infinity;
+  for (const el of list) {
+    if (el === cur) continue;
+    const q = el.getBoundingClientRect();
+    const x = q.left + q.width / 2 - cx;
+    const y = q.top + q.height / 2 - cy;
+    const along = dir === 'right' ? x : dir === 'left' ? -x : dir === 'down' ? y : -y;
+    const across = dir === 'left' || dir === 'right' ? Math.abs(y) : Math.abs(x);
+    if (along <= 4) continue;
+    const score = along + across * 2.2;
+    if (score < bestScore) {
+      bestScore = score;
+      best = el;
+    }
+  }
+  if (best) ring(best);
+  return !!best;
+}
+
 const isTyping = (t: EventTarget | null) => t instanceof HTMLInputElement ? !['range', 'checkbox', 'radio', 'button'].includes(t.type) : t instanceof HTMLTextAreaElement || (t instanceof HTMLElement && t.isContentEditable);
 
 export function installHotkeys(): void {
@@ -63,10 +112,19 @@ export function installHotkeys(): void {
       case 'Escape':
         handled = escape();
         break;
-      case ' ':
-        // a focused button would also take the Space press as a click
-        (document.activeElement as HTMLElement | null)?.blur?.();
+      case ' ': {
+        // a button focused from the keyboard takes Space as a click; one focused by the mouse is let go first
+        const active = document.activeElement as HTMLElement | null;
+        if (active?.matches?.(':focus-visible') && active.matches('button, [role="button"]')) return;
+        active?.blur?.();
         handled = !e.repeat && (press('fight') || press('proceed'));
+        break;
+      }
+      case 'ArrowUp':
+      case 'ArrowDown':
+      case 'ArrowLeft':
+      case 'ArrowRight':
+        handled = moveFocus(e.key.slice(5).toLowerCase() as 'up' | 'down' | 'left' | 'right');
         break;
       case '1':
       case '2':

@@ -5709,3 +5709,28 @@ textarea {
   filter: drop-shadow(0 0 6px rgba(243, 207, 120, 0.55));
   opacity: 1;
 }
+
+/* ───────── keyboard focus: a gold ring on plaques, cards and tabs (I8) ───────── */
+:focus {
+  outline: none;
+}
+.kb-focus,
+button:focus-visible,
+[role='button']:focus-visible,
+[tabindex='0']:focus-visible,
+.settings-tab:focus-visible,
+.reward-card:focus-visible,
+.event-choice:focus-visible,
+.hero-card:focus-visible {
+  outline: 2px solid var(--gold-bright);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 6px rgba(243, 207, 120, 0.22), 0 0 24px rgba(243, 207, 120, 0.45);
+}
+input[type='range']:focus-visible {
+  outline: 2px solid var(--gold-bright);
+  outline-offset: 6px;
+}
+/* click-to-place: what you carry follows the brush */
+html:has(.drag-ghost) .drag-ghost {
+  filter: drop-shadow(0 0 14px rgba(243, 207, 120, 0.6));
+}
