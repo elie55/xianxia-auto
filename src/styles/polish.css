@@ -4757,3 +4757,12 @@ input[type='range']:hover::-webkit-slider-thumb {
 .result-wrap.v2 .result-columns {
   margin-top: 30px;
 }
+
+/* the rank badge sits on the portrait's top-left, clear of the live HP / Qi bar along its bottom */
+.slot-rank {
+  z-index: 4;
+  top: -4px;
+  left: -4px;
+  right: auto;
+  bottom: auto;
+}
