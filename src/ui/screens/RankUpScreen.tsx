@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useMemo, useState } from 'preact/hooks';
 import { PAINTED_ICONS } from '@/ui/components/paintedIcons';
 import { act, run } from '@/app/store';
 import { chooseUpgrade, heroByUid, teamContext } from '@/core/run';
 import { HERO_BY_ID } from '@/content/heroes';
 import { CLASSES } from '@/content/classes';
-import { RANK_NAMES } from '@/core/types';
-import { HeroCard } from '@/ui/components/HeroCard';
+import { RANK_NAMES, type Rank } from '@/core/types';
+import { heroStats } from '@/core/builder';
+import { CountUp } from '@/ui/components/Triumph';
+import { HeroCard, RankGlyph } from '@/ui/components/HeroCard';
 import { Icon, STAT_COLOR, STAT_ICON, STAT_LABEL } from '@/ui/components/Icon';
 import { RichText } from '@/ui/components/RichText';
 import { audio } from '@/audio/AudioManager';
@@ -23,21 +25,47 @@ export function RankUpScreen() {
   const isDao = h.rank >= 1 && !h.daoPathId;
   useEffect(() => {
     audio.sfx('rankup', { volume: 0.8 });
-    const t = setTimeout(() => setSplash(false), 1500);
+    const t = setTimeout(() => setSplash(false), 3000);
     return () => clearTimeout(t);
   }, [c.uid, h.rank]);
   const rank = RANK_NAMES[h.rank];
+  // what the breakthrough itself added (same Treasures and Insights, one realm lower)
+  const gains = useMemo(() => {
+    if (h.rank <= 0) return [];
+    const ctx = teamContext(s);
+    const now = heroStats(h, ctx, null);
+    const before = heroStats({ ...h, rank: (h.rank - 1) as Rank }, ctx, null);
+    return (['hp', 'attack', 'spirit', 'defense'] as const)
+      .map((k) => ({ k, d: Math.round(now[k] - before[k]) }))
+      .filter((g) => g.d > 0)
+      .slice(0, 3);
+  }, [c.uid, h.rank]);
   return (
     <div class="screen rankup-screen">
       <div class="rankup-bg" />
       {splash && (
-        <div class="rankup-splash" onClick={() => setSplash(false)}>
-          <div class="splash-glyph brush">{rank.hanzi}</div>
-          <div class={`splash-title display rank-${h.rank}`}>{SPLASH[h.rank] ?? 'Breakthrough'}</div>
-          <div class="splash-sub">
-            {def.name} · {rank.name}
-          </div>
+        <div class="rankup-splash v2" onClick={() => setSplash(false)}>
           <div class="splash-rays" />
+          <div class="splash-aura" />
+          <img class="splash-hero" src={`./assets/art/sprites/${def.sprite}.png`} alt="" draggable={false} />
+          <div class="splash-text">
+            <div class="splash-seal">
+              <RankGlyph rank={h.rank} size={124} />
+            </div>
+            <div class={`splash-title display rank-${h.rank}`}>{SPLASH[h.rank] ?? 'Breakthrough'}</div>
+            <div class="splash-sub">
+              {def.name} · {rank.name}
+            </div>
+            {gains.length > 0 && (
+              <div class="splash-gains">
+                {gains.map((g, i) => (
+                  <span key={g.k} class="splash-gain" style={{ color: STAT_COLOR[g.k] }}>
+                    <Icon name={STAT_ICON[g.k]} size={22} /> +<CountUp to={g.d} delay={1 + i * 0.15} /> {STAT_LABEL[g.k]}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
       {!splash && (

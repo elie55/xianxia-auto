@@ -1,4 +1,29 @@
 import type { ComponentChildren } from 'preact';
+import { useEffect, useState } from 'preact/hooks';
+import { reducedMotion } from '@/app/motion';
+
+/** A number that counts up from 0 after `delay` seconds (shows the final value at once with reduced motion). */
+export function CountUp({ to, delay = 0, duration = 0.8 }: { to: number; delay?: number; duration?: number }) {
+  const [v, setV] = useState(reducedMotion() ? to : 0);
+  useEffect(() => {
+    if (reducedMotion()) return void setV(to);
+    let raf = 0;
+    const t0 = performance.now() + delay * 1000;
+    const tick = (now: number) => {
+      const k = Math.min(1, Math.max(0, (now - t0) / (duration * 1000)));
+      setV(Math.round(to * (1 - Math.pow(1 - k, 3))));
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    // a hidden window may never animate: land on the value anyway
+    const done = setTimeout(() => setV(to), (delay + duration + 0.4) * 1000);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(done);
+    };
+  }, [to]);
+  return <>{v}</>;
+}
 
 let uid = 0;
 

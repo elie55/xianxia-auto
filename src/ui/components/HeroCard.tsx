@@ -36,8 +36,20 @@ export function Portrait({ id, accent, hanzi, class: cls }: { id: string; accent
 export function RankGlyph({ rank, size = 44 }: { rank: Rank; size?: number }) {
   const r = RANK_NAMES[rank];
   return (
-    <div class={`rank-glyph rank-${rank} has-tip`} style={{ width: size, height: size, fontSize: size * 0.5 }} {...tip(<><h4>{r.name}</h4><div class="sub">Rank {r.short}</div><p>Cultivation realm of this disciple. Buy a copy of the disciple to break through.</p></>)}>
-      <span class="display">{r.short}</span>
+    <div
+      class={`rank-glyph seal rank-${rank} has-tip`}
+      style={{ width: size, height: size }}
+      {...tip(<><h4>{r.name}</h4><div class="sub">Cultivation realm {rank + 1} of 4 · {r.hanzi}</div><p>Cultivation realm of this disciple. Buy a copy of the disciple to break through.</p></>)}
+    >
+      {/* a cultivation seal: the realm's hanzi, with one pip per realm reached */}
+      <span class="brush seal-hanzi" style={{ fontSize: Math.round(size * 0.5) }}>
+        {r.hanzi}
+      </span>
+      <span class="seal-pips" style={{ gap: Math.max(1, Math.round(size * 0.05)), bottom: Math.round(size * 0.1) }}>
+        {Array.from({ length: rank + 1 }, (_, i) => (
+          <i key={i} style={{ width: Math.max(2, Math.round(size * 0.09)), height: Math.max(2, Math.round(size * 0.09)) }} />
+        ))}
+      </span>
     </div>
   );
 }

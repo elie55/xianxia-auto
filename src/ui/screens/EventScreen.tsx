@@ -114,7 +114,20 @@ export function EventScreen() {
             )}
             {outcome && (
               <>
-                <p class="event-text outcome">{outcome.text}</p>
+                <div class="event-outcome anim-rise">
+                  <div class="outcome-medal">
+                    <Icon name={choiceIcon(ev.choices.find((x) => x.id === ce.chosen)?.desc ?? '')} size={64} />
+                  </div>
+                  <div class="outcome-main">
+                    <p class="event-text outcome">{outcome.text}</p>
+                    {outcome.stonesDelta ? (
+                      <div class={`outcome-gain ${outcome.stonesDelta < 0 ? 'loss' : ''}`}>
+                        {outcome.stonesDelta > 0 ? '+' : ''}
+                        {outcome.stonesDelta} <Icon name="stones" size={18} /> Spirit Stones
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
                 {s.pendingPick && (
                   <div class="pick-grid">
                     <div class="muted" style={{ fontSize: 14, width: '100%' }}>

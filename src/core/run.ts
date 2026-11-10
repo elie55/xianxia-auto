@@ -1309,6 +1309,21 @@ export function chooseReward(s: RunState, relicId: string): void {
   if (!s.pendingPick) openShop(s);
 }
 
+/** Spirit Stones granted for passing on a reward. */
+export const SKIP_REWARD_STONES = 10;
+
+/** Passes on the reward on offer (a Dao Insight choice, or a Treasure / Insight pick) for a few Spirit Stones. */
+export function skipReward(s: RunState): void {
+  s.stones += SKIP_REWARD_STONES;
+  s.stats.stonesEarned += SKIP_REWARD_STONES;
+  if (s.pendingReward) {
+    s.pendingReward = null;
+    if (!s.pendingPick) openShop(s);
+    return;
+  }
+  finishRewardPick(s);
+}
+
 export function finishRewardPick(s: RunState): void {
   s.pendingPick = null;
   if (!s.pendingReward) openShop(s);

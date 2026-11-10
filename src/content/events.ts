@@ -9,7 +9,7 @@ export const EVENTS: EventDef[] = [
     id: 'starter_kit',
     title: 'The Sect Elder’s Parcel',
     hanzi: '启程',
-    text: 'An elder of your sect presses a worn parcel into your hands before you set out. "Choose wisely. The Ladder does not forgive the unprepared."',
+    text: "An elder of your sect presses a worn parcel into your hands at the mountain gate. Prayer flags snap in the wind, and far below the bamboo sea whispers of rifts torn open by demons. \"Choose wisely. The Ladder does not forgive the unprepared.\"",
     art: 'event_starter',
     only: 'event',
     choices: [
@@ -36,7 +36,7 @@ export const EVENTS: EventDef[] = [
     id: 'abandoned_cave',
     title: 'The Abandoned Cave Dwelling',
     hanzi: '洞府',
-    text: 'A cultivator’s cave dwelling, long abandoned. Arrays still hum faintly. Something gleams on the altar.',
+    text: "A cultivator’s cave dwelling, long abandoned. Dust lies thick on the meditation mat, yet the arrays carved into the walls still hum faintly, guarding whatever their master left behind. Something gleams on the altar.",
     art: 'event_cave',
     weight: 3,
     choices: [
@@ -48,7 +48,7 @@ export const EVENTS: EventDef[] = [
     id: 'spirit_spring',
     title: 'The Spirit Spring',
     hanzi: '灵泉',
-    text: 'A spring of luminous water bubbles between mossy stones. The deeper you look, the brighter it shines.',
+    text: "A spring of luminous water bubbles between mossy stones, and the air above it tastes of qi. Your disciples fall silent around it. The deeper you look, the brighter it shines, as if the earth itself were breathing.",
     art: 'event_spring',
     weight: 3,
     choices: [
@@ -76,7 +76,7 @@ export const EVENTS: EventDef[] = [
     id: 'wandering_merchant',
     title: 'The Wandering Merchant',
     hanzi: '商旅',
-    text: 'A merchant with a cart drawn by a spirit ox hails you. "Fine treasures, elder! Fine prices!"',
+    text: "A merchant with a cart drawn by a spirit ox hails you from the roadside, bells jangling on every crate. Half his wares are surely fakes; the other half might change your fate. \"Fine treasures, elder! Fine prices!\"",
     art: 'event_merchant',
     weight: 2,
     choices: [
@@ -89,7 +89,7 @@ export const EVENTS: EventDef[] = [
     id: 'sect_banner',
     title: 'The Sect Banner',
     hanzi: '旗',
-    text: 'Your disciples argue over the design of the sect banner. Each faction wants its own Dao honored.',
+    text: "Your disciples argue over the sect banner by lantern light. The swordsmen want a blade, the alchemists a cauldron, the talisman masters a seal. Each faction wants its own Dao honored, and none of them will yield.",
     art: 'event_banner',
     weight: 2,
     choices: [
@@ -102,7 +102,7 @@ export const EVENTS: EventDef[] = [
     id: 'beast_nest',
     title: 'The Demon Beast Nest',
     hanzi: '兽巢',
-    text: 'A nest of bone and bamboo holds a single enormous egg. Something glints inside its shell.',
+    text: "A nest of bone and bamboo, wide as a courtyard, cradles a single enormous egg. Its shell is warm to the touch, and something glints deep inside it. Whatever laid it cannot be far away.",
     art: 'event_nest',
     weight: 2,
     choices: [
@@ -114,7 +114,7 @@ export const EVENTS: EventDef[] = [
     id: 'bodhi_tree',
     title: 'Beneath the Bodhi Tree',
     hanzi: '菩提',
-    text: 'An ancient bodhi tree hums with enlightenment. A disciple could meditate here... for a price.',
+    text: "An ancient bodhi tree hums with enlightenment, its roots wrapped around stones older than the empire. Leaves drift down like falling sutras. A disciple could meditate here... for a price.",
     art: 'event_bodhi',
     weight: 2,
     choices: [
@@ -126,7 +126,7 @@ export const EVENTS: EventDef[] = [
     id: 'heavenly_trial',
     title: 'Heavenly Trial: Single Combat',
     hanzi: '试炼',
-    text: 'Your sect crests a hill. In the valley below, a lone monster stands over a pile of treasure, daring any single challenger.',
+    text: "Your sect crests a hill. In the valley below, a lone monster stands over a pile of treasure, daring any single challenger. The heavens are watching: this trial is fought alone, or not at all.",
     art: 'event_trial',
     only: 'trial',
     choices: [
@@ -139,7 +139,7 @@ export const EVENTS: EventDef[] = [
     id: 'sect_rest',
     title: 'Sect Rest',
     hanzi: '歇',
-    text: 'Your disciples gather around a campfire beneath a blanket of stars. Tomorrow, the realm’s guardian awaits.',
+    text: "Your disciples gather around a campfire beneath a blanket of stars, sharing rice wine and old tales of the masters. For one night the war against the rifts feels far away. Tomorrow, the realm’s guardian awaits.",
     art: 'event_campfire',
     only: 'rest',
     choices: [
@@ -152,7 +152,7 @@ export const EVENTS: EventDef[] = [
     id: 'karmic_debt',
     title: 'The Gambler of Karma',
     hanzi: '因果',
-    text: 'A grinning old man shakes a cup of dice. "Your karma against my stones, elder."',
+    text: "A grinning old man sits cross-legged in the middle of the road, shaking a cup of dice that rattles like bones. His eyes seem to see straight through your sect’s fortune. \"Your karma against my stones, elder.\"",
     art: 'event_gambler',
     weight: 1,
     choices: [
@@ -164,7 +164,7 @@ export const EVENTS: EventDef[] = [
     id: 'mysterious_elder',
     title: 'The Mysterious Elder',
     hanzi: '前辈',
-    text: 'A white-haired figure sits on a cloud, sipping tea. "I have watched your sect. It has... potential."',
+    text: "A white-haired figure sits on a passing cloud, sipping tea as if the world below were a play. He never looks at you, yet you feel weighed and measured. \"I have watched your sect. It has... potential.\"",
     art: 'event_elder',
     weight: 2,
     choices: [
@@ -176,7 +176,7 @@ export const EVENTS: EventDef[] = [
     id: 'alchemy_furnace',
     title: 'The Abandoned Furnace',
     hanzi: '丹炉',
-    text: 'A cold alchemy furnace stands in a ruined hall. Pill residue still glows faintly in its belly.',
+    text: "A cold alchemy furnace stands in a ruined hall, its bronze skin cracked by some failed tribulation. Pill residue still glows faintly in its belly, and the air smells of cinnabar and lightning.",
     art: 'event_furnace',
     weight: 2,
     choices: [
