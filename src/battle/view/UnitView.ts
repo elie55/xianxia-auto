@@ -61,7 +61,11 @@ export class UnitView extends Container {
   private currentAnim = 'idle';
   private shadow = new Sprite(softShadow());
   private aura: Graphics;
-  private bars = new Container();
+  /** HP / Qi / status bars: drawn by this view, but parented to the battle view's bar layer so no body ever hides them. */
+  readonly bars = new Container();
+  /** Where the bars sit relative to the unit's feet. */
+  barsOffsetY = 0;
+  private occlude = 1;
   private hpBar = new Graphics();
   private qiBar = new Graphics();
   private statusRow = new Container();
@@ -102,8 +106,7 @@ export class UnitView extends Container {
     this.buildPlaceholder();
     void this.tryLoadArt();
 
-    this.bars.y = -UNIT_HEIGHT * this.baseScale - 26;
-    this.addChild(this.bars);
+    this.barsOffsetY = -UNIT_HEIGHT * this.baseScale - 26 - this.lift;
     this.bars.addChild(this.hpBar);
     this.bars.addChild(this.qiBar);
     this.bars.addChild(this.statusRow);
@@ -136,7 +139,22 @@ export class UnitView extends Container {
     const w = Math.max(44, this.visualW * 1.05);
     this.shadow.width = w;
     this.shadow.height = w * 0.34;
-    this.shadow.alpha = this.unit.flying ? 0.55 : 0.9;
+    this.shadow.alpha = this.hovers ? 0.55 : 0.9;
+  }
+
+  /** Small flyers hover above their hex; a big one (the guardian dragon) rests its coils on the floor. */
+  get hovers(): boolean {
+    return this.unit.flying && this.baseScale < 1.6;
+  }
+  private get lift(): number {
+    return this.hovers ? HOVER_LIFT * Math.min(1.2, this.baseScale) : 0;
+  }
+
+  /** A big unit turns translucent while a disciple stands behind it, so it never hides them (eased). */
+  setOcclusion(target: number, dt: number): void {
+    if (this.dead) return;
+    this.occlude += (target - this.occlude) * Math.min(1, dt * 8);
+    this.body.alpha = this.occlude;
   }
 
   private drawAura(color: number): void {
@@ -273,10 +291,10 @@ export class UnitView extends Container {
 
   update(time: number, idleSpeed = 1): void {
     if (this.dead) return;
-    if (this.unit.flying) {
+    if (this.hovers) {
       // hover: the body floats above the hex while the shadow breathes underneath
       const t = Math.sin(time * 1.6 * idleSpeed + this.bob);
-      this.body.y = -HOVER_LIFT * this.baseScale + t * 5;
+      this.body.y = -this.lift + t * 5;
       const k = 1 - (t + 1) * 0.08;
       const s = this.shadowBaseScale;
       this.shadow.scale.set(s * k, s * 0.68 * k);
@@ -417,14 +435,15 @@ export class UnitView extends Container {
   override destroy(options?: DestroyOptions): void {
     if (this.destroyed) return;
     for (const t of [this, this.scale, this.body, this.body.scale, this.aura, this.shadow, this.shadow.scale, this.bars, this.statusRow]) gsap.killTweensOf(t);
+    this.bars.destroy({ children: true }); // it lives in the battle view's bar layer, not under this view
     super.destroy(options);
   }
 
   get headY(): number {
-    return -UNIT_HEIGHT * this.baseScale * 0.85 + (this.unit.flying ? -HOVER_LIFT * this.baseScale : 0);
+    return -UNIT_HEIGHT * this.baseScale * 0.85 - this.lift;
   }
   get chestY(): number {
-    return -UNIT_HEIGHT * this.baseScale * 0.5 + (this.unit.flying ? -HOVER_LIFT * this.baseScale : 0);
+    return -UNIT_HEIGHT * this.baseScale * 0.5 - this.lift;
   }
   /** Half width of the visible body in design px. */
   get halfWidth(): number {
@@ -548,7 +567,7 @@ export class UnitView extends Container {
     this.body.rotation = 0;
     this.body.y = 0;
     this.alpha = 1;
-    this.shadow.alpha = this.unit.flying ? 0.55 : 0.9;
+    this.shadow.alpha = this.hovers ? 0.55 : 0.9;
     this.playAnim('idle');
     gsap.fromTo(this.body.scale, { y: 0.4 }, { y: 1, duration: 0.5, ease: 'back.out(2)' });
   }

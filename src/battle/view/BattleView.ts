@@ -102,6 +102,8 @@ export class BattleView {
   private hexLayer = new Graphics();
   private highlightLayer = new Graphics();
   private unitLayer = new Container();
+  /** Every unit's HP / Qi / status bars, above all bodies and effects (a huge guardian can no longer cover them). */
+  private barLayer = new Container();
   private fx = new VfxLayer();
   /** Effects drawn behind the units (self-buffs, shields, cast glyphs) so they frame the character instead of hiding it. */
   private fxBack = new VfxLayer();
@@ -143,6 +145,7 @@ export class BattleView {
     this.world.addChild(this.fxBack);
     this.world.addChild(this.unitLayer);
     this.world.addChild(this.fx);
+    this.world.addChild(this.barLayer);
     this.world.addChild(this.texts);
     this.world.addChild(this.overlay);
     this.world.addChild(this.flashOverlay);
@@ -196,7 +199,7 @@ export class BattleView {
     const h = HEX_SIZE * 1.5 * cfg.squash * (BOARD_ROWS - 1);
     this.boardOrigin.x = DESIGN_W / 2 - w / 2;
     this.boardOrigin.y = cfg.centerY - h / 2;
-    for (const layer of [this.arenaLayer, this.fxBack, this.unitLayer, this.fx, this.texts]) layer.position.set(this.boardOrigin.x, this.boardOrigin.y);
+    for (const layer of [this.arenaLayer, this.fxBack, this.unitLayer, this.fx, this.barLayer, this.texts]) layer.position.set(this.boardOrigin.x, this.boardOrigin.y);
     for (const v of this.views.values()) {
       if (!v.unit.pos) continue;
       const p = hexToPixel(v.unit.pos);
@@ -528,6 +531,7 @@ export class BattleView {
     v.setFacing(u.facing);
     v.visible = u.onBoard && !!u.pos;
     this.unitLayer.addChild(v);
+    this.barLayer.addChild(v.bars);
     this.views.set(u.id, v);
     if (animate) v.spawnAnim();
     return v;
@@ -682,7 +686,7 @@ export class BattleView {
         const a = hexToPixel(u.moving.from);
         const c = hexToPixel(u.moving.to);
         v.baseX = a.x + (c.x - a.x) * t;
-        v.y = a.y + (c.y - a.y) * t - Math.sin(t * Math.PI) * (v.hasWalk || u.flying ? 3 : 10);
+        v.y = a.y + (c.y - a.y) * t - Math.sin(t * Math.PI) * (v.hasWalk || v.hovers ? 3 : 10);
         fighting.push(v);
       } else if (b) {
         const p = hexToPixel(u.pos);
@@ -698,6 +702,24 @@ export class BattleView {
       v.update(this.elapsed, 1);
     }
     if (b) this.separate(fighting, dt);
+    this.occlusion(dt);
+    for (const v of this.views.values()) {
+      v.bars.position.set(v.x, v.y + v.barsOffsetY);
+      v.bars.renderable = v.visible;
+      v.bars.alpha = v.alpha;
+    }
+  }
+
+  /** Big units (bosses, elites) fade while a disciple stands behind their body, so nobody disappears behind them. */
+  private occlusion(dt: number): void {
+    const views = [...this.views.values()].filter((v) => v.visible);
+    for (const big of views) {
+      if (big.bodyHeight < 1.4 * 180 || big.unit.side !== 'enemy') continue;
+      const hidesSomeone = views.some(
+        (o) => o !== big && o.unit.side === 'ally' && o.unit.alive && o.y < big.y - 6 && o.y > big.y - big.bodyHeight * 0.85 && Math.abs(o.x - big.x) < big.halfWidth * 0.95,
+      );
+      big.setOcclusion(hidesSomeone ? 0.58 : 1, dt);
+    }
   }
 
   /**
@@ -776,7 +798,7 @@ export class BattleView {
       }
       case 'move': {
         const v = this.viewOf(e.id);
-        if (v && !v.unit.flying) {
+        if (v && !v.hovers) {
           const p = hexToPixel(e.from);
           this.fx.dust(p.x, p.y);
         }
@@ -979,7 +1001,7 @@ export class BattleView {
         this.fx.flipbook('fx_death_burst', v.x, v.y + v.chestY, { scale: Math.max(0.9, v.bodyHeight / 170), tint: v.unit.side === 'ally' ? 0xbfe4ff : 0xff8a7a, fps: 22 });
         this.fx.burst(v.x, v.y + v.chestY, v.unit.side === 'ally' ? 0x9fd5ff : 0x8a3a3a, { count: 16, speed: 110, size: 18, life: 0.7, gravity: 30 });
         this.fx.wisp(v.x, v.y + v.chestY, col);
-        if (!v.unit.flying) this.fx.dust(v.x, v.y);
+        if (!v.hovers) this.fx.dust(v.x, v.y);
         audio.sfx('death', { volume: 0.5 });
         this.hitStop(v.unit.boss ? 220 : 55);
         if (v.unit.boss) {
