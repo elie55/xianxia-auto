@@ -518,6 +518,37 @@ export function equipItem(s: RunState, itemId: string, uid: string, fromHero?: s
   return true;
 }
 
+/**
+ * Equips a Treasure into one chosen socket of a disciple. An empty socket fills the next free slot; an occupied one
+ * trades places with the dragged Treasure: the one it replaces goes back where the dragged one came from (the
+ * inventory, or the other disciple's socket). Within the same disciple, two sockets swap.
+ */
+export function equipItemAt(s: RunState, itemId: string, uid: string, index: number, fromHero?: string): boolean {
+  const h = heroByUid(s, uid);
+  if (!h) return false;
+  if (index < 0 || index >= h.items.length) return equipItem(s, itemId, uid, fromHero);
+  if (fromHero === uid) {
+    const from = h.items.indexOf(itemId);
+    if (from < 0) return false;
+    [h.items[from], h.items[index]] = [h.items[index], h.items[from]];
+    return true;
+  }
+  const replaced = h.items[index];
+  if (fromHero) {
+    const src = heroByUid(s, fromHero);
+    if (!src) return false;
+    const i = src.items.indexOf(itemId);
+    if (i < 0) return false;
+    src.items.splice(i, 1, replaced);
+  } else {
+    const i = s.inventory.indexOf(itemId);
+    if (i < 0) return false;
+    s.inventory.splice(i, 1, replaced);
+  }
+  h.items[index] = itemId;
+  return true;
+}
+
 export function unequipItem(s: RunState, itemId: string, uid: string): boolean {
   const h = heroByUid(s, uid);
   if (!h) return false;

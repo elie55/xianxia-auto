@@ -8,7 +8,7 @@ import { HERO_BY_ID } from '@/content/heroes';
 import { RELIC_BY_ID } from '@/content/relics';
 import { ITEM_BY_ID } from '@/content/items';
 import { heroAbility, heroItemSlots, heroStats, type HeroState, type TeamContext } from '@/core/builder';
-import { endRun, equipItem, heroByUid, moveHero, relicDefs, sellHero, sellItem, teamContext, unequipItem, itemQuestState, type RunState, setPosition } from '@/core/run';
+import { endRun, equipItem, equipItemAt, heroByUid, moveHero, relicDefs, sellHero, sellItem, teamContext, unequipItem, itemQuestState, type RunState, setPosition } from '@/core/run';
 import { Icon, STAT_COLOR, STAT_ICON, STAT_LABEL } from '@/ui/components/Icon';
 import { RichText } from '@/ui/components/RichText';
 import { tip } from '@/ui/components/Tooltip';
@@ -387,7 +387,9 @@ function BottomBar({ s }: { s: RunState }) {
 function HeroSlot({ s, uid, ctx, drop, dragging, reserve, portrait = 104, sock = 34 }: { s: RunState; uid: string | null; ctx: ReturnType<typeof teamContext>; drop: string; dragging: ReturnType<typeof drag.peek>; reserve?: boolean; portrait?: number; sock?: number }) {
   const h = uid ? heroByUid(s, uid) : undefined;
   const def = h ? HERO_BY_ID[h.defId] : undefined;
-  const over = dragging?.over === drop || (dragging?.over === `hero:${uid}` && !!uid);
+  const over = dragging?.over === drop || ((dragging?.over === `hero:${uid}` || !!dragging?.over?.startsWith(`socket:${uid}:`)) && !!uid);
+  // the socket a dragged Treasure would land in (its Treasure is the one replaced)
+  const overSocket = dragging?.payload.kind === 'item' && uid && dragging.over?.startsWith(`socket:${uid}:`) ? Number(dragging.over.slice(dragging.over.lastIndexOf(':') + 1)) : -1;
   const acceptsHero = dragging?.payload.kind === 'hero';
   const acceptsItem = dragging?.payload.kind === 'item' && !!h;
   const size = reserve ? Math.min(portrait, 92) : portrait;
@@ -433,7 +435,7 @@ function HeroSlot({ s, uid, ctx, drop, dragging, reserve, portrait = 104, sock =
               {Array.from({ length: heroItemSlots(h, ctx) }).map((_, i) => {
                 const itemId = h.items[i];
                 return (
-                  <div key={i} class="slot-item" data-sell={itemId ? `item:${itemId}:${h.uid}` : undefined}>
+                  <div key={i} class={`slot-item ${overSocket === i ? (itemId ? 'drop-swap' : 'drop-fill') : ''}`} data-drop={`socket:${h.uid}:${i}`} data-sell={itemId ? `item:${itemId}:${h.uid}` : undefined}>
                     {itemId && <ItemChip itemId={itemId} size={chip} draggable onDragStart={(e) => startDrag({ kind: 'item', itemId, fromHero: h.uid }, e)} />}
                   </div>
                 );
@@ -611,6 +613,13 @@ function SellConfirm() {
   );
 }
 
+/** A Treasure socket drop target, `socket:<uid>:<index>`. */
+function parseSocket(target: string | null): { uid: string; index: number } | null {
+  if (!target?.startsWith('socket:')) return null;
+  const cut = target.lastIndexOf(':');
+  return { uid: target.slice(7, cut), index: Number(target.slice(cut + 1)) };
+}
+
 /** Shared drop resolution for all run screens. */
 export function handleDrop(payload: DragPayload, target: string | null, clientX: number, clientY: number): void {
   const s = run.value!;
@@ -628,6 +637,15 @@ export function handleDrop(payload: DragPayload, target: string | null, clientX:
     return;
   }
   if (payload.kind === 'item') {
+    // onto one socket of a disciple: that exact Treasure is replaced (or the empty socket filled)
+    const socket = parseSocket(target);
+    if (socket) {
+      act((st) => {
+        if (!equipItemAt(st, payload.itemId, socket.uid, socket.index, payload.fromHero)) showToast('Cannot equip', 'error');
+      });
+      audio.sfx('ui_equip');
+      return;
+    }
     if (target?.startsWith('hero:')) {
       const uid = target.slice(5);
       act((st) => {
@@ -653,7 +671,9 @@ export function handleDrop(payload: DragPayload, target: string | null, clientX:
     }
     return;
   }
-  // hero
+  // hero (a disciple dropped on another's Treasure socket counts as dropped on that disciple)
+  const socketOwner = parseSocket(target);
+  if (socketOwner) target = `hero:${socketOwner.uid}`;
   const lifted = payload.fromBoard ? getBattleView() : null;
   if (target?.startsWith('party:') || target?.startsWith('reserve:')) {
     const [kind, idx] = target.split(':');

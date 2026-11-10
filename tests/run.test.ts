@@ -10,6 +10,7 @@ import {
   draftPick,
   enterNode,
   equipItem,
+  equipItemAt,
   finishBattle,
   finishEvent,
   finishRewardPick,
@@ -27,6 +28,7 @@ import {
 import { Battle } from '@/battle/sim/battle';
 import { EVENT_BY_ID } from '@/content/events';
 import { Rng } from '@/core/rng';
+import { ITEMS } from '@/content/items';
 
 /** A simple greedy bot that plays a whole run through the state machine. */
 function playRun(seed: number, tier = 0, maxSteps = 600): { s: RunState; steps: number; fights: number; realmReached: number } {
@@ -215,5 +217,26 @@ describe('run state machine', () => {
     expect(s.phase).toBe('board');
     expect(s.nodeIndex).toBe(s.timeline.findIndex((n) => n.kind === 'boss'));
     expect(s.currentEncounter!.kind).toBe('boss');
+  });
+
+  it('a Treasure dropped on a socket replaces that socket, not the last one', () => {
+    const s = toFirstBoard(77);
+    const h = s.roster[0];
+    const [a, b, c2, fromBag, fromOther] = ITEMS.slice(0, 5).map((it) => it.id);
+    h.items = [a, b, c2];
+    s.inventory = [fromBag];
+    // from the inventory onto the first socket: the first Treasure goes back to the inventory
+    expect(equipItemAt(s, fromBag, h.uid, 0)).toBe(true);
+    expect(h.items).toEqual([fromBag, b, c2]);
+    expect(s.inventory).toEqual([a]);
+    // from another disciple onto the middle socket: the two Treasures trade places
+    const other = { ...h, uid: 'other', items: [fromOther] };
+    s.roster.push(other);
+    expect(equipItemAt(s, fromOther, h.uid, 1, 'other')).toBe(true);
+    expect(h.items).toEqual([fromBag, fromOther, c2]);
+    expect(other.items).toEqual([b]);
+    // within one disciple: two sockets swap
+    expect(equipItemAt(s, c2, h.uid, 0, h.uid)).toBe(true);
+    expect(h.items).toEqual([c2, fromOther, fromBag]);
   });
 });

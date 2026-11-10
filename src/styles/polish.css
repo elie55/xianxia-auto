@@ -4766,3 +4766,16 @@ input[type='range']:hover::-webkit-slider-thumb {
   right: auto;
   bottom: auto;
 }
+
+/* dragging a Treasure over a socket: the socket it would land in glows (gold = swap with the Treasure there) */
+.slot-item.drop-swap,
+.slot-item.drop-fill {
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 0 0 3px var(--gold-bright), 0 0 26px 8px rgba(243, 207, 120, 0.7);
+  scale: 1.12;
+  transition: scale 0.12s ease-out;
+}
+.slot-item.drop-fill {
+  box-shadow: 0 0 0 3px var(--jade-bright), 0 0 26px 8px rgba(111, 227, 196, 0.65);
+}
