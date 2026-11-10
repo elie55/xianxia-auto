@@ -23,10 +23,48 @@ const COLORS: Record<NumberKind, { fill: string; stroke: string }> = {
 
 let seq = 0;
 
+/** A live number that later events with the same key add into instead of spawning new text. */
+interface Merge {
+  t: Text;
+  total: number;
+  until: number;
+  format: (total: number) => string;
+}
+
 export class FloatingTextLayer extends Container {
   private pool: Text[] = [];
+  private merges = new Map<string, Merge>();
 
-  spawn(x: number, y: number, text: string, kind: NumberKind, opts: { size?: number; crit?: boolean; dot?: boolean; speed?: number; amount?: number } = {}): void {
+  /**
+   * Repeating numbers (heals, shields, ticks, buffs) on the same unit: while the last one is still young, the new
+   * amount is added to it (the text bumps) instead of stacking another number on top. Labels just skip duplicates.
+   * Returns true when the event was absorbed into a live number.
+   */
+  merge(key: string, amount: number, windowSec: number, format: (total: number) => string): boolean {
+    const now = performance.now() / 1000;
+    const m = this.merges.get(key);
+    if (m && now < m.until && m.t.parent === this) {
+      m.total += amount;
+      m.t.text = m.format(m.total);
+      gsap.fromTo(m.t.scale, { x: 1.18, y: 1.18 }, { x: 1, y: 1, duration: 0.18, ease: 'back.out(2)', overwrite: 'auto' });
+      return true;
+    }
+    return false;
+  }
+
+  /** Spawns a number that merge() can add into for `windowSec` (see merge). */
+  spawnMerged(key: string, amount: number, windowSec: number, format: (total: number) => string, x: number, y: number, kind: NumberKind, opts: Parameters<FloatingTextLayer['spawn']>[4] = {}): void {
+    if (this.merge(key, amount, windowSec, format)) return;
+    const t = this.spawn(x, y, format(amount), kind, opts);
+    this.merges.set(key, { t, total: amount, until: performance.now() / 1000 + windowSec, format });
+  }
+
+  /** Clears merge bookkeeping (a new fight). */
+  resetMerges(): void {
+    this.merges.clear();
+  }
+
+  spawn(x: number, y: number, text: string, kind: NumberKind, opts: { size?: number; crit?: boolean; dot?: boolean; speed?: number; amount?: number } = {}): Text {
     const c = COLORS[kind];
     // heavier hits read heavier: ~0.82× for chip damage, 1× at 10, ~1.36× at 1 000, capped at 1.5× (ticks scale half as much)
     const weight = opts.size === undefined && opts.amount ? Math.min(1.5, Math.max(0.82, 0.82 + 0.18 * Math.log10(Math.max(1, opts.amount)))) : 1;
@@ -62,5 +100,6 @@ export class FloatingTextLayer extends Container {
     if (opts.crit) tl.to(t.scale, { x: 1.15, y: 1.15, duration: 0.12, yoyo: true, repeat: 1, ease: 'sine.inOut' }, 0.18);
     tl.to(t, { y: y - rise, duration: dur, ease: 'power2.out' }, 0);
     tl.to(t, { alpha: 0, duration: dur * 0.4, ease: 'power1.in' }, dur * 0.6);
+    return t;
   }
 }

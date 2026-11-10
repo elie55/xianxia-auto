@@ -1,4 +1,4 @@
-import { AnimatedSprite, Assets, ColorMatrixFilter, Container, Graphics, Sprite, Text, TextStyle, Texture } from 'pixi.js';
+import { AnimatedSprite, Assets, ColorMatrixFilter, Container, Graphics, Sprite, Text, TextStyle, Texture, type DestroyOptions } from 'pixi.js';
 import gsap from 'gsap';
 import type { Unit } from '@/battle/sim/unit';
 import { STATUS_COLORS } from './Vfx';
@@ -410,6 +410,13 @@ export class UnitView extends Container {
       this.statusRow.addChild(badge);
       x += 26;
     }
+  }
+
+  /** Stops every tween on this unit's parts before Pixi tears them down (a tween on a destroyed object throws). */
+  override destroy(options?: DestroyOptions): void {
+    if (this.destroyed) return;
+    for (const t of [this, this.scale, this.body, this.body.scale, this.aura, this.shadow, this.shadow.scale, this.bars, this.statusRow]) gsap.killTweensOf(t);
+    super.destroy(options);
   }
 
   get headY(): number {

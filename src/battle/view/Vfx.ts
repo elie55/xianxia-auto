@@ -63,7 +63,7 @@ export class VfxLayer extends Container {
   private shardTex: Texture | null = null;
   /** Rough budget: skip decorative particles when the layer is already crowded. */
   private get crowded(): boolean {
-    return this.children.length > 420;
+    return this.children.length > 260;
   }
 
   private soft(): Texture {

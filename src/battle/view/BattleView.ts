@@ -1,6 +1,7 @@
 import { Application, Container, Graphics, Sprite, Text, TextStyle, Texture, Assets } from 'pixi.js';
 import gsap from 'gsap';
 import { signal } from '@preact/signals';
+import { installAnimationSafety, sweepDeadTweens } from './animSafety';
 import type { Hex } from '@/core/types';
 import { Battle, TICK, type BattleResult } from '@/battle/sim/battle';
 import { Unit, type UnitInit } from '@/battle/sim/unit';
@@ -128,6 +129,7 @@ export class BattleView {
 
   async mount(parent: HTMLElement): Promise<void> {
     if (this.ready) return;
+    installAnimationSafety();
     await this.app.init({ resizeTo: window, backgroundAlpha: 1, background: 0x070e0f, antialias: true, resolution: Math.min(2, window.devicePixelRatio || 1), autoDensity: true, preference: 'webgl' });
     parent.appendChild(this.app.canvas);
     this.app.stage.addChild(this.bgLayer);
@@ -538,6 +540,9 @@ export class BattleView {
     this.fx.removeChildren();
     this.fxBack.removeChildren();
     this.texts.removeChildren();
+    this.texts.resetMerges();
+    this.fxLast.clear();
+    this.tribulationBolts = 0;
   }
 
   // ───────────────────────── battle ─────────────────────────
@@ -596,9 +601,27 @@ export class BattleView {
     this.overlay.alpha = 0;
     this.flashOverlay.alpha = 0;
     if (this.tribulationLabel) {
+      // its pulse is an endless tween: stop it first, or it keeps animating a destroyed label forever
+      gsap.killTweensOf(this.tribulationLabel);
+      gsap.killTweensOf(this.tribulationLabel.scale);
       this.tribulationLabel.destroy();
       this.tribulationLabel = null;
     }
+    gsap.killTweensOf(this.overlay);
+  }
+
+  /** View time (s) each throttled effect last played, keyed per unit and kind (see throttle). */
+  private fxLast = new Map<string, number>();
+  /** Full lightning bolts still to draw for the current heavenly pulse. */
+  private tribulationBolts = 0;
+  private lastSweep = 0;
+
+  /** Throttle: true (and stamps the time) when `key` has not played for `gap` seconds of real time. */
+  private throttle(key: string, gap: number): boolean {
+    const last = this.fxLast.get(key);
+    if (last !== undefined && this.elapsed - last < gap) return false;
+    this.fxLast.set(key, this.elapsed);
+    return true;
   }
 
   private frame(deltaMS: number): void {
@@ -606,6 +629,11 @@ export class BattleView {
     this.elapsed += dt;
     // the deployment zone breathes softly while you place disciples
     if (this.mode === 'placement') this.hexLayer.alpha = 0.8 + 0.2 * Math.sin(this.elapsed * 2.4);
+    // housekeeping: drop any tween left animating a destroyed object (see animSafety)
+    if (this.elapsed - this.lastSweep > 2) {
+      this.lastSweep = this.elapsed;
+      sweepDeadTweens();
+    }
     // camera shake
     if (this.shakeAmt > 0.2) {
       const v = viewport.value;
@@ -820,16 +848,30 @@ export class BattleView {
         if (!v) break;
         const src = this.viewOf(e.sourceId);
         if (e.dot) {
-          if (showNumbers) this.texts.spawn(v.x, v.y + v.headY, `${e.amount}`, (e.dot === 'tribulation' ? 'tribulation' : e.dot) as NumberKind, { dot: true, amount: e.amount });
+          // ticks on the same unit add into one rising number instead of stacking
+          const dotKind = (e.dot === 'tribulation' ? 'tribulation' : e.dot) as NumberKind;
+          if (showNumbers) this.texts.spawnMerged(`${e.dot}:${e.id}`, e.amount, 0.45, (n) => `${n}`, v.x, v.y + v.headY, dotKind, { dot: true, amount: e.amount });
+          if (e.dot === 'tribulation') {
+            // one heavenly pulse for the whole field (a flash, a light shake, two full bolts), a small crackle elsewhere
+            if (this.throttle('tribulation:pulse', 0.9)) {
+              this.screenFlash(0xfff27a, 0.1, 0.3);
+              this.shake(3);
+              this.tribulationBolts = 2;
+            }
+            if (this.tribulationBolts > 0 && this.throttle(`tribulation:${e.id}`, 0.9)) {
+              this.tribulationBolts--;
+              this.fx.strike(v.x, v.y, 0xfff27a);
+              this.fx.flipbook('fx_lightning_strike', v.x, v.y + 6, { scale: 1.1, anchorY: 0.92, fps: 30 });
+            } else if (this.throttle(`crackle:${e.id}`, 0.9)) {
+              this.fx.sparks(v.x, v.y + v.chestY, 1, 0xfff27a, 3, 160);
+              this.fx.sparks(v.x, v.y + v.chestY, -1, 0xfff27a, 3, 160);
+            }
+            break;
+          }
+          if (!this.throttle(`dot:${e.dot}:${e.id}`, 0.5)) break;
           if (e.dot === 'burn') this.fx.embers(v.x, v.y, STATUS_COLORS.burn, 3);
           if (e.dot === 'poison') this.fx.burst(v.x, v.y - 50, STATUS_COLORS.poison, { count: 3, speed: 30, size: 10, life: 0.5 });
           if (e.dot === 'bleed') this.fx.burst(v.x, v.y + v.chestY, STATUS_COLORS.bleed, { count: 3, speed: 50, size: 10, life: 0.4, gravity: 30 });
-          if (e.dot === 'tribulation') {
-            this.fx.strike(v.x, v.y, 0xfff27a);
-            this.fx.flipbook('fx_lightning_strike', v.x, v.y + 6, { scale: 1.1, anchorY: 0.92, fps: 30 });
-            this.screenFlash(0xfff27a, 0.12, 0.25);
-            this.shake(3);
-          }
           break;
         }
         v.hurtAnim(e.crit, src?.x);
@@ -837,9 +879,13 @@ export class BattleView {
         if (showNumbers) this.texts.spawn(v.x, v.y + v.headY, e.crit ? `${e.amount}!` : `${e.amount}`, kind, { crit: e.crit, amount: e.amount });
         const dir = src ? (v.x >= src.x ? 1 : -1) : -v.unit.facing;
         const hitColor = e.crit ? 0xffd84a : e.kind === 'magic' ? 0xb57cff : e.kind === 'true' ? 0xffd9a1 : 0xfff1c0;
-        this.fx.sparks(v.x - dir * 8, v.y + v.chestY, dir, hitColor, e.crit ? 11 : 5, e.crit ? 340 : 220);
-        this.fx.flash(v.x, v.y + v.chestY, hitColor, e.crit ? 150 : 70, e.crit ? 0.35 : 0.2);
-        if (e.absorbed > 0) this.fx.dome(v.x, v.y, 0xbfe4ff, v.halfWidth + 14, v.bodyHeight);
+        // impact flashes are additive: a unit hit many times a second would turn into a white blob
+        if (e.crit || this.throttle(`hit:${e.id}`, 0.12)) {
+          this.fx.sparks(v.x - dir * 8, v.y + v.chestY, dir, hitColor, e.crit ? 11 : 5, e.crit ? 340 : 220);
+          this.fx.flash(v.x, v.y + v.chestY, hitColor, e.crit ? 150 : 70, e.crit ? 0.35 : 0.2);
+        }
+        // a hit soaked by a shield: a faint rim, not a bright dome over the character
+        if (e.absorbed > 0 && this.throttle(`absorb:${e.id}`, 0.45)) this.fx.rim(v.x, v.y, 0xbfe4ff, v.halfWidth + 14, v.bodyHeight);
         if (e.crit) {
           this.shake(v.unit.boss ? 10 : 5);
           this.hitStop(v.unit.boss ? 60 : 38);
@@ -851,19 +897,24 @@ export class BattleView {
       case 'heal': {
         const v = this.viewOf(e.id);
         if (!v || e.amount <= 0) break;
-        if (showNumbers) this.texts.spawn(v.x, v.y + v.headY, `+${e.amount}`, 'heal', { amount: e.amount });
-        this.fx.motes(v.x, v.y, 0x8dff9a, 8, 120);
-        this.fx.ring(v.x, v.y, 0x8dff9a, 50, 2, 0.5, hexLayout.squash);
+        if (showNumbers) this.texts.spawnMerged(`heal:${e.id}`, e.amount, 0.5, (n) => `+${n}`, v.x, v.y + v.headY, 'heal', { amount: e.amount });
+        if (this.throttle(`heal:${e.id}`, 0.6)) {
+          this.fx.motes(v.x, v.y, 0x8dff9a, 8, 120);
+          this.fx.ring(v.x, v.y, 0x8dff9a, 50, 2, 0.5, hexLayout.squash);
+        }
         audio.sfx('heal', { volume: 0.35, throttleMs: 300 });
         break;
       }
       case 'shield': {
         const v = this.viewOf(e.id);
         if (!v) break;
-        if (showNumbers) this.texts.spawn(v.x, v.y + v.headY, `+${e.amount}`, 'shield', { size: 20 });
-        this.fxBack.dome(v.x, v.y, 0xbfe4ff, v.halfWidth + 18, v.bodyHeight, 0.16);
-        this.fx.rim(v.x, v.y, 0xbfe4ff, v.halfWidth + 18, v.bodyHeight);
-        v.tintFlash(0xd6ecff, 0.3);
+        if (showNumbers) this.texts.spawnMerged(`shield:${e.id}`, e.amount, 0.6, (n) => `+${n}`, v.x, v.y + v.headY, 'shield', { size: 20 });
+        // repeated shields (auras, insights) refresh constantly: the barrier shimmer plays at most every 0.8 s per unit
+        if (this.throttle(`shield:${e.id}`, 0.8)) {
+          this.fxBack.dome(v.x, v.y, 0xbfe4ff, v.halfWidth + 18, v.bodyHeight, 0.16);
+          this.fx.rim(v.x, v.y, 0xbfe4ff, v.halfWidth + 18, v.bodyHeight);
+          v.tintFlash(0xd6ecff, 0.3);
+        }
         audio.sfx('shield', { volume: 0.35, throttleMs: 300 });
         break;
       }
@@ -871,6 +922,8 @@ export class BattleView {
         const v = this.viewOf(e.id);
         if (!v) break;
         const color = STATUS_COLORS[e.status] ?? 0xffffff;
+        // re-applied statuses (every hit can add a stack) show their burst at most every 0.6 s per unit
+        if (!this.throttle(`status:${e.status}:${e.id}`, 0.6)) break;
         switch (e.status) {
           case 'burn':
             this.fx.embers(v.x, v.y, color, 8);
@@ -953,9 +1006,16 @@ export class BattleView {
       case 'buff': {
         const v = this.viewOf(e.id);
         if (!v || !showNumbers) break;
-        const label = e.label ?? `${e.flat ? (e.flat > 0 ? '+' : '') + e.flat : (e.pct > 0 ? '+' : '') + e.pct + '%'} ${STAT_SHORT[e.stat] ?? e.stat}`;
-        this.texts.spawn(v.x, v.y + v.headY - 24, label, 'buff', { size: 14 });
-        if (e.flat > 0 || e.pct > 0) this.fx.motes(v.x, v.y, 0xf3cf78, 4, 70);
+        // growing buffs (Dao Companions, stacking insights) tick every second: one label per stat that adds up
+        if (e.label) {
+          if (this.throttle(`buff:${e.id}:${e.label}`, 1.5)) this.texts.spawn(v.x, v.y + v.headY - 24, e.label, 'buff', { size: 14 });
+        } else {
+          const stat = STAT_SHORT[e.stat] ?? e.stat;
+          const pct = !e.flat;
+          const amount = pct ? e.pct : e.flat;
+          this.texts.spawnMerged(`buff:${e.id}:${e.stat}:${pct ? '%' : '+'}`, amount, 1.4, (n) => `${n > 0 ? '+' : ''}${Math.round(n * 10) / 10}${pct ? '%' : ''} ${stat}`, v.x, v.y + v.headY - 24, 'buff', { size: 14 });
+        }
+        if ((e.flat > 0 || e.pct > 0) && this.throttle(`buffmotes:${e.id}`, 1.2)) this.fx.motes(v.x, v.y, 0xf3cf78, 4, 70);
         break;
       }
       case 'vfx': {
@@ -990,7 +1050,8 @@ export class BattleView {
       }
       case 'companion': {
         const [a, b] = e.ids.map((id) => this.viewOf(id));
-        if (a && b) {
+        // companions grow every second: the bond shows when it forms and every few seconds after, not every tick
+        if (a && b && this.throttle(`companion:${e.ids.join('-')}`, 5)) {
           const g = new Graphics();
           g.moveTo(a.x, a.y + a.chestY).lineTo(b.x, b.y + b.chestY).stroke({ color: 0xff9ad5, width: 3, alpha: 0.9 });
           g.blendMode = 'add';
