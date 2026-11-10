@@ -52,6 +52,21 @@ export function burstAt(x: number, y: number, color = 'var(--gold-bright)'): voi
 }
 
 /**
+ * In-context refusal (not enough Spirit Stones): the thing you clicked shakes with its price flashing red, and the
+ * Spirit Stone counter pulses red, instead of a message box far away from both.
+ */
+export function deny(el: Element | null): void {
+  audio.sfx('ui_error', { volume: 0.6 });
+  for (const t of [el, document.querySelector('.stones-pill.big')]) {
+    if (!t) continue;
+    t.classList.remove('deny');
+    void (t as HTMLElement).offsetWidth;
+    t.classList.add('deny');
+    setTimeout(() => t.classList.remove('deny'), 520);
+  }
+}
+
+/**
  * Victory payout: Spirit Stone crystals arc one by one from `source` (the results total) to the HUD counter; each
  * arrival releases its share of `amount` from stonesHeld, so the counter climbs as the stones land.
  */

@@ -5165,3 +5165,101 @@ input[type='range']:hover::-webkit-slider-thumb {
   font-variant-numeric: tabular-nums;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
 }
+
+/* ───────── SHOP polish: painted Rank Up ribbon, a brazier sell zone with the refund, in-context refusals ───────── */
+.rankup-ribbon {
+  position: relative;
+  padding: 7px 26px 7px 22px;
+  border-radius: 3px;
+  color: #f4fff9;
+  text-shadow: 0 1px 2px rgba(0, 40, 30, 0.9);
+  background: linear-gradient(180deg, #3fd1a8 0%, #1f8f70 55%, #146b53 100%);
+  box-shadow: 0 0 0 1.5px #e6c26a, 0 0 0 3px rgba(20, 40, 30, 0.9), 0 0 22px rgba(63, 191, 159, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  clip-path: polygon(0 0, 100% 0, 94% 50%, 100% 100%, 0 100%, 6% 50%);
+}
+.rankup-ribbon .icon {
+  filter: drop-shadow(0 1px 1px rgba(0, 40, 30, 0.9));
+}
+.sell-zone.v2 {
+  height: 46px;
+  padding: 0 20px 0 8px;
+  border: 0;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(20, 30, 30, 0.9), rgba(6, 12, 12, 0.92));
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 75, 0.45);
+  color: var(--paper-dim);
+}
+.sell-brazier {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--gold);
+  background: radial-gradient(circle at 50% 70%, rgba(255, 140, 60, 0.18), rgba(10, 18, 18, 0.95) 70%);
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 75, 0.6);
+  transition: box-shadow 0.2s, background 0.2s;
+}
+.sell-zone.v2.armed {
+  color: var(--gold-bright);
+  box-shadow: inset 0 0 0 1px var(--gold-bright), 0 0 22px rgba(243, 207, 120, 0.35);
+}
+.sell-zone.v2.armed .sell-brazier {
+  background: radial-gradient(circle at 50% 75%, rgba(255, 170, 70, 0.95), rgba(220, 70, 30, 0.55) 45%, rgba(10, 18, 18, 0.95) 75%);
+  box-shadow: inset 0 0 0 1px var(--gold-bright), 0 0 18px rgba(255, 150, 60, 0.75);
+  animation: brazier-flicker 0.45s ease-in-out infinite alternate;
+}
+.sell-zone.v2.over {
+  transform: scale(1.06);
+  color: #ffe2b0;
+  background: linear-gradient(180deg, rgba(90, 30, 18, 0.95), rgba(40, 12, 8, 0.95));
+  box-shadow: inset 0 0 0 1px #ffb36b, 0 0 30px rgba(255, 140, 60, 0.6);
+}
+@keyframes brazier-flicker {
+  from {
+    filter: brightness(0.9);
+  }
+  to {
+    filter: brightness(1.25);
+  }
+}
+.sell-label b {
+  color: var(--gold-bright);
+  font-size: 1.15em;
+}
+.deny {
+  animation: deny-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+.deny .price,
+.deny .price-tag,
+.deny .shop-price,
+.deny [class*='price'] {
+  color: var(--vermilion-bright) !important;
+}
+.stones-pill.big.deny {
+  box-shadow: 0 0 0 2px var(--vermilion-bright), 0 0 22px rgba(255, 107, 90, 0.6);
+  color: var(--vermilion-bright);
+}
+@keyframes deny-shake {
+  10%,
+  90% {
+    translate: -2px 0;
+  }
+  20%,
+  80% {
+    translate: 4px 0;
+  }
+  30%,
+  50%,
+  70% {
+    translate: -7px 0;
+  }
+  40%,
+  60% {
+    translate: 7px 0;
+  }
+}
+/* messages sit below the top bar and the shop toolbar instead of on top of them */
+.toast {
+  top: 178px;
+}

@@ -1,7 +1,7 @@
 import { useEffect } from 'preact/hooks';
-import { flyTo } from '@/ui/flourish';
+import { deny, flyTo } from '@/ui/flourish';
 import { act, run, showToast } from '@/app/store';
-import { beginRankUps, buyHero, buyItem, buyRelic, proceedFromShop, rerollCost, shopReroll, toggleFreeze, type RunState } from '@/core/run';
+import { beginRankUps, buyHero, buyItem, buyRelic, heroSellValue, itemSellValue, proceedFromShop, rerollCost, shopReroll, toggleFreeze, type RunState } from '@/core/run';
 import { ITEM_BY_ID } from '@/content/items';
 import { RELIC_BY_ID } from '@/content/relics';
 import { HeroCard, ItemChip, ItemTip } from '@/ui/components/HeroCard';
@@ -23,6 +23,8 @@ export function ShopScreen() {
   const shop = s.shop!;
   const dragging = drag.value;
   const cost = rerollCost(s);
+  // what the dragged disciple or Treasure would sell for
+  const refund = dragging?.started ? (dragging.payload.kind === 'hero' ? heroSellValue(s, dragging.payload.uid) : itemSellValue(dragging.payload.itemId)) : null;
   const ctx = teamContext(s);
   const offerEl = (key: string) => document.querySelector(`[data-offer="${key}"]`);
   const lastFilled = (sel: string) => [...document.querySelectorAll(sel)].filter((el) => el.firstElementChild).pop() ?? null;
@@ -33,8 +35,11 @@ export function ShopScreen() {
     act((st) => {
       const r = buyHero(st, key);
       if (!r.ok) {
-        if (r.reason) showToast(r.reason, 'error');
-        audio.sfx('ui_error');
+        if (r.reason === 'Not enough Spirit Stones') deny(src);
+        else {
+          if (r.reason) showToast(r.reason, 'error');
+          audio.sfx('ui_error');
+        }
         return;
       }
       ok = true;
@@ -49,8 +54,11 @@ export function ShopScreen() {
     act((st) => {
       const r = buyItem(st, key);
       if (!r.ok) {
-        if (r.reason) showToast(r.reason, 'error');
-        audio.sfx('ui_error');
+        if (r.reason === 'Not enough Spirit Stones') deny(src);
+        else {
+          if (r.reason) showToast(r.reason, 'error');
+          audio.sfx('ui_error');
+        }
       } else {
         ok = true;
         audio.sfx('ui_buy');
@@ -64,8 +72,11 @@ export function ShopScreen() {
     act((st) => {
       const r = buyRelic(st, key);
       if (!r.ok) {
-        if (r.reason) showToast(r.reason, 'error');
-        audio.sfx('ui_error');
+        if (r.reason === 'Not enough Spirit Stones') deny(src);
+        else {
+          if (r.reason) showToast(r.reason, 'error');
+          audio.sfx('ui_error');
+        }
       } else {
         ok = true;
         audio.sfx('ui_buy');
@@ -87,10 +98,11 @@ export function ShopScreen() {
               data-hotkey="reroll"
               disabled={s.stones < cost}
               {...tip(<><h4>Reroll <kbd class="keycap">R</kbd></h4><p>Replace every offer for the price shown.</p></>, 'below')}
-              onClick={() => {
+              onClick={(e) => {
+                const btn = e.currentTarget;
                 act((st) => {
                   if (shopReroll(st)) audio.sfx('ui_reroll');
-                  else showToast('Not enough Spirit Stones', 'error');
+                  else deny(btn);
                 });
               }}
             >
@@ -99,9 +111,17 @@ export function ShopScreen() {
             <button class={`btn small ${s.shopFrozen ? 'primary' : ''}`} data-hotkey="freeze" onClick={() => act((st) => (toggleFreeze(st), audio.sfx('ui_click')))} {...tip(<><h4>Freeze <kbd class="keycap">F</kbd></h4><p>Keep the current offers for the next shop.</p></>, 'below')}>
               <Icon name="ui_freeze" size={16} /> {s.shopFrozen ? 'Unfreeze shop' : 'Freeze shop'}
             </button>
-            <div class={`sell-zone ${dragging?.started ? 'armed' : ''} ${dragging?.over === 'sell' ? 'over' : ''}`} data-drop="sell" {...tip(<><h4>Sell</h4><p>Drag a disciple or Treasure here to sell it for Spirit Stones. Disciples refund part of their price; equipped Treasures are refunded too.</p><p>Or point at one and press <kbd class="keycap">E</kbd>.</p></>, 'below')}>
-              <Icon name="ui_sell" size={18} />
-              {dragging?.started ? (dragging.payload.kind === 'hero' ? 'Sell disciple' : 'Sell treasure') : 'Drop here to sell'}
+            <div class={`sell-zone v2 ${dragging?.started ? 'armed' : ''} ${dragging?.over === 'sell' ? 'over' : ''}`} data-drop="sell" {...tip(<><h4>Sell</h4><p>Drag a disciple or Treasure here to sell it for Spirit Stones. Disciples refund part of their price; equipped Treasures are refunded too.</p><p>Or point at one and press <kbd class="keycap">E</kbd>.</p></>, 'below')}>
+              <span class="sell-brazier">
+                <Icon name="ui_sell" size={22} />
+              </span>
+              {refund !== null ? (
+                <span class="sell-label">
+                  Sell for <b>+{refund}</b> <Icon name="stones" size={16} />
+                </span>
+              ) : (
+                <span class="sell-label">Drop here to sell</span>
+              )}
             </div>
             <div class="grow" />
             <button
@@ -170,7 +190,7 @@ export function ShopScreen() {
                   return (
                     <div key={o ? o.key : `sold${i}`} class="shop-card-wrap" data-offer={o?.key}>
                       <div class={`rankup-ribbon ${owned ? '' : 'hidden'}`} {...(owned ? tip(<><h4>Rank Up</h4><p>You already own this disciple. Buying the card again raises their rank.</p></>) : {})}>
-                        ▲ Rank Up
+                        <Icon name="ui_rank" size={15} /> Rank Up
                       </div>
                       {o ? (
                         <HeroCard defId={o.defId} rank={o.rank} price={o.price} sale={o.sale} owned={owned} onClick={() => onBuyHero(o.key)} ctx={ctx} compact />
