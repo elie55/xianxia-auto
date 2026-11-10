@@ -34,10 +34,17 @@ export function InkTransition() {
     if (last.current !== null && last.current !== key) setPlay((n) => n + 1);
     last.current = key;
   }, [key]);
+  // the veil leaves once its wash has opened (the animation runs on the child, so any animationend inside counts);
+  // a timer backs that up, for animations the browser skips (reduced motion, a hidden window)
+  useEffect(() => {
+    if (!play) return;
+    const t = setTimeout(() => setPlay(0), 900);
+    return () => clearTimeout(t);
+  }, [play]);
   if (!play) return null;
   const calm = reducedMotion();
   return (
-    <div key={play} class={`ink-veil ${calm ? 'calm' : ''}`} aria-hidden="true" onAnimationEnd={(e) => e.target === e.currentTarget && setPlay(0)}>
+    <div key={play} class={`ink-veil ${calm ? 'calm' : ''}`} aria-hidden="true" onAnimationEnd={() => setPlay(0)}>
       <svg class="ink-defs" width="0" height="0" aria-hidden="true">
         <filter id="ink-rough" x="-10%" y="-10%" width="120%" height="120%">
           <feTurbulence type="fractalNoise" baseFrequency="0.011 0.016" numOctaves="3" seed="4" result="n" />

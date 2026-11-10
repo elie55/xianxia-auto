@@ -6584,19 +6584,6 @@ button.class-member:hover .portrait {
   color: var(--paper-faint);
   background: rgba(0, 0, 0, 0.3);
 }
-/* the bundled Cinzel carries capitals only: Compendium titles in Cinzel are set in capitals so no letter falls back to a plain serif */
-.codex-screen.v2 .codex-card-name,
-.drawer-sec .drawer-ability-name,
-.class-insight-name {
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-.codex-screen.v2 .codex-card-name {
-  font-size: calc(16px * var(--ts, 1));
-}
-.class-insight-name {
-  font-size: calc(14px * var(--ts, 1));
-}
 .tag.drawer-price {
   color: var(--gold-bright);
   border-color: rgba(212, 168, 75, 0.4);
@@ -7061,4 +7048,22 @@ button.class-member:hover .portrait {
 .board-tier {
   font-size: 22px;
   line-height: 1;
+}
+
+/* ───────── NEW RUN: a larger Begin Ascension plaque ───────── */
+.newrun-footer .btn.gold.big {
+  min-width: 600px;
+  min-height: 96px;
+  border-width: 15px 84px;
+  border-image-width: 15px 84px;
+  padding: 4px 34px 0;
+  font-size: calc(32px * var(--ts, 1));
+  letter-spacing: 0.18em;
+}
+.newrun-footer .btn.gold.big .btn-glyph {
+  font-size: 1.35em;
+  margin-right: 6px;
+}
+.newrun-footer {
+  padding: 14px 0 40px;
 }

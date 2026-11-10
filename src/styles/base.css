@@ -45,7 +45,10 @@ body {
   z-index: 1;
   pointer-events: none;
 }
-#ui-root > * {
+/* screens take the pointer; :where() keeps this at zero specificity so click-through layers (ink veil, tooltip,
+   toast, tutorial, flourish, a fading loading veil) keep their own pointer-events: none. Written as #ui-root > *,
+   the id outranked those class rules and the ink veil, left over a screen, swallowed every click. */
+:where(#ui-root) > * {
   pointer-events: auto;
 }
 
