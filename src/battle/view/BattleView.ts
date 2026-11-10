@@ -1,5 +1,6 @@
 import { Application, Container, Graphics, Sprite, Text, TextStyle, Texture, Assets } from 'pixi.js';
 import { reducedMotion } from '@/app/motion';
+import { AmbientLayer } from './Ambient';
 import gsap from 'gsap';
 import { signal } from '@preact/signals';
 import { installAnimationSafety, sweepDeadTweens } from './animSafety';
@@ -83,6 +84,27 @@ const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: numbe
   fist_flurry: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 0.7 },
 };
 
+/** Each technique's own sound (on top of the shared cast whoosh), played when it leaves the hands. */
+const TECHNIQUE_SFX: Record<string, { key: string; rate?: number; volume?: number; repeat?: number; gap?: number }> = {
+  li_jian: { key: 'sword', rate: 1.15, volume: 0.7 },
+  shan_tie: { key: 'shield', rate: 0.7, volume: 0.75 },
+  hong_lian: { key: 'fire', rate: 1.05, volume: 0.65 },
+  mei_yao: { key: 'heal', rate: 1.1, volume: 0.6 },
+  ying_wu: { key: 'blink', rate: 0.9, volume: 0.7 },
+  tie_quan: { key: 'hit_crit', rate: 1.25, volume: 0.45, repeat: 4, gap: 0.08 },
+  xuan_bing: { key: 'frost', rate: 0.85, volume: 0.7 },
+  lei_zhen: { key: 'lightning', rate: 1, volume: 0.6 },
+  long_mu: { key: 'swing', rate: 1.45, volume: 0.65 },
+  bai_hu: { key: 'boss_roar', rate: 1.45, volume: 0.4 },
+  qing_feng: { key: 'swing', rate: 0.8, volume: 0.7 },
+  yue_ling: { key: 'shield', rate: 1.45, volume: 0.55 },
+  hei_yan: { key: 'fire', rate: 0.7, volume: 0.6 },
+  zhu_sha: { key: 'poison', rate: 0.9, volume: 0.65 },
+  gu_lao: { key: 'heal', rate: 0.75, volume: 0.6 },
+  feng_huang: { key: 'fire', rate: 1.25, volume: 0.7 },
+  blood_moon_sovereign: { key: 'tribulation', rate: 0.8, volume: 0.5 },
+  flood_dragon: { key: 'frost', rate: 0.6, volume: 0.75 },
+};
 export class BattleView {
   readonly app = new Application();
   private ready = false;
@@ -98,6 +120,8 @@ export class BattleView {
   private bgPainting: Sprite | null = null;
   private bgGradient = new Graphics();
   private world = new Container();
+  /** Living arena: petals, embers or clouds between the painting and the fighters (Ambient.ts). */
+  private ambient: AmbientLayer | null = null;
   private arenaLayer = new Container();
   private ground = new Graphics();
   private hexLayer = new Graphics();
@@ -146,6 +170,10 @@ export class BattleView {
     this.app.stage.addChild(this.bgLayer);
     this.bgLayer.addChild(this.bgGradient);
     this.app.stage.addChild(this.world);
+    // first child: the painting is inserted below it later, the board layers stay above it
+    this.ambient = new AmbientLayer(this.app.renderer);
+    this.world.addChild(this.ambient);
+    this.ambient.setRealm(this.realm || 1);
     this.world.addChild(this.arenaLayer);
     this.arenaLayer.addChild(this.ground);
     this.arenaLayer.addChild(this.hexLayer);
@@ -245,6 +273,7 @@ export class BattleView {
 
   async setRealm(realm: number): Promise<void> {
     this.realm = realm;
+    this.ambient?.setRealm(realm);
     this.layoutBoard();
     this.drawBackground(viewport.value);
     this.drawGround();
@@ -712,6 +741,10 @@ export class BattleView {
     if (b) this.separate(fighting, dt);
     this.occlusion(dt);
     this.updateCamera(dt, fighting);
+    if (this.ambient) {
+      this.ambient.visible = !reducedMotion();
+      if (this.ambient.visible) this.ambient.update(dt);
+    }
     for (const v of this.views.values()) {
       v.bars.position.set(v.x, v.y + v.barsOffsetY);
       v.bars.renderable = v.visible;
@@ -955,6 +988,12 @@ export class BattleView {
           audio.sfx('boss_roar', { volume: 0.6 });
         }
         audio.sfx('cast', { volume: 0.5 });
+        // the technique's own sound, when it leaves the hands (the sim resolves abilities 55 % into their cast time)
+        const tech = TECHNIQUE_SFX[v.unit.defId];
+        if (tech) {
+          const castTime = v.unit.ability?.castTime ?? 0.6;
+          for (let i = 0; i < (tech.repeat ?? 1); i++) gsap.delayedCall(castTime * 0.55 + i * (tech.gap ?? 0.09), () => audio.sfx(tech.key, { volume: tech.volume ?? 0.6, rate: tech.rate, throttleMs: 0 }));
+        }
         break;
       }
       case 'damage': {
@@ -1015,6 +1054,7 @@ export class BattleView {
         if (this.throttle(`heal:${e.id}`, 0.6)) {
           this.fx.motes(v.x, v.y, 0x8dff9a, 8, 120);
           this.fx.ring(v.x, v.y, 0x8dff9a, 50, 2, 0.5, hexLayout.squash);
+          v.tintFlash(0x9dffb4, 0.35);
         }
         audio.sfx('heal', { volume: 0.35, throttleMs: 300 });
         break;

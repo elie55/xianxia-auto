@@ -5,6 +5,7 @@ import { STATUS_COLORS } from './Vfx';
 import { loadSpritePack, type SpriteAnimDef, type SpritePack } from './SpritePack';
 import { loadUnitTexture } from './textures';
 import { teamPalette } from './palette';
+import { GlowFilter } from 'pixi-filters';
 
 /** Status medallion art: painted icons in assets/art/ui/status when present, else the tinted keyword glyph. */
 const STATUS_GLYPH: Record<string, string> = { burn: 'kw_burn', poison: 'kw_poison', frost: 'kw_frost', bleed: 'kw_bleed', taunt: 'kw_taunt', stun: 'kw_lightning' };
@@ -72,6 +73,8 @@ export class UnitView extends Container {
   private statusRow = new Container();
   private nameLabel: Text | null = null;
   private brightness = new ColorMatrixFilter();
+  /** Heals, shields and statuses light the body's outline instead of recolouring the sprite (tintFlash). */
+  private glow: GlowFilter | null = null;
   private bob = Math.random() * Math.PI * 2;
   private baseScale: number;
   private auraColor = 0x3fbf9f;
@@ -437,6 +440,7 @@ export class UnitView extends Container {
   override destroy(options?: DestroyOptions): void {
     if (this.destroyed) return;
     for (const t of [this, this.scale, this.body, this.body.scale, this.aura, this.shadow, this.shadow.scale, this.bars, this.statusRow]) gsap.killTweensOf(t);
+    if (this.glow) gsap.killTweensOf(this.glow);
     this.bars.destroy({ children: true }); // it lives in the battle view's bar layer, not under this view
     super.destroy(options);
   }
@@ -534,12 +538,18 @@ export class UnitView extends Container {
   }
 
   /** Tints the body for a moment (frost = blue, poison = green...). */
+  /** A soft coloured glow around the body (heal, shield, burn, frost, poison): the sprite keeps its own colours. */
   tintFlash(color: number, duration = 0.35): void {
-    const targets = this.body.children as (Sprite | Container)[];
-    for (const c of targets) if ('tint' in c) (c as Sprite).tint = color;
-    gsap.delayedCall(duration, () => {
-      for (const c of targets) if ('tint' in c && !c.destroyed) (c as Sprite).tint = 0xffffff;
-    });
+    if (this.destroyed) return;
+    if (!this.glow) {
+      this.glow = new GlowFilter({ distance: 12, outerStrength: 0, innerStrength: 0, color, quality: 0.2, alpha: 0.9 });
+      this.body.filters = [this.brightness, this.glow];
+    }
+    const g = this.glow;
+    g.color = color;
+    g.enabled = true;
+    gsap.killTweensOf(g);
+    gsap.fromTo(g, { outerStrength: 2.6 }, { outerStrength: 0, duration: duration + 0.3, ease: 'power2.out', onComplete: () => void (g.enabled = false) });
   }
 
   pulseAura(color: number, alpha: number, duration: number): void {
