@@ -488,7 +488,12 @@ export class UnitView extends Container {
   }
 
   castAnim(): void {
-    if (!this.playAnim('cast') && !this.playAnim('attack', { fps: 30 })) {
+    // a cast clip (e.g. the dragon's Tidal Breath) is timed so its release, about 55 % in, lands when the ability
+    // resolves at the end of its cast time
+    const def = this.pack?.def.animations.cast;
+    const castTime = Math.max(0.3, this.unit.ability?.castTime ?? 0.6);
+    const castFps = def ? Math.min(30, Math.max(def.fps, (def.frames * 0.55) / castTime)) : undefined;
+    if (!this.playAnim('cast', castFps ? { fps: castFps } : {}) && !this.playAnim('attack', { fps: 30 })) {
       const tl = gsap.timeline();
       tl.to(this.body.scale, { y: 1.12, duration: 0.15, ease: 'power2.out' }).to(this.body.scale, { y: 1, duration: 0.25, ease: 'back.out(2)' });
     }

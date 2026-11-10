@@ -12,6 +12,46 @@
       "charH": 173,
       "loop": true,
       "charW": 209
+    },
+    "attack": {
+      "sheet": "attack.png",
+      "frames": 25,
+      "cols": 5,
+      "frameW": 404,
+      "frameH": 258,
+      "fps": 10.7,
+      "pivotX": 0.3614,
+      "pivotY": 0.7906,
+      "charH": 149,
+      "loop": false,
+      "hitFrame": 12,
+      "charW": 180
+    },
+    "cast": {
+      "sheet": "cast.png",
+      "frames": 19,
+      "cols": 5,
+      "frameW": 485,
+      "frameH": 442,
+      "fps": 10.7,
+      "pivotX": 0.3698,
+      "pivotY": 0.9757,
+      "charH": 345,
+      "loop": false,
+      "charW": 417
+    },
+    "walk": {
+      "sheet": "walk.png",
+      "frames": 25,
+      "cols": 5,
+      "frameW": 298,
+      "frameH": 202,
+      "fps": 10.7,
+      "pivotX": 0.5068,
+      "pivotY": 0.9456,
+      "charH": 177,
+      "loop": true,
+      "charW": 214
     }
   }
 }
