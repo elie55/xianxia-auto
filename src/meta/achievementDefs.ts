@@ -3,7 +3,7 @@ import type { RunState } from '@/core/run';
 import type { RunEvent } from '@/core/runEvents';
 import type { ClassId } from '@/core/types';
 import { heroClasses } from '@/core/builder';
-import { HEROES } from '@/content/heroes';
+import { BASE_HEROES } from '@/content/heroes';
 import { ITEMS } from '@/content/items';
 import { RELICS } from '@/content/relics';
 import { ENEMIES } from '@/content/enemies';
@@ -183,7 +183,7 @@ export function earnedBy(e: MetaEvent, m: MetaSave): string[] {
       const mm = e.m;
       const seen = mm.seen;
       const codex = [
-        allIn(seen?.heroes, HEROES.map((h) => h.id)),
+        allIn(seen?.heroes, BASE_HEROES.map((h) => h.id)),
         allIn(seen?.items, ITEMS.map((i) => i.id)),
         allIn(seen?.relics, RELICS.map((r) => r.id)),
         allIn(seen?.enemies, ENEMIES.map((x) => x.id)),
@@ -201,7 +201,7 @@ export function earnedBy(e: MetaEvent, m: MetaSave): string[] {
       if (cleared >= 10) out.push('ACH_LADDER_10');
       if (cleared >= 20) out.push('ACH_LADDER_20');
       if (allIn(mm.lifetime?.challengesWon, CHALLENGE_IDS)) out.push('ACH_SEEKER');
-      if (allIn(mm.lifetime?.winnersWith, HEROES.map((h) => h.id))) out.push('ACH_HUNDRED_SCHOOLS');
+      if (allIn(mm.lifetime?.winnersWith, BASE_HEROES.map((h) => h.id))) out.push('ACH_HUNDRED_SCHOOLS');
       break;
     }
   }

@@ -13,21 +13,27 @@ import {
   CURRENCIES,
   MAX_BUILDING_LEVEL,
   RECIPES,
+  RECRUITS,
   STUDIES,
   canAfford,
+  draftSizeFor,
+  freeRerollsFor,
   isOpen,
   levelCap,
   levelCost,
+  recruitState,
   sealSlots,
   sectOf,
   studyRelics,
   type BuildingId,
   type Purse,
   type SectState,
+  type UpgradableId,
 } from '@/meta/sect';
-import { craft, research, setCarry, toggleSeal, upgradeBuilding, type SectResult } from '@/meta/sectActions';
+import { craft, recruit, research, setCarry, toggleSeal, upgradeBuilding, type SectResult } from '@/meta/sectActions';
+import { HERO_BY_ID } from '@/content/heroes';
 import { SectPlate } from '@/ui/components/MetaBits';
-import { ItemTip } from '@/ui/components/HeroCard';
+import { HeroCard, ItemTip } from '@/ui/components/HeroCard';
 import { RelicTip } from '@/ui/hud/Hud';
 import { Icon } from '@/ui/components/Icon';
 import { RichText } from '@/ui/components/RichText';
@@ -42,12 +48,14 @@ const SPOT: Record<BuildingId, { x: number; y: number }> = {
   pavilion: { x: 880, y: 300 },
   forge: { x: 1230, y: 610 },
   bounty: { x: 640, y: 760 },
+  // at the foot of the stairs, where new disciples arrive
+  recruit: { x: 1390, y: 820 },
 };
 
 /**
  * The Sect (docs/META_PROGRESSION.md, section 6): the sect between runs, painted as a mountain sect with its buildings.
  * Each building opens a panel beside the painting: the Main Hall, the Scripture Pavilion (studies and seals), the
- * Artifact Forge (heirlooms) and the Bounty Board.
+ * Artifact Forge (heirlooms), the Bounty Board and the Recruitment Hall (exclusive disciples).
  */
 export function SectScreen() {
   const m = meta.value;
@@ -82,7 +90,7 @@ export function SectScreen() {
       <div class={`sect-map ${open ? 'dim' : ''}`}>
         {BUILDINGS.map((b) => {
           const unlocked = isOpen(b.id, xp);
-          const lvl = b.id === 'hall' ? rankOf(levelOf(xp).level).index + 1 : b.upgradable ? s.buildings[b.id as 'pavilion' | 'forge'] : 0;
+          const lvl = b.id === 'hall' ? rankOf(levelOf(xp).level).index + 1 : b.upgradable ? s.buildings[b.id as UpgradableId] : 0;
           return (
             <button
               key={b.id}
@@ -127,6 +135,7 @@ export function SectScreen() {
             {open === 'pavilion' && <PavilionPanel />}
             {open === 'forge' && <ForgePanel />}
             {open === 'bounty' && <BountyPanel />}
+            {open === 'recruit' && <RecruitPanel />}
           </div>
         </aside>
       )}
@@ -136,12 +145,13 @@ export function SectScreen() {
 
 function hasNews(id: BuildingId, m: ReturnType<typeof meta.peek>, s: SectState): boolean {
   const xp = m.renown?.xp ?? 0;
-  if (id === 'pavilion' || id === 'forge') {
+  if (id === 'pavilion' || id === 'forge' || id === 'recruit') {
     const lvl = s.buildings[id];
     if (lvl < levelCap(xp) && canAfford(s.purse, levelCost(lvl + 1, BUILDING_BY_ID[id].material!))) return true;
   }
   if (id === 'pavilion') return STUDIES.some((st) => !s.research.includes(st.id) && st.level <= s.buildings.pavilion && canAfford(s.purse, st.cost));
   if (id === 'forge') return RECIPES.some((r) => !s.heirlooms.some((h) => h.id === r.id) && r.forge <= s.buildings.forge && canAfford(s.purse, r.cost));
+  if (id === 'recruit') return RECRUITS.some((r) => recruitState(m, r.hero) === 'waiting' && canAfford(s.purse, r.cost));
   return false;
 }
 
@@ -210,7 +220,7 @@ function Sec({ title, aside, children }: { title: string; aside?: ComponentChild
 }
 
 /** The level row of an upgradable building: its level, the rank's cap and the cost of the next level. */
-function LevelRow({ id }: { id: 'pavilion' | 'forge' }) {
+function LevelRow({ id }: { id: UpgradableId }) {
   const m = meta.value;
   const s = sectOf(m);
   const xp = m.renown?.xp ?? 0;
@@ -291,6 +301,18 @@ function HallPanel() {
             <span>Heirlooms</span>
             <b>
               {s.heirlooms.length} / {RECIPES.length}
+            </b>
+          </div>
+          <div class="drawer-stat">
+            <Icon name={BUILDING_BY_ID.recruit.icon} size={22} />
+            <span>Recruitment Hall</span>
+            <b>{isOpen('recruit', xp) ? `Level ${ROMAN[s.buildings.recruit]}` : `Renown ${BUILDING_BY_ID.recruit.unlock}`}</b>
+          </div>
+          <div class="drawer-stat">
+            <Icon name="choice_disciple" size={22} />
+            <span>Exclusive disciples</span>
+            <b>
+              {s.disciples.length} / {RECRUITS.length}
             </b>
           </div>
         </div>
@@ -463,6 +485,73 @@ function ForgePanel() {
               </div>
             );
           })}
+        </div>
+      </Sec>
+    </>
+  );
+}
+
+// ───────────────────────── Recruitment Hall ─────────────────────────
+
+function RecruitPanel() {
+  const m = meta.value;
+  const s = sectOf(m);
+  const lvl = s.buildings.recruit;
+  return (
+    <>
+      <LevelRow id="recruit" />
+      <Sec title="Exclusive disciples" aside={`${s.disciples.length} of ${RECRUITS.length} recruited`}>
+        <p class="sect-note">An exclusive disciple answers the call when the sect reaches their Renown. Recruit them once, and from then on they can appear in every run's draft and shop.</p>
+        <div class="sect-cards">
+          {RECRUITS.map((r) => {
+            const st = recruitState(m, r.hero);
+            const def = HERO_BY_ID[r.hero];
+            return (
+              <div key={r.hero} class={`sect-card recruit ${st}`}>
+                <div class="sect-card-row">
+                  <div class="recruit-card">
+                    <HeroCard defId={r.hero} rank={0} size="md" />
+                  </div>
+                  <div class="sect-card-text">
+                    <div class="sect-card-head">
+                      <span class="display sect-card-name">{def.name}</span>
+                      {st === 'recruited' ? <span class="sect-badge">Recruited</span> : st === 'locked' ? <span class="sect-badge faint">Renown {r.renown}</span> : <span class="sect-badge glow">At the gate</span>}
+                    </div>
+                    <p class="sect-card-blurb">{r.blurb}</p>
+                    <p class="sect-card-effect">{def.lore}</p>
+                  </div>
+                </div>
+                <div class="sect-card-foot">
+                  {st === 'recruited' ? (
+                    <span class="sect-note">Joins your drafts and shops.</span>
+                  ) : st === 'locked' ? (
+                    <span class="sect-note">Answers the sect's call at Renown {r.renown}.</span>
+                  ) : (
+                    <>
+                      <Cost cost={r.cost} purse={s.purse} />
+                      <button class="btn small primary" disabled={!canAfford(s.purse, r.cost)} onClick={() => act(recruit(r.hero))}>
+                        Recruit
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Sec>
+      <Sec title="What the hall's levels do">
+        <div class="drawer-stats">
+          <div class="drawer-stat">
+            <Icon name="ui_reroll" size={22} />
+            <span>Free draft rerolls each run (one from level III)</span>
+            <b>{freeRerollsFor(lvl)}</b>
+          </div>
+          <div class="drawer-stat">
+            <Icon name="choice_disciple" size={22} />
+            <span>Disciples in the opening draft (four at level V)</span>
+            <b>{draftSizeFor(lvl)}</b>
+          </div>
         </div>
       </Sec>
     </>

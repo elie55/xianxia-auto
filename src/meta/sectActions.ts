@@ -2,16 +2,19 @@ import { meta, updateMeta } from '@/app/store';
 import {
   BUILDING_BY_ID,
   RECIPES,
+  RECRUIT_BY_HERO,
   STUDIES,
   canAfford,
   heirloomStartLevel,
   isOpen,
   levelCap,
   levelCost,
+  recruitState,
   sealSlots,
   sectOf,
   spend,
   type SectState,
+  type UpgradableId,
 } from '@/meta/sect';
 
 /** Writes a changed sect back into the save. */
@@ -25,8 +28,8 @@ function save(fn: (s: SectState) => SectState | void): void {
 export type SectResult = { ok: true } | { ok: false; reason: string };
 const no = (reason: string): SectResult => ({ ok: false, reason });
 
-/** Raises the Scripture Pavilion or the Artifact Forge one level, within the rank's cap. */
-export function upgradeBuilding(id: 'pavilion' | 'forge'): SectResult {
+/** Raises the Scripture Pavilion, the Artifact Forge or the Recruitment Hall one level, within the rank's cap. */
+export function upgradeBuilding(id: UpgradableId): SectResult {
   const m = meta.peek();
   const s = sectOf(m);
   const xp = m.renown?.xp ?? 0;
@@ -91,6 +94,23 @@ export function craft(recipeId: string): SectResult {
     x.purse = spend(x.purse, r.cost);
     x.heirlooms = [...x.heirlooms, { id: recipeId, level: heirloomStartLevel(x.buildings.forge) }];
     if (!x.carry) x.carry = recipeId;
+  });
+  return { ok: true };
+}
+
+/** Recruits an exclusive disciple waiting at the Recruitment Hall: from now on they can join drafts and shops. */
+export function recruit(hero: string): SectResult {
+  const m = meta.peek();
+  const s = sectOf(m);
+  const r = RECRUIT_BY_HERO[hero];
+  const state = recruitState(m, hero);
+  if (!r) return no('Not available');
+  if (state === 'recruited') return no('Already recruited');
+  if (state === 'locked') return no(`Answers the call at Renown ${r.renown}`);
+  if (!canAfford(s.purse, r.cost)) return no('Not enough Funds or Heavenly Jade');
+  save((x) => {
+    x.purse = spend(x.purse, r.cost);
+    x.disciples = [...x.disciples, hero];
   });
   return { ok: true };
 }

@@ -2,6 +2,7 @@ import type { MetaSave } from '@/app/store';
 import type { RunSect, RunState } from '@/core/run';
 import { RESEARCH_RELICS } from '@/content/relics';
 import { HEIRLOOM_MAX_LEVEL, HEIRLOOM_RECIPES } from '@/content/heirlooms';
+import { HERO_BY_ID } from '@/content/heroes';
 import { contractMultiplier, cumulativeXp, levelOf, rankOf } from '@/meta/renown';
 
 /**
@@ -43,7 +44,10 @@ export function computeRunPurse(s: RunState): Purse {
 
 // ───────────────────────── buildings ─────────────────────────
 
-export type BuildingId = 'hall' | 'pavilion' | 'forge' | 'bounty';
+export type BuildingId = 'hall' | 'pavilion' | 'forge' | 'bounty' | 'recruit';
+/** The buildings raised with Funds and materials. */
+export type UpgradableId = 'pavilion' | 'forge' | 'recruit';
+export const UPGRADABLE: UpgradableId[] = ['forge', 'pavilion', 'recruit'];
 
 export interface BuildingDef {
   id: BuildingId;
@@ -67,6 +71,16 @@ export const BUILDINGS: BuildingDef[] = [
   { id: 'pavilion', name: 'Scripture Pavilion', hanzi: '经', icon: 'relic_library', desc: 'Studies add new Dao Insights to what runs can offer. Seals keep chosen Treasures and Insights out of every shop and reward.', unlock: 3, material: 'herbs', upgradable: true },
   { id: 'forge', name: 'Artifact Forge', hanzi: '炉', icon: 'relic_furnace', desc: 'Crafts heirloom Treasures. One heirloom can be carried into a run, and it grows with each victory.', unlock: 5, material: 'cores', upgradable: true },
   { id: 'bounty', name: 'Bounty Board', hanzi: '榜', icon: 'relic_ledger', desc: 'Three standing bounties. A run that meets one pays its reward, and a new bounty takes its place.', unlock: SECT_OPENS, upgradable: false },
+  {
+    id: 'recruit',
+    name: 'Recruitment Hall',
+    hanzi: '招',
+    icon: 'sect_recruitment_hall',
+    desc: 'Exclusive disciples answer the call of a rising sect. Recruit them here and they can join your drafts and shops. Level III: one free draft reroll each run. Level V: the draft shows 4 disciples.',
+    unlock: 8,
+    material: 'cores',
+    upgradable: true,
+  },
 ];
 export const BUILDING_BY_ID = Object.fromEntries(BUILDINGS.map((b) => [b.id, b])) as Record<BuildingId, BuildingDef>;
 export const MAX_BUILDING_LEVEL = 5;
@@ -130,6 +144,26 @@ export const RECIPES = HEIRLOOM_RECIPES.map((r) => ({ ...r, ...RECIPE_TERMS[r.id
 export const heirloomStartLevel = (forgeLevel: number) => (forgeLevel >= 4 ? 2 : 1);
 export const nextHeirloomLevel = (level: number) => Math.min(HEIRLOOM_MAX_LEVEL, level + 1);
 
+// ───────────────────────── Recruitment Hall ─────────────────────────
+
+/** An exclusive disciple: the Renown at which they answer the sect's call and what recruiting them costs. */
+export interface RecruitDef {
+  hero: string;
+  renown: number;
+  cost: Partial<Purse>;
+  /** One line for the Recruitment Hall. */
+  blurb: string;
+}
+
+export const RECRUITS: RecruitDef[] = [
+  { hero: 'ling_shuang', renown: 10, cost: { funds: 150, jade: 4 }, blurb: 'A Sword Cultivator and Array Master in one: her frost swords fall in waves and freeze what they strike.' },
+];
+export const RECRUIT_BY_HERO = Object.fromEntries(RECRUITS.map((r) => [r.hero, r])) as Record<string, RecruitDef>;
+
+/** Disciples the opening draft shows, and free draft rerolls, for a Recruitment Hall level. */
+export const draftSizeFor = (hallLevel: number) => (hallLevel >= 5 ? 4 : 3);
+export const freeRerollsFor = (hallLevel: number) => (hallLevel >= 3 ? 1 : 0);
+
 // ───────────────────────── Bounty Board ─────────────────────────
 
 export interface BountyDef {
@@ -180,23 +214,26 @@ export function refillBounties(active: string[], done: string[]): { active: stri
 
 export interface SectState {
   purse: Purse;
-  buildings: Record<'pavilion' | 'forge', number>;
+  buildings: Record<UpgradableId, number>;
   research: string[];
   seals: string[];
   heirlooms: RecipeState[];
   bounties: { active: string[]; done: string[] };
   /** The heirloom picked on the New Run screen last time ('' for none). */
   carry: string;
+  /** Exclusive disciples recruited in the Recruitment Hall. */
+  disciples: string[];
 }
 
 export const emptySect = (): SectState => ({
   purse: emptyPurse(),
-  buildings: { pavilion: 1, forge: 1 },
+  buildings: { pavilion: 1, forge: 1, recruit: 1 },
   research: [],
   seals: [],
   heirlooms: [],
   bounties: { active: [], done: [] },
   carry: '',
+  disciples: [],
 });
 
 /** The sect part of a save, with defaults for older saves. */
@@ -212,6 +249,7 @@ export function sectOf(m: MetaSave): SectState {
     heirlooms: s.heirlooms ?? [],
     bounties: { active: s.bounties?.active ?? [], done: s.bounties?.done ?? [] },
     carry: s.carry ?? '',
+    disciples: (s.disciples ?? []).filter((id) => RECRUIT_BY_HERO[id]),
   };
 }
 
@@ -227,32 +265,48 @@ export function addPurse(a: Purse, b: Partial<Purse>): Purse {
   return out;
 }
 
-/** What the sect sends into a new run: its seals, its studies and the chosen heirloom (none while the Forge is closed). */
+/**
+ * What the sect sends into a new run: its seals, its studies, the chosen heirloom (none while the Forge is closed),
+ * its recruited disciples and what the Recruitment Hall's level does to the draft.
+ */
 export function runSectFor(m: MetaSave, heirloom: string): RunSect {
   const s = sectOf(m);
   const xp = m.renown?.xp ?? 0;
   const h = isOpen('forge', xp) ? s.heirlooms.find((x) => x.id === heirloom) : undefined;
+  const hall = isOpen('recruit', xp) ? s.buildings.recruit : 0;
   return {
     seals: isOpen('pavilion', xp) ? s.seals.slice() : [],
     research: s.research.slice(),
     heirloom: h ? { id: h.id, level: h.level } : undefined,
+    disciples: s.disciples.slice(),
+    draftSize: draftSizeFor(hall),
+    freeRerolls: freeRerollsFor(hall),
   };
+}
+
+/** Where an exclusive disciple stands: not yet at the gate (Renown or Hall missing), waiting to be recruited, or recruited. */
+export function recruitState(m: MetaSave, hero: string): 'locked' | 'waiting' | 'recruited' {
+  const r = RECRUIT_BY_HERO[hero];
+  const xp = m.renown?.xp ?? 0;
+  if (sectOf(m).disciples.includes(hero)) return 'recruited';
+  return r && isOpen('recruit', xp) && levelOf(xp).level >= r.renown ? 'waiting' : 'locked';
 }
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
 
-/** What the player can do in the sect right now and afford, the most tempting first: craft, study, then raise a hall. */
+/** What the player can do in the sect right now and afford, the most tempting first: recruit, craft, study, then raise a hall. */
 export function sectToDo(m: MetaSave): string[] {
   const xp = m.renown?.xp ?? 0;
   if (!isOpen('hall', xp)) return [];
   const s = sectOf(m);
   const out: string[] = [];
+  for (const r of RECRUITS) if (recruitState(m, r.hero) === 'waiting' && canAfford(s.purse, r.cost)) out.push(`The Recruitment Hall can recruit ${HERO_BY_ID[r.hero].name}.`);
   if (isOpen('forge', xp))
     for (const r of RECIPES) if (!s.heirlooms.some((h) => h.id === r.id) && r.forge <= s.buildings.forge && canAfford(s.purse, r.cost)) out.push(`The Artifact Forge can craft the ${r.name}.`);
   if (isOpen('pavilion', xp))
     for (const st of STUDIES) if (!s.research.includes(st.id) && st.level <= s.buildings.pavilion && canAfford(s.purse, st.cost)) out.push(`The Scripture Pavilion can study the ${st.name}.`);
   const cap = levelCap(xp);
-  for (const id of ['forge', 'pavilion'] as const) {
+  for (const id of UPGRADABLE) {
     const lvl = s.buildings[id];
     if (isOpen(id, xp) && lvl < cap && canAfford(s.purse, levelCost(lvl + 1, BUILDING_BY_ID[id].material!))) out.push(`The ${BUILDING_BY_ID[id].name} can rise to level ${ROMAN[lvl + 1]}.`);
   }
@@ -282,8 +336,12 @@ export function sectInvite(m: MetaSave): SectInvite {
     return { open: false, ready: false, headline: `Every run earns Sect Renown. At Renown ${SECT_OPENS} your sect is founded.`, progress: Math.min(1, xp / cumulativeXp(SECT_OPENS)) };
   const todo = sectToDo(m);
   if (todo.length) return { open: true, ready: true, headline: todo[0] };
+  const waiting = RECRUITS.find((r) => recruitState(m, r.hero) === 'waiting');
+  if (waiting) return { open: true, ready: false, headline: `${HERO_BY_ID[waiting.hero].name} waits at the gate of the Recruitment Hall.` };
   const next = BUILDINGS.find((b) => !isOpen(b.id, xp));
   if (next) return { open: true, ready: false, headline: `Renown ${next.unlock} opens the ${next.name}.`, progress: Math.min(1, xp / cumulativeXp(next.unlock)) };
+  const coming = RECRUITS.find((r) => levelOf(xp).level < r.renown);
+  if (coming) return { open: true, ready: false, headline: `At Renown ${coming.renown}, ${HERO_BY_ID[coming.hero].name} answers the sect's call.`, progress: Math.min(1, xp / cumulativeXp(coming.renown)) };
   const n = sectOf(m).bounties.active.length;
   return { open: true, ready: false, headline: n ? `${n} ${n === 1 ? 'bounty waits' : 'bounties wait'} on the Bounty Board.` : 'Bring Sect Funds home from your runs to raise its halls.' };
 }

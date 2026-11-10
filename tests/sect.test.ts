@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { MetaSave } from '@/app/store';
-import { itemPool, newRun, relicPool, rollShop, type FightRecord, type RunState } from '@/core/run';
+import { draftReroll, heroPool, itemPool, newRun, relicPool, rollShop, type FightRecord, type RunSect, type RunState } from '@/core/run';
+import { BASE_HEROES, HERO_BY_ID } from '@/content/heroes';
 import { ITEMS, ITEM_BY_ID, SHOP_ITEMS, UNIQUE_ITEMS } from '@/content/items';
 import { RELICS, RESEARCH_RELICS, SHOP_RELICS } from '@/content/relics';
 import { HEIRLOOM_ITEMS, HEIRLOOM_RECIPES, heirloomItemId } from '@/content/heirlooms';
@@ -12,9 +13,12 @@ import {
   STUDIES,
   canAfford,
   computeRunPurse,
+  draftSizeFor,
+  freeRerollsFor,
   isOpen,
   levelCap,
   levelCost,
+  recruitState,
   refillBounties,
   runSectFor,
   sectHasNews,
@@ -146,9 +150,9 @@ describe('Buildings, the board and the save', () => {
   });
   it('reads older saves with defaults and sends seals, studies and the heirloom into a run', () => {
     const m = metaWith({ renown: { xp: cumulativeXp(6) } });
-    expect(sectOf(m).buildings).toEqual({ pavilion: 1, forge: 1 });
+    expect(sectOf(m).buildings).toEqual({ pavilion: 1, forge: 1, recruit: 1 });
     m.sect = { seals: ['monk_beads'], research: ['five_phases'], heirlooms: [{ id: 'founder_sword', level: 2 }], purse: { funds: 0, herbs: 0, cores: 0, jade: 0 } };
-    expect(runSectFor(m, 'founder_sword')).toEqual({ seals: ['monk_beads'], research: ['five_phases'], heirloom: { id: 'founder_sword', level: 2 } });
+    expect(runSectFor(m, 'founder_sword')).toEqual({ seals: ['monk_beads'], research: ['five_phases'], heirloom: { id: 'founder_sword', level: 2 }, disciples: [], draftSize: 3, freeRerolls: 0 });
     // a closed Forge sends no heirloom
     expect(runSectFor(metaWith({ renown: { xp: cumulativeXp(3) }, sect: m.sect }), 'founder_sword').heirloom).toBeUndefined();
   });
@@ -168,18 +172,64 @@ describe('The main menu sect banner', () => {
     expect(inv.progress).toBeCloseTo(60 / cumulativeXp(2));
     expect(inv.headline).toContain('Renown 2');
   });
-  it('names the first thing to do: craft, then study, then raise a hall', () => {
+  it('names the first thing to do: recruit, craft, study, then raise a hall', () => {
     const m = metaWith({ renown: { xp: cumulativeXp(10) }, sect: { purse: { funds: 1000, herbs: 100, cores: 100, jade: 10 } } });
     const todo = sectToDo(m);
-    expect(todo[0]).toBe("The Artifact Forge can craft the Sect Founder's Sword.");
+    expect(todo[0]).toBe('The Recruitment Hall can recruit Ling Shuang.');
+    expect(todo[1]).toBe("The Artifact Forge can craft the Sect Founder's Sword.");
     expect(todo).toContain('The Scripture Pavilion can study the Scrolls of the Five Phases.');
-    expect(todo.at(-1)).toBe('The Scripture Pavilion can rise to level II.');
+    expect(todo.at(-1)).toBe('The Recruitment Hall can rise to level II.');
     expect(sectInvite(m)).toMatchObject({ open: true, ready: true, headline: todo[0] });
     expect(sectHasNews(m)).toBe(true);
   });
   it('otherwise shows the next building to open, then the bounties', () => {
     expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(3) } }))).toMatchObject({ open: true, ready: false, headline: 'Renown 5 opens the Artifact Forge.' });
-    const all = metaWith({ renown: { xp: cumulativeXp(6) }, sect: { bounties: { active: ['win_six', 'two_elites', 'realm_one'], done: [] } } });
+    expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(6) } })).headline).toBe('Renown 8 opens the Recruitment Hall.');
+    expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(8) } })).headline).toBe("At Renown 10, Ling Shuang answers the sect's call.");
+    expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(10) } })).headline).toBe('Ling Shuang waits at the gate of the Recruitment Hall.');
+    const all = metaWith({ renown: { xp: cumulativeXp(10) }, sect: { disciples: ['ling_shuang'], bounties: { active: ['win_six', 'two_elites', 'realm_one'], done: [] } } });
     expect(sectInvite(all)).toMatchObject({ ready: false, headline: '3 bounties wait on the Bounty Board.' });
+  });
+});
+
+describe('The Recruitment Hall and exclusive disciples', () => {
+  it('keeps exclusive disciples out of a run until the sect recruits them', () => {
+    expect(HERO_BY_ID.ling_shuang.exclusive).toBe(true);
+    const plain = newRun(0, 5);
+    expect(heroPool(plain).some((h) => h.id === 'ling_shuang')).toBe(false);
+    expect(heroPool(plain).length).toBe(BASE_HEROES.length);
+    for (let seed = 1; seed <= 40; seed++) {
+      const s = newRun(0, seed);
+      expect(s.draft!.heroes).not.toContain('ling_shuang');
+      rollShop(s, false);
+      expect(s.shop!.heroes.map((h) => h?.defId)).not.toContain('ling_shuang');
+    }
+    const sect: RunSect = { seals: [], research: [], disciples: ['ling_shuang'] };
+    expect(heroPool(newRun(0, 5, sect)).some((h) => h.id === 'ling_shuang')).toBe(true);
+    let drafted = 0;
+    for (let seed = 1; seed <= 60; seed++) if (newRun(0, seed, sect).draft!.heroes.includes('ling_shuang')) drafted++;
+    expect(drafted).toBeGreaterThan(0);
+  });
+  it('recruits only once the sect reaches her Renown with the hall open', () => {
+    expect(recruitState(metaWith({ renown: { xp: cumulativeXp(9) } }), 'ling_shuang')).toBe('locked');
+    expect(recruitState(metaWith({ renown: { xp: cumulativeXp(10) } }), 'ling_shuang')).toBe('waiting');
+    expect(recruitState(metaWith({ renown: { xp: cumulativeXp(10) }, sect: { disciples: ['ling_shuang'] } }), 'ling_shuang')).toBe('recruited');
+    expect(runSectFor(metaWith({ renown: { xp: cumulativeXp(10) }, sect: { disciples: ['ling_shuang'] } }), '').disciples).toEqual(['ling_shuang']);
+    // unknown ids in an old or edited save are dropped
+    expect(sectOf(metaWith({ sect: { disciples: ['nobody', 'ling_shuang'] } })).disciples).toEqual(['ling_shuang']);
+  });
+  it('gives a free draft reroll from level III and a fourth draft disciple at level V', () => {
+    expect([1, 2, 3, 4, 5].map(freeRerollsFor)).toEqual([0, 0, 1, 1, 1]);
+    expect([1, 2, 3, 4, 5].map(draftSizeFor)).toEqual([3, 3, 3, 3, 4]);
+    const s = newRun(0, 9, { seals: [], research: [], draftSize: 4, freeRerolls: 1 });
+    expect(s.draft!.heroes.length).toBe(4);
+    expect(s.draft!.free).toBe(1);
+    const stones = s.stones;
+    expect(draftReroll(s)).toBe(true);
+    expect(s.stones).toBe(stones);
+    expect(s.draft!.free).toBe(0);
+    expect(s.draft!.heroes.length).toBe(4);
+    expect(draftReroll(s)).toBe(true);
+    expect(s.stones).toBe(stones - 1);
   });
 });

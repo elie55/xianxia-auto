@@ -85,12 +85,14 @@ export interface MetaSave {
   /** The Sect (src/meta/sect.ts, read through sectOf): Funds and materials, building levels, studies, seals, heirlooms, bounties. */
   sect?: {
     purse?: { funds: number; herbs: number; cores: number; jade: number };
-    buildings?: { pavilion: number; forge: number };
+    buildings?: { pavilion: number; forge: number; recruit?: number };
     research?: string[];
     seals?: string[];
     heirlooms?: { id: string; level: number }[];
     bounties?: { active?: string[]; done?: string[] };
     carry?: string;
+    /** Exclusive disciples recruited in the Recruitment Hall. */
+    disciples?: string[];
   };
 }
 

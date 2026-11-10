@@ -25,7 +25,27 @@ unlock, the Ladder leaderboard, run counters and the Compendium's discovery list
 - Phase 2 reuses existing art for the sect (the old key art) and for the new Insights (existing painted icons).
   Dedicated art can come later. The four heirlooms have their own icons and sect-wide effects (section 6.4).
 
-Phases 3–5 are not started.
+**The first slice of phase 4 is built** (2026-11-10, pulled ahead of phase 3):
+- The **Recruitment Hall** (`recruit` in `src/meta/sect.ts`) opens at Renown 8, at the foot of the sect's stairs.
+  - Materials: Beast Cores, levels I to V like the Pavilion and the Forge.
+  - Level III: one free draft reroll each run. Level V: the draft shows 4 disciples.
+- **Ling Shuang** (凌霜, "Nine Frost Swords") is the first exclusive disciple (`exclusive: true` in
+  `src/content/heroes.ts`).
+  - She answers the sect's call at Renown 10. Recruiting her costs 150 Funds and 4 Heavenly Jade.
+  - From then on she can appear in every run's draft and shop (`heroPool` in `src/core/run.ts`).
+  - Kit: a Sword Cultivator and Array Master. Her technique sends three waves of frost swords onto the target and
+    the enemies beside it. Her Crits apply Frost. Her Dao Paths are Myriad Frost Blades (four waves, Crit), Glacial
+    Lattice (more Frost, +30% damage to Frozen enemies) and Formation Ward (shields and Attack Speed for the allies
+    beside her).
+  - Art: a ChatGPT portrait, an AutoSprite pack (idle, walk, attack, cast, hurt, death) and painted icons for her
+    three paths and for the hall.
+  - Balance: in fights against the same foes she sits with the other carries. At Rank II she wins 12–13 of 40,
+    against 6–13 for Li Jian, Xuan Bing, Feng Huang and Lei Zhen. Her damage is a little lower than theirs, and her
+    Frost makes up for it.
+- The achievements that ask for "every disciple" still count the 16 launch disciples (`BASE_HEROES`).
+
+Phase 3 and phase 5 are not started; the rest of phase 4 (more exclusive disciples, sect events, the Hall of
+Ancestors) is not either.
 
 ---
 

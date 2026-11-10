@@ -82,7 +82,7 @@ export function ChooseHero() {
         </div>
         <button
           class="btn ghost"
-          disabled={s.stones < 1}
+          disabled={s.stones < 1 && !d.free}
           onClick={() => {
             act((st) => {
               if (!draftReroll(st)) showToast('Not enough Spirit Stones', 'error');
@@ -91,7 +91,14 @@ export function ChooseHero() {
             audio.sfx('ui_reroll');
           }}
         >
-          <Icon name="ui_reroll" size={18} /> Reroll disciples · <Icon name="stones" size={16} /> 1
+          <Icon name="ui_reroll" size={18} /> Reroll disciples ·{' '}
+          {d.free ? (
+            <span class="draft-free-reroll">Free{d.free > 1 ? ` ×${d.free}` : ''}</span>
+          ) : (
+            <>
+              <Icon name="stones" size={16} /> 1
+            </>
+          )}
         </button>
         <button class="btn primary big" data-tut="draft-accept" disabled={!hero || !blessing} onClick={confirm}>
           <span class="btn-glyph">拜</span> Accept into the Sect

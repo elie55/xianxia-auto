@@ -1,7 +1,7 @@
 import type { HeroDef } from '@/core/types';
 
 /**
- * The 16 launch disciples. Stats are Rank C (Qi Condensation) values.
+ * The 16 launch disciples, then the exclusive disciples the sect recruits. Stats are Rank C (Qi Condensation) values.
  * `qi` in baseStats is STARTING Qi; the ability's qiCost is the pool size.
  */
 export const HEROES: HeroDef[] = [
@@ -955,6 +955,111 @@ export const HEROES: HeroDef[] = [
     accent: '#ff6b3c',
     projectile: 'fire_talisman',
   },
+
+  // ───────── exclusive disciples: only in runs once the sect has recruited them (src/meta/sect.ts RECRUITS) ─────────
+  {
+    id: 'ling_shuang',
+    name: 'Ling Shuang',
+    hanzi: '凌霜',
+    title: 'Nine Frost Swords',
+    classes: ['sword', 'array'],
+    baseStats: { hp: 820, attack: 46, spirit: 32, crit: 15, defense: 26, range: 3 },
+    ability: {
+      id: 'nine_frost_swords',
+      name: 'Nine Frost Swords',
+      desc: 'Three waves of frost swords fall on the target and the enemies beside it, each dealing [60% Attack] + [25% Spirit] and applying [8 Frost].',
+      qiCost: 75,
+      castTime: 0.6,
+      vfx: 'frost_array',
+      actions: [
+        {
+          do: 'repeat',
+          times: 3,
+          interval: 0.25,
+          actions: [
+            { do: 'damage', target: { kind: 'enemiesAroundTarget', radius: 1 }, scale: { attack: 0.6, spirit: 0.25 }, kind: 'physical', vfx: 'sword_shard' },
+            { do: 'status', target: { kind: 'enemiesAroundTarget', radius: 1 }, status: 'frost', stacks: 8, duration: 5 },
+          ],
+        },
+      ],
+      keywords: ['Frost', 'Crit'],
+    },
+    passives: [
+      {
+        id: 'frost_edge',
+        name: 'Frost Edge',
+        desc: 'Her [Crits] apply [6 Frost].',
+        trigger: { on: 'crit' },
+        actions: [{ do: 'status', target: 'triggerTarget', status: 'frost', stacks: 6, duration: 5 }],
+        keywords: ['Crit', 'Frost'],
+      },
+    ],
+    daoPaths: [
+      {
+        id: 'ling_myriad_blades',
+        name: 'Myriad Frost Blades',
+        desc: 'Nine Frost Swords falls in [4] waves. Gain [15 Crit].',
+        stats: { crit: 15 },
+        ability: {
+          actions: [
+            {
+              do: 'repeat',
+              times: 4,
+              interval: 0.25,
+              actions: [
+                { do: 'damage', target: { kind: 'enemiesAroundTarget', radius: 1 }, scale: { attack: 0.6, spirit: 0.25 }, kind: 'physical', vfx: 'sword_shard' },
+                { do: 'status', target: { kind: 'enemiesAroundTarget', radius: 1 }, status: 'frost', stacks: 8, duration: 5 },
+              ],
+            },
+          ],
+        },
+        keywords: ['Crit'],
+      },
+      {
+        id: 'ling_glacial_lattice',
+        name: 'Glacial Lattice',
+        desc: '[Frozen] enemies take [+30%] damage from her, and each wave applies [12 Frost]. Gain [20 Spirit].',
+        stats: { spirit: 20 },
+        effects: [{ id: 'lattice_marker', desc: '', trigger: { on: 'passive' }, actions: [{ do: 'counter', key: 'shatterPct', add: 30 }] }],
+        ability: {
+          actions: [
+            {
+              do: 'repeat',
+              times: 3,
+              interval: 0.25,
+              actions: [
+                { do: 'damage', target: { kind: 'enemiesAroundTarget', radius: 1 }, scale: { attack: 0.6, spirit: 0.25 }, kind: 'physical', vfx: 'sword_shard' },
+                { do: 'status', target: { kind: 'enemiesAroundTarget', radius: 1 }, status: 'frost', stacks: 12, duration: 5 },
+              ],
+            },
+          ],
+        },
+        keywords: ['Frost'],
+      },
+      {
+        id: 'ling_formation_ward',
+        name: 'Formation Ward',
+        desc: 'Nine Frost Swords also gives her and the allies beside her a [Qi Shield] of [70% Spirit] and [+15 Attack Speed] for 4 s. Gain [200 HP].',
+        stats: { hp: 200 },
+        ability: {
+          extraActions: [
+            { do: 'shield', target: { kind: 'alliesAdjacent', radius: 1, includeSelf: true }, scale: { spirit: 0.7 }, duration: 6, vfx: 'shield_pop' },
+            { do: 'buff', target: { kind: 'alliesAdjacent', radius: 1, includeSelf: true }, stat: 'attackSpeed', flat: 15, duration: 4, unique: 'ward' },
+          ],
+        },
+        keywords: ['Shield'],
+      },
+    ],
+    tags: ['Frost', 'Crit'],
+    lore: 'She learned the sword in a glacier hall where nine swords hung frozen in the air. When she left, they followed her.',
+    portrait: 'ling_shuang',
+    sprite: 'ling_shuang',
+    accent: '#9fd8ff',
+    projectile: 'ice_shard',
+    exclusive: true,
+  },
 ];
 
 export const HERO_BY_ID: Record<string, HeroDef> = Object.fromEntries(HEROES.map((h) => [h.id, h]));
+/** The launch roster: every disciple that is not exclusive (achievements that ask for "every disciple" count these). */
+export const BASE_HEROES: HeroDef[] = HEROES.filter((h) => !h.exclusive);

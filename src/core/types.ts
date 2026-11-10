@@ -273,6 +273,11 @@ export interface HeroDef {
   projectile?: string;
   /** Sprite scale multiplier in the arena. */
   scale?: number;
+  /**
+   * An exclusive disciple (docs/META_PROGRESSION.md, section 7): never in a run's draft or shop until the sect has
+   * recruited them in the Recruitment Hall (src/meta/sect.ts RECRUITS).
+   */
+  exclusive?: boolean;
 }
 
 export interface QuestDef {

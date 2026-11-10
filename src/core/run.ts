@@ -65,6 +65,8 @@ export interface Draft {
   heroes: string[];
   blessings: string[];
   rerolls: number;
+  /** Free rerolls left (Recruitment Hall level III). */
+  free?: number;
 }
 
 export interface StonesBreakdown {
@@ -203,6 +205,12 @@ export interface RunSect {
   research: string[];
   /** The heirloom Treasure carried, if any. */
   heirloom?: { id: string; level: number };
+  /** Exclusive disciples the sect has recruited: they may appear in the draft and the shop. */
+  disciples?: string[];
+  /** Disciples the opening draft shows (3; 4 from Recruitment Hall level V). */
+  draftSize?: number;
+  /** Free draft rerolls (1 from Recruitment Hall level III). */
+  freeRerolls?: number;
 }
 
 /** The Sect Renown a finished run paid (src/meta/runtime.ts finishRunMeta). */
@@ -374,16 +382,25 @@ export function newRun(tier: number, seed: number, sect?: RunSect): RunState {
   return s;
 }
 
+/** The disciples a run can offer: the launch roster plus the exclusive disciples the sect has recruited. */
+export function heroPool(s: RunState): typeof HEROES {
+  const recruited = s.sect?.disciples ?? [];
+  return HEROES.filter((h) => !h.exclusive || recruited.includes(h.id));
+}
+
 function rollDraft(s: RunState, rng: Rng): void {
-  const heroes = rng.pickN(HEROES, 3).map((h) => h.id);
+  const heroes = rng.pickN(heroPool(s), s.sect?.draftSize ?? 3).map((h) => h.id);
   const blessings = rng.pickN(BLESSINGS, 3).map((b) => b.id);
-  s.draft = { heroes, blessings, rerolls: s.draft?.rerolls ?? 0 };
+  s.draft = { heroes, blessings, rerolls: s.draft?.rerolls ?? 0, free: s.draft ? s.draft.free : (s.sect?.freeRerolls ?? 0) };
 }
 
 export function draftReroll(s: RunState): boolean {
-  if (!s.draft || s.stones < 1) return false;
+  if (!s.draft) return false;
+  const free = (s.draft.free ?? 0) > 0;
+  if (!free && s.stones < 1) return false;
   const rng = rngOf(s);
-  s.stones -= 1;
+  if (free) s.draft.free = (s.draft.free ?? 0) - 1;
+  else s.stones -= 1;
   s.draft.rerolls++;
   const prev = s.draft.blessings;
   rollDraft(s, rng);
@@ -772,13 +789,14 @@ export function rollShop(s: RunState, keepFrozen = false): void {
 
   const heroes: (ShopHero | null)[] = [];
   const offered = new Set<string>((prev?.heroes ?? []).filter(Boolean).map((h) => h!.defId));
+  const pool = heroPool(s);
   for (let i = 0; i < 3; i++) {
     if (prev?.heroes[i]) {
       heroes.push(prev.heroes[i]);
       continue;
     }
-    let def = rng.pick(HEROES);
-    for (let tries = 0; offered.has(def.id) && tries < 8; tries++) def = rng.pick(HEROES);
+    let def = rng.pick(pool);
+    for (let tries = 0; offered.has(def.id) && tries < 8; tries++) def = rng.pick(pool);
     offered.add(def.id);
     const rank = rng.weighted([0, 1, 2, 3] as Rank[], rankWeights(s));
     const sale = rng.chance(12);

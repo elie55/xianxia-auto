@@ -9,7 +9,7 @@ const PERKS: { icon: string; name: string; detail: string; building?: BuildingId
   { icon: 'item_founder_sword', name: 'Heirloom Treasures', detail: 'Forged to grow with every victory', building: 'forge' },
   { icon: 'choice_insight', name: 'New Dao Insights', detail: 'Studied in the Scripture Pavilion', building: 'pavilion' },
   { icon: 'relic_ledger', name: 'Bounties and rewards', detail: 'Sect Funds and rare materials', building: 'bounty' },
-  { icon: 'choice_disciple', name: 'New disciples', detail: 'The Recruitment Hall, coming soon' },
+  { icon: 'choice_disciple', name: 'New disciples', detail: 'Exclusive, from the Recruitment Hall', building: 'recruit' },
 ];
 
 /**

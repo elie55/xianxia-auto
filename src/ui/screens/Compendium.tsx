@@ -13,6 +13,7 @@ import type { ClassId, EnemyDef, HeroDef, ItemDef, Keyword, QuestDef, RelicDef, 
 import { HERO_PRICE_BY_RANK, ITEM_PRICE_BY_RARITY, RELIC_PRICE_BY_RARITY } from '@/core/types';
 import { heroStats } from '@/core/builder';
 import { itemSellValue } from '@/core/run';
+import { RECRUIT_BY_HERO } from '@/meta/sect';
 import { EMPTY_CTX, HeroCard, KEYWORD_DESC, Portrait, STAT_DESC, fmtStat, tempHero } from '@/ui/components/HeroCard';
 import { Icon, KEYWORD_ICON, STAT_COLOR, STAT_ICON, STAT_LABEL } from '@/ui/components/Icon';
 import { PAINTED_ICONS } from '@/ui/components/paintedIcons';
@@ -765,6 +766,12 @@ function HeroDetail({ id }: { id: string }) {
         ))}
         <PriceTag price={HERO_PRICE_BY_RANK[0]} what="to recruit" />
       </div>
+      {h.exclusive && (
+        <p class="drawer-exclusive">
+          <Icon name="choice_disciple" size={22} /> <b>Exclusive disciple.</b> Answers the sect's call at Renown {RECRUIT_BY_HERO[h.id]?.renown ?? 10}. Once recruited in the
+          Recruitment Hall, this disciple can join a run's draft and shop.
+        </p>
+      )}
       <p class="drawer-lore">{h.lore}</p>
       <Section title="Technique" aside={`${h.ability.qiCost} Qi`}>
         <p class="drawer-ability-name">{h.ability.name}</p>
