@@ -1,4 +1,5 @@
 import type { ComponentChildren } from 'preact';
+import { InkTransition } from '@/ui/components/InkTransition';
 import { useErrorBoundary } from 'preact/hooks';
 import { run, screen, toast } from './store';
 import { MainMenu } from '@/ui/screens/MainMenu';
@@ -32,6 +33,7 @@ export function App() {
           {t.text}
         </div>
       )}
+      <InkTransition />
       <TutorialLayer />
       <TooltipLayer />
       <LoadingVeil />

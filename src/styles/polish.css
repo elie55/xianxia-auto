@@ -4779,3 +4779,63 @@ input[type='range']:hover::-webkit-slider-thumb {
 .slot-item.drop-fill {
   box-shadow: 0 0 0 3px var(--jade-bright), 0 0 26px 8px rgba(111, 227, 196, 0.65);
 }
+
+/* ───────── ink-wash screen transitions (InkTransition.tsx) ───────── */
+@property --ink-a {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+@property --ink-b {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+.ink-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ink-defs {
+  position: absolute;
+}
+.ink-wash {
+  position: absolute;
+  inset: -12%;
+  background: radial-gradient(ellipse at 50% 45%, #13211f 0%, #081010 55%, #040808 100%);
+  filter: url(#ink-rough);
+  -webkit-mask-image: radial-gradient(circle at 50% 52%, transparent var(--ink-a), #000 calc(var(--ink-a) + 7%)), radial-gradient(circle at 18% 30%, transparent var(--ink-b), #000 calc(var(--ink-b) + 9%)), radial-gradient(circle at 84% 72%, transparent var(--ink-b), #000 calc(var(--ink-b) + 9%));
+  -webkit-mask-composite: source-in;
+  mask-image: radial-gradient(circle at 50% 52%, transparent var(--ink-a), #000 calc(var(--ink-a) + 7%)), radial-gradient(circle at 18% 30%, transparent var(--ink-b), #000 calc(var(--ink-b) + 9%)), radial-gradient(circle at 84% 72%, transparent var(--ink-b), #000 calc(var(--ink-b) + 9%));
+  mask-composite: intersect;
+  animation: ink-open 0.62s cubic-bezier(0.45, 0, 0.25, 1) forwards;
+}
+@keyframes ink-open {
+  0% {
+    --ink-a: 0%;
+    --ink-b: 0%;
+  }
+  30% {
+    --ink-b: 6%;
+  }
+  100% {
+    --ink-a: 95%;
+    --ink-b: 70%;
+  }
+}
+.ink-veil.calm .ink-wash {
+  filter: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+  animation: ink-fade 0.22s ease-out forwards;
+}
+@keyframes ink-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
