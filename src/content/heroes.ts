@@ -20,7 +20,7 @@ export const HEROES: HeroDef[] = [
       castTime: 0.5,
       animation: 'attack',
       vfx: 'flying_sword',
-      actions: [{ do: 'damage', target: 'target', scale: { attack: 1.8, spirit: 0.6 }, kind: 'physical', projectile: 'flying_sword', vfx: 'sword_slash' }],
+      actions: [{ do: 'damage', target: 'target', scale: { attack: 1.8, spirit: 0.6 }, kind: 'physical', projectile: 'flying_sword', vfx: 'sig_li_jian' }],
       keywords: ['Crit'],
     },
     daoPaths: [
@@ -46,7 +46,7 @@ export const HEROES: HeroDef[] = [
         addClass: 'talisman',
         stats: { spirit: 30 },
         ability: {
-          actions: [{ do: 'damage', target: { kind: 'nearestEnemies', count: 3 }, scale: { attack: 1.1, spirit: 0.6 }, kind: 'physical', projectile: 'flying_sword', vfx: 'sword_slash' }],
+          actions: [{ do: 'damage', target: { kind: 'nearestEnemies', count: 3 }, scale: { attack: 1.1, spirit: 0.6 }, kind: 'physical', projectile: 'flying_sword', vfx: 'sig_li_jian' }],
         },
       },
       {
@@ -82,7 +82,7 @@ export const HEROES: HeroDef[] = [
       qiCost: 50,
       vfx: 'stone_aura',
       actions: [
-        { do: 'shield', target: 'self', scale: { maxHp: 0.25 }, duration: 8, vfx: 'shield_pop' },
+        { do: 'shield', target: 'self', scale: { maxHp: 0.25 }, duration: 8, vfx: 'sig_shan_tie' },
         { do: 'status', target: { kind: 'enemiesAdjacent', radius: 2 }, status: 'taunt', duration: 3 },
       ],
       keywords: ['Shield', 'Taunt'],
@@ -131,7 +131,7 @@ export const HEROES: HeroDef[] = [
       desc: '[Burn] the 3 nearest enemies for [15 + 40% Spirit] per second for 4 s.',
       qiCost: 70,
       vfx: 'lotus_fire',
-      actions: [{ do: 'status', target: { kind: 'nearestEnemies', count: 3 }, status: 'burn', scale: { base: 15, spirit: 0.4 }, duration: 4 }, { do: 'vfx', key: 'lotus_bloom', target: { kind: 'nearestEnemies', count: 3 } }],
+      actions: [{ do: 'status', target: { kind: 'nearestEnemies', count: 3 }, status: 'burn', scale: { base: 15, spirit: 0.4 }, duration: 4 }, { do: 'vfx', key: 'sig_hong_lian', target: { kind: 'nearestEnemies', count: 3 } }],
       keywords: ['Burn'],
     },
     daoPaths: [
@@ -180,7 +180,7 @@ export const HEROES: HeroDef[] = [
       desc: 'Heal the lowest-HP ally for [200 + 250% Spirit] and [Cleanse] them.',
       qiCost: 60,
       vfx: 'heal_bloom',
-      actions: [{ do: 'heal', target: { kind: 'lowestHpAlly', includeSelf: true }, scale: { base: 200, spirit: 2.5 }, cleanse: true, vfx: 'heal_bloom' }],
+      actions: [{ do: 'heal', target: { kind: 'lowestHpAlly', includeSelf: true }, scale: { base: 200, spirit: 2.5 }, cleanse: true, vfx: 'sig_mei_yao' }],
       keywords: ['Heal'],
     },
     daoPaths: [
@@ -239,7 +239,7 @@ export const HEROES: HeroDef[] = [
       vfx: 'shadow_blink',
       actions: [
         { do: 'blink', target: 'lowestHpEnemy' },
-        { do: 'damage', target: 'lowestHpEnemy', scale: { attack: 2.5 }, kind: 'physical', vfx: 'shadow_slash' },
+        { do: 'damage', target: 'lowestHpEnemy', scale: { attack: 2.5 }, kind: 'physical', vfx: 'sig_ying_wu' },
         { do: 'status', target: 'lowestHpEnemy', status: 'poison', stacks: 3 },
       ],
       keywords: ['Poison', 'Crit'],
@@ -260,7 +260,7 @@ export const HEROES: HeroDef[] = [
         ability: {
           actions: [
             { do: 'blink', target: 'lowestHpEnemy' },
-            { do: 'damage', target: 'lowestHpEnemy', scale: { attack: 2.5 }, kind: 'physical', vfx: 'shadow_slash' },
+            { do: 'damage', target: 'lowestHpEnemy', scale: { attack: 2.5 }, kind: 'physical', vfx: 'sig_ying_wu' },
             { do: 'status', target: 'lowestHpEnemy', status: 'poison', stacks: 8 },
           ],
         },
@@ -298,7 +298,7 @@ export const HEROES: HeroDef[] = [
       animation: 'attack',
       vfx: 'fist_flurry',
       actions: [
-        { do: 'repeat', times: 6, interval: 0.12, actions: [{ do: 'damage', target: 'target', scale: { attack: 0.55 }, kind: 'physical', vfx: 'impact' }] },
+        { do: 'repeat', times: 6, interval: 0.12, actions: [{ do: 'damage', target: 'target', scale: { attack: 0.55 }, kind: 'physical', vfx: 'sig_tie_quan' }] },
         { do: 'buff', stat: 'attackSpeed', flat: 10 },
       ],
     },
@@ -360,7 +360,7 @@ export const HEROES: HeroDef[] = [
       vfx: 'frost_array',
       actions: [
         { do: 'status', target: 'allEnemies', status: 'frost', stacks: 20, duration: 5 },
-        { do: 'damage', target: 'allEnemies', scale: { spirit: 0.6 }, vfx: 'frost_burst' },
+        { do: 'damage', target: 'allEnemies', scale: { spirit: 0.6 }, vfx: 'sig_xuan_bing' },
       ],
       keywords: ['Frost'],
     },
@@ -390,7 +390,7 @@ export const HEROES: HeroDef[] = [
         ability: {
           actions: [
             { do: 'status', target: 'allEnemies', status: 'frost', stacks: 30, duration: 5 },
-            { do: 'damage', target: 'allEnemies', scale: { spirit: 0.6 }, vfx: 'frost_burst' },
+            { do: 'damage', target: 'allEnemies', scale: { spirit: 0.6 }, vfx: 'sig_xuan_bing' },
           ],
         },
         keywords: ['Frost'],
@@ -423,7 +423,7 @@ export const HEROES: HeroDef[] = [
           times: 3,
           interval: 0.15,
           actions: [
-            { do: 'damage', target: 'randomEnemy', scale: { spirit: 1.2 }, vfx: 'lightning' },
+            { do: 'damage', target: 'randomEnemy', scale: { spirit: 1.2 }, vfx: 'sig_lei_zhen' },
             { do: 'status', target: 'randomEnemy', status: 'stun', duration: 0.8 },
           ],
         },
@@ -443,7 +443,7 @@ export const HEROES: HeroDef[] = [
               times: 3,
               interval: 0.15,
               actions: [
-                { do: 'damage', target: 'randomEnemy', scale: { spirit: 1.2 }, vfx: 'lightning' },
+                { do: 'damage', target: 'randomEnemy', scale: { spirit: 1.2 }, vfx: 'sig_lei_zhen' },
                 { do: 'damage', target: { kind: 'enemiesAroundTarget', count: 1 }, scale: { spirit: 0.6 }, vfx: 'lightning_arc' },
                 { do: 'status', target: 'randomEnemy', status: 'stun', duration: 0.8 },
               ],
@@ -504,7 +504,7 @@ export const HEROES: HeroDef[] = [
       castTime: 0.5,
       animation: 'attack',
       vfx: 'sun_arrow',
-      actions: [{ do: 'damage', target: 'lineThroughTarget', scale: { attack: 2.2 }, kind: 'physical', vfx: 'arrow_pierce' }],
+      actions: [{ do: 'damage', target: 'lineThroughTarget', scale: { attack: 2.2 }, kind: 'physical', vfx: 'sig_long_mu' }],
       keywords: ['Crit'],
     },
     daoPaths: [
@@ -516,7 +516,7 @@ export const HEROES: HeroDef[] = [
         addClass: 'array',
         ability: {
           actions: [
-            { do: 'damage', target: { kind: 'nearestEnemies', count: 3 }, scale: { attack: 1.4 }, kind: 'physical', projectile: 'spirit_arrow' },
+            { do: 'damage', target: { kind: 'nearestEnemies', count: 3 }, scale: { attack: 1.4 }, kind: 'physical', projectile: 'spirit_arrow', vfx: 'sig_long_mu' },
             { do: 'status', target: { kind: 'nearestEnemies', count: 3 }, status: 'frost', stacks: 5 },
           ],
         },
@@ -552,7 +552,7 @@ export const HEROES: HeroDef[] = [
       animation: 'attack',
       vfx: 'tiger_roar',
       actions: [
-        { do: 'damage', target: { kind: 'enemiesAdjacent', radius: 1 }, scale: { attack: 1.2 }, kind: 'physical', vfx: 'claw' },
+        { do: 'damage', target: { kind: 'enemiesAdjacent', radius: 1 }, scale: { attack: 1.2 }, kind: 'physical', vfx: 'sig_bai_hu' },
         { do: 'status', target: { kind: 'enemiesAdjacent', radius: 2 }, status: 'taunt', duration: 2 },
         { do: 'buff', stat: 'attack', pct: 10 },
       ],
@@ -615,7 +615,7 @@ export const HEROES: HeroDef[] = [
       castTime: 0.45,
       animation: 'attack',
       vfx: 'gale_thrust',
-      actions: [{ do: 'damage', target: 'lineThroughTarget', scale: { attack: 1.6 }, kind: 'physical', vfx: 'spear_line' }],
+      actions: [{ do: 'damage', target: 'lineThroughTarget', scale: { attack: 1.6 }, kind: 'physical', vfx: 'sig_qing_feng' }],
     },
     passives: [
       {
@@ -673,7 +673,7 @@ export const HEROES: HeroDef[] = [
       vfx: 'moon_pulse',
       actions: [
         { do: 'qi', target: 'otherAllies', amount: 20 },
-        { do: 'shield', target: 'allAllies', scale: { maxHp: 0.1, spirit: 0.6 }, duration: 6, vfx: 'shield_pop' },
+        { do: 'shield', target: 'allAllies', scale: { maxHp: 0.1, spirit: 0.6 }, duration: 6, vfx: 'sig_yue_ling' },
       ],
       keywords: ['Qi', 'Shield'],
     },
@@ -727,7 +727,7 @@ export const HEROES: HeroDef[] = [
       vfx: 'obsidian',
       actions: [
         { do: 'counter', key: 'obsidian', add: 1 },
-        { do: 'damage', target: { kind: 'enemiesAdjacent', radius: 1 }, scale: { attack: 1.0 }, kind: 'physical', vfx: 'impact' },
+        { do: 'damage', target: { kind: 'enemiesAdjacent', radius: 1 }, scale: { attack: 1.0 }, kind: 'physical', vfx: 'sig_hei_yan' },
       ],
       keywords: ['Shield'],
     },
@@ -785,6 +785,7 @@ export const HEROES: HeroDef[] = [
       vfx: 'cinnabar_smoke',
       actions: [
         { do: 'status', target: 'allEnemies', status: 'poison', stacks: 4 },
+        { do: 'vfx', key: 'sig_zhu_sha', target: 'allEnemies' },
         { do: 'buff', stat: 'spirit', pct: 10, duration: 5, target: 'allAllies', unique: 'cinnabar' },
       ],
       keywords: ['Poison'],
@@ -815,6 +816,7 @@ export const HEROES: HeroDef[] = [
         ability: {
           actions: [
             { do: 'status', target: 'allEnemies', status: 'poison', stacks: 7 },
+            { do: 'vfx', key: 'sig_zhu_sha', target: 'allEnemies' },
             { do: 'buff', stat: 'spirit', pct: 10, duration: 5, target: 'allAllies', unique: 'cinnabar' },
           ],
         },
@@ -842,7 +844,7 @@ export const HEROES: HeroDef[] = [
       desc: 'Heal all allies for [120% Spirit]. [Meditation]: from the reserve, heal for [50%].',
       qiCost: 70,
       vfx: 'sutra',
-      actions: [{ do: 'heal', target: 'allAllies', scale: { spirit: 1.2 }, vfx: 'heal_bloom' }],
+      actions: [{ do: 'heal', target: 'allAllies', scale: { spirit: 1.2 }, vfx: 'sig_gu_lao' }],
       keywords: ['Heal', 'Meditation'],
     },
     passives: [
@@ -871,7 +873,7 @@ export const HEROES: HeroDef[] = [
         id: 'gu_wandering',
         name: 'Wandering Monk',
         desc: 'Sutra Chant [Cleanses] allies. Allies healed by you gain [5 Qi].',
-        ability: { actions: [{ do: 'heal', target: 'allAllies', scale: { spirit: 1.2 }, cleanse: true, vfx: 'heal_bloom' }] },
+        ability: { actions: [{ do: 'heal', target: 'allAllies', scale: { spirit: 1.2 }, cleanse: true, vfx: 'sig_gu_lao' }] },
         effects: [{ id: 'wandering_monk', desc: 'Heals grant Qi.', trigger: { on: 'healed' }, actions: [{ do: 'qi', target: 'triggerTarget', amount: 5 }] }],
         keywords: ['Qi'],
       },
@@ -898,7 +900,7 @@ export const HEROES: HeroDef[] = [
       animation: 'attack',
       vfx: 'phoenix_strike',
       actions: [
-        { do: 'damage', target: 'target', scale: { attack: 1.5 }, kind: 'physical', vfx: 'fire_slash' },
+        { do: 'damage', target: 'target', scale: { attack: 1.5 }, kind: 'physical', vfx: 'sig_feng_huang' },
         { do: 'status', target: 'target', status: 'burn', scale: { spirit: 0.5 }, duration: 4 },
       ],
       keywords: ['Burn'],

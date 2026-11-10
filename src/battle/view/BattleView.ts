@@ -49,7 +49,25 @@ const STAT_SHORT: Record<string, string> = {
 };
 
 /** Flipbook sheets (4×4 frames on black, played additively) under public/assets/art/fx. */
-export const FLIPBOOK_SHEETS = ['fx_qi_cast', 'fx_fire_burst', 'fx_frost_burst', 'fx_lightning_strike', 'fx_heal_bloom', 'fx_shadow_burst', 'fx_slash_arc', 'fx_poison_cloud', 'fx_water_splash', 'fx_death_burst', 'fx_impact_hit', 'fx_blood_burst', 'fx_buff_rise', 'fx_frost_swords'];
+/** The launch disciples whose technique has its own flipbook, fx_sig_<id> played by the effect key sig_<id>. */
+const SIGNATURE_HEROES = ['li_jian', 'shan_tie', 'hong_lian', 'mei_yao', 'ying_wu', 'tie_quan', 'xuan_bing', 'lei_zhen', 'long_mu', 'bai_hu', 'qing_feng', 'yue_ling', 'hei_yan', 'zhu_sha', 'gu_lao', 'feng_huang'];
+export const FLIPBOOK_SHEETS = [
+  'fx_qi_cast',
+  'fx_fire_burst',
+  'fx_frost_burst',
+  'fx_lightning_strike',
+  'fx_heal_bloom',
+  'fx_shadow_burst',
+  'fx_slash_arc',
+  'fx_poison_cloud',
+  'fx_water_splash',
+  'fx_death_burst',
+  'fx_impact_hit',
+  'fx_blood_burst',
+  'fx_buff_rise',
+  'fx_frost_swords',
+  ...SIGNATURE_HEROES.map((h) => `fx_sig_${h}`),
+];
 
 /**
  * Which flipbook plays for an ability VFX key, on top of the procedural effect. `jitter` moves each play up to that
@@ -89,6 +107,44 @@ const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: numbe
   tiger_roar: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 1.7, ground: true },
   impact: { sheet: 'fx_impact_hit', scale: 0.9 },
   fist_flurry: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 0.7 },
+  // signature techniques of the launch disciples (one painted sheet each)
+  sig_li_jian: { sheet: 'fx_sig_li_jian', scale: 1.25, directional: true },
+  sig_shan_tie: { sheet: 'fx_sig_shan_tie', scale: 1.3, ground: true, behind: true },
+  sig_hong_lian: { sheet: 'fx_sig_hong_lian', scale: 1.25, ground: true },
+  sig_mei_yao: { sheet: 'fx_sig_mei_yao', scale: 1.15 },
+  sig_ying_wu: { sheet: 'fx_sig_ying_wu', scale: 1.2, directional: true },
+  sig_tie_quan: { sheet: 'fx_sig_tie_quan', scale: 0.95, alpha: 0.85, jitter: 26 },
+  sig_xuan_bing: { sheet: 'fx_sig_xuan_bing', scale: 1.25, ground: true },
+  sig_lei_zhen: { sheet: 'fx_sig_lei_zhen', scale: 1.3, ground: true, fps: 30, jitter: 18 },
+  sig_long_mu: { sheet: 'fx_sig_long_mu', scale: 1.2, directional: true },
+  sig_bai_hu: { sheet: 'fx_sig_bai_hu', scale: 1.2, directional: true },
+  sig_qing_feng: { sheet: 'fx_sig_qing_feng', scale: 1.2, directional: true },
+  sig_yue_ling: { sheet: 'fx_sig_yue_ling', scale: 1.2, ground: true, behind: true },
+  sig_hei_yan: { sheet: 'fx_sig_hei_yan', scale: 1.2, ground: true },
+  sig_zhu_sha: { sheet: 'fx_sig_zhu_sha', scale: 1.2 },
+  sig_gu_lao: { sheet: 'fx_sig_gu_lao', scale: 1.2, ground: true, behind: true },
+  sig_feng_huang: { sheet: 'fx_sig_feng_huang', scale: 1.35 },
+};
+
+/** A signature technique key keeps the procedural part (sparks, rings, sounds) of the shared effect it replaced. */
+const SIGNATURE_BASE: Record<string, string> = {
+  sig_li_jian: 'sword_slash',
+  sig_shan_tie: 'shield_pop',
+  sig_hong_lian: 'lotus_bloom',
+  sig_mei_yao: 'heal_bloom',
+  sig_ying_wu: 'shadow_slash',
+  // the fists' own sparks, not six full impacts with six screen shakes
+  sig_tie_quan: 'fist_flurry',
+  sig_xuan_bing: 'frost_burst',
+  sig_lei_zhen: 'lightning',
+  sig_long_mu: 'arrow_pierce',
+  sig_bai_hu: 'claw',
+  sig_qing_feng: 'spear_line',
+  sig_yue_ling: 'shield_pop',
+  sig_hei_yan: 'impact',
+  sig_zhu_sha: 'cinnabar_smoke',
+  sig_gu_lao: 'sutra',
+  sig_feng_huang: 'fire_slash',
 };
 
 /** Each technique's own sound (on top of the shared cast whoosh), played when it leaves the hands. */
@@ -1285,6 +1341,8 @@ export class BattleView {
       const jx = fb.jitter ? (Math.random() * 2 - 1) * fb.jitter : 0;
       (fb.behind ? this.fxBack : this.fx).flipbook(fb.sheet, p.x + jx, fb.ground ? p.y + 6 : p.y + chest, { scale: (fb.scale ?? 1) * size, tint: fb.tint, alpha: fb.alpha, anchorY: fb.ground ? 0.92 : 0.5, fps: fb.fps ?? 24, flipX: facing < 0 && !!fb.directional });
     }
+    // a signature technique plays its own flipbook above, then the procedural layer of the effect it replaced
+    key = SIGNATURE_BASE[key] ?? key;
     switch (key) {
       case 'lightning':
       case 'lightning_arc':
