@@ -17,6 +17,10 @@ import { audio } from '@/audio/AudioManager';
 import { toDesign } from '@/app/scale';
 import { isAllyZone } from '@/battle/sim/hex';
 import { RANK_NAMES, type NodeKind } from '@/core/types';
+import { REALM_BOSSES, REALM_ELITES, tribulationLevel } from '@/core/encounters';
+import { ENEMY_BY_ID } from '@/content/enemies';
+import { PAINTED_ICONS } from '@/ui/components/paintedIcons';
+import { baseWinStones } from '@/core/run';
 
 /** Incremented a few times per second during battle so tracker panels refresh. */
 export const battleTick = signal(0);
@@ -43,6 +47,72 @@ const NODE_LABEL: Record<NodeKind, string> = {
   rest: 'Sect Rest',
 };
 
+const nodeIcon = (k: NodeKind) => (PAINTED_ICONS.has(`node_${k}`) ? `node_${k}` : NODE_ICON[k]);
+const realmKey = (realm: number): 1 | 2 | 3 => (realm === 1 ? 1 : realm === 2 ? 2 : 3);
+const FIGHT_NODES: NodeKind[] = ['fight', 'elite', 'boss', 'challenge'];
+
+/** What a node holds: its kind, Tribulation level, what happens there, the reward and the foes (when known). */
+function NodeTip({ s, index }: { s: RunState; index: number }) {
+  const n = s.timeline[index];
+  const state = index < s.nodeIndex ? 'done' : index === s.nodeIndex ? 'current' : 'future';
+  const level = tribulationLevel(s.realm, index, s.tier, s.floor);
+  const stones = baseWinStones(s);
+  const desc: Record<NodeKind, string> = {
+    fight: "A band of the realm's creatures blocks the road.",
+    elite: 'A champion of the realm, far stronger than a band.',
+    boss: 'The Realm Guardian. Defeat it to seal the rift and ascend.',
+    event: 'A chance meeting on the road: choices, treasures and risks.',
+    challenge: 'A stronger foe. Accept a hardship for a greater reward, or fight it as it comes.',
+    trial: 'One disciple faces a creature alone.',
+    rest: 'A pause at the sect: train, fortify or gamble.',
+  };
+  const reward: Partial<Record<NodeKind, string>> = {
+    fight: `${stones} Spirit Stones, +1 per surviving disciple`,
+    elite: `${stones} Spirit Stones and a choice of epic Dao Insights`,
+    boss: 'The realm is sealed',
+    challenge: 'A rare or epic reward if you accept a hardship',
+    trial: 'A choice of rare Treasures',
+  };
+  // foes: the real ones for the node you stand on, the known champion for elites and the guardian
+  const live = state === 'current' && s.currentEncounter && FIGHT_NODES.includes(n.kind) ? s.currentEncounter.enemies.map((e) => e.defId) : [];
+  const known = n.kind === 'boss' ? REALM_BOSSES[realmKey(s.realm)] : n.kind === 'elite' ? REALM_ELITES[realmKey(s.realm)] : [];
+  const foes = [...new Set(live.length ? live : known)].slice(0, 5);
+  return (
+    <div class="node-tip">
+      <div class="node-tip-head">
+        <Icon name={nodeIcon(n.kind)} size={50} />
+        <div>
+          <h4>{NODE_LABEL[n.kind]}</h4>
+          <div class="sub">
+            Node {index + 1} of {s.timeline.length} · {state === 'done' ? 'Cleared' : state === 'current' ? 'You are here' : `${index - s.nodeIndex} ahead`}
+          </div>
+        </div>
+      </div>
+      {FIGHT_NODES.includes(n.kind) && (
+        <div class="node-tip-level">
+          Tribulation level <b>{level}</b>
+        </div>
+      )}
+      <p>{desc[n.kind]}</p>
+      {reward[n.kind] && <p class="gold">Reward: {reward[n.kind]}</p>}
+      {foes.length > 0 && (
+        <div class="node-tip-foes">
+          {!live.length && known.length > 1 && <div class="faint">One of:</div>}
+          {foes.map((id) => {
+            const e = ENEMY_BY_ID[id];
+            return e ? (
+              <div key={id} class={`node-foe ${e.boss ? 'boss' : ''}`}>
+                <img src={`./assets/art/sprites/${e.sprite}.png`} alt="" draggable={false} />
+                <span>{e.name}</span>
+              </div>
+            ) : null;
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Hud({ children, showTracker = true }: { children?: preact.ComponentChildren; showTracker?: boolean }) {
   const s = run.value!;
   return (
@@ -62,7 +132,7 @@ export function Hud({ children, showTracker = true }: { children?: preact.Compon
 
 function TopBar({ s }: { s: RunState }) {
   const diff = DIFFICULTIES[s.tier];
-  const level = s.currentEncounter?.level ?? 0;
+  const level = s.currentEncounter?.level ?? tribulationLevel(s.realm, s.nodeIndex, s.tier, s.floor);
   const inBattle = s.phase === 'battle';
   const realmName = s.realm === 1 ? 'Azure Bamboo Province' : s.realm === 2 ? 'Blood Moon Abyss' : `Heavenly Ladder · Floor ${s.floor}`;
   return (
@@ -80,11 +150,15 @@ function TopBar({ s }: { s: RunState }) {
         </div>
       </div>
       <div class="timeline">
+        <div class="tl-track">
+          <i style={{ width: `${(Math.min(s.nodeIndex, s.timeline.length - 1) / Math.max(1, s.timeline.length - 1)) * 100}%` }} />
+        </div>
         {s.timeline.map((n, i) => {
           const state = i < s.nodeIndex ? 'done' : i === s.nodeIndex ? 'current' : 'future';
           return (
-            <div key={i} class={`tl-node ${state} ${n.kind}`} {...tip(<><h4>{NODE_LABEL[n.kind]}</h4><div class="sub">Node {i + 1} of {s.timeline.length}</div></>, 'below')}>
-              <Icon name={NODE_ICON[n.kind]} size={n.kind === 'boss' ? 22 : 16} />
+            <div key={i} class={`tl-node ${state} ${n.kind}`} {...tip(() => <NodeTip s={s} index={i} />, 'below')}>
+              <Icon name={nodeIcon(n.kind)} size={n.kind === 'boss' ? 46 : n.kind === 'elite' ? 38 : 34} />
+              {state === 'done' && <i class="tl-done" />}
             </div>
           );
         })}
@@ -92,7 +166,8 @@ function TopBar({ s }: { s: RunState }) {
       <div class="topbar-right">
         <div class="trib-level" {...tip(<><h4>Tribulation Level {level}</h4><p>Enemy power at this node. Higher levels mean sturdier, deadlier foes.</p><p class="muted">Contract: {diff.name}</p></>, 'left')}>
           <Icon name="kw_enlightenment" size={20} color="var(--gold-bright)" />
-          <span>{level}</span>
+          <span class="trib-label">Tribulation</span>
+          <span class="trib-value">{level}</span>
         </div>
         {(inBattle || s.phase === 'board') && (
           <div class="speed-controls" data-tut="speed">

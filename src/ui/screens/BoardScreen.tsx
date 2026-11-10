@@ -11,6 +11,7 @@ import { Icon } from '@/ui/components/Icon';
 import { MiniPortrait } from '@/ui/components/MiniPortrait';
 import { HERO_BY_ID } from '@/content/heroes';
 import { audio } from '@/audio/AudioManager';
+import { BossBar, BossIntro } from '@/ui/hud/Boss';
 import { toDesign } from '@/app/scale';
 
 /** Keeps the Pixi arena in sync with the run state. Used by every run phase that shows the board. */
@@ -202,6 +203,8 @@ export function BoardScreen() {
           </div>
         )}
         {isBattle && <BattleTimer />}
+        {isBattle && enc?.kind === 'boss' && <BossBar s={s} />}
+        {!isBattle && enc?.kind === 'boss' && <BossIntro key={enc.id} s={s} />}
       </Hud>
     </div>
   );

@@ -266,6 +266,11 @@ export class Unit {
     if (!this.classes.includes(c)) this.classes.push(c);
   }
 
+  /** True while a modifier with this unique id is active (the HUD reads it, e.g. a boss's enrage). */
+  hasMod(unique: string): boolean {
+    return this.mods.some((m) => m.unique === unique);
+  }
+
   addMod(mod: StatMod): boolean {
     if (mod.unique) {
       const existing = this.mods.find((m) => m.unique === mod.unique);

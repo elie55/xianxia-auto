@@ -94,13 +94,19 @@ export function placeEnemies(defIds: string[], rng: Rng): EncounterUnit[] {
   return out;
 }
 
+/** Who can guard each realm, and its elite champions (the Heavenly Ladder draws one at random). Also shown in node previews. */
+export const REALM_BOSSES: Record<1 | 2 | 3, string[]> = { 1: ['flood_dragon'], 2: ['blood_moon_sovereign'], 3: ['flood_dragon', 'blood_moon_sovereign'] };
+export const REALM_ELITES: Record<1 | 2 | 3, string[]> = { 1: ['moss_golem'], 2: ['demon_general'], 3: ['moss_golem', 'demon_general', 'thunder_ape'] };
+const realmKey = (realm: number): 1 | 2 | 3 => (realm === 1 ? 1 : realm === 2 ? 2 : 3);
+
 export function generateEncounter(realm: number, nodeIndex: number, kind: NodeKind | 'single', tier: number, rng: Rng, floor = 0): Encounter {
   const level = tribulationLevel(realm, nodeIndex, tier, floor);
   const defIds: string[] = [];
   let label = 'Regular Encounter';
 
   if (kind === 'boss') {
-    const boss = realm === 1 ? 'flood_dragon' : realm === 2 ? 'blood_moon_sovereign' : rng.pick(['flood_dragon', 'blood_moon_sovereign']);
+    const bosses = REALM_BOSSES[realmKey(realm)];
+    const boss = bosses.length === 1 ? bosses[0] : rng.pick(bosses);
     defIds.push(boss);
     const adds = realm === 1 ? ['spirit_wolf', 'spirit_wolf'] : ['blood_bat', 'blood_bat'];
     defIds.push(...adds);
@@ -113,7 +119,8 @@ export function generateEncounter(realm: number, nodeIndex: number, kind: NodeKi
   } else {
     let budget = budgetFor(realm, nodeIndex, kind);
     if (kind === 'elite') {
-      const elite = realm === 1 ? 'moss_golem' : realm === 2 ? 'demon_general' : rng.pick(['moss_golem', 'demon_general', 'thunder_ape']);
+      const elites = REALM_ELITES[realmKey(realm)];
+      const elite = elites.length === 1 ? elites[0] : rng.pick(elites);
       defIds.push(elite);
       budget = Math.max(1.5, budget * 0.5);
       label = `Elite: ${ENEMY_BY_ID[elite].name}`;

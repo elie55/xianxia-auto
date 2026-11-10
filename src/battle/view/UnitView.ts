@@ -110,7 +110,8 @@ export class UnitView extends Container {
     // above the rank pips
     this.statusRow.y = -32;
 
-    if (unit.boss || unit.elite) {
+    // elites carry their name overhead; a boss has its own guardian bar (and the encounter banner) instead
+    if (unit.elite && !unit.boss) {
       this.nameLabel = new Text({
         text: unit.name.toUpperCase(),
         // light gold on a heavy dark outline and shadow: readable over every painting (dark red vanished on the abyss)
