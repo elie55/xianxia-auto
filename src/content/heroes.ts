@@ -977,7 +977,7 @@ export const HEROES: HeroDef[] = [
           times: 3,
           interval: 0.25,
           actions: [
-            { do: 'damage', target: { kind: 'enemiesAroundTarget', radius: 1 }, scale: { attack: 0.6, spirit: 0.25 }, kind: 'physical', vfx: 'sword_shard' },
+            { do: 'damage', target: { kind: 'enemiesAroundTarget', radius: 1 }, scale: { attack: 0.6, spirit: 0.25 }, kind: 'physical', vfx: 'frost_sword_rain' },
             { do: 'status', target: { kind: 'enemiesAroundTarget', radius: 1 }, status: 'frost', stacks: 8, duration: 5 },
           ],
         },
@@ -1007,7 +1007,7 @@ export const HEROES: HeroDef[] = [
               times: 4,
               interval: 0.25,
               actions: [
-                { do: 'damage', target: { kind: 'enemiesAroundTarget', radius: 1 }, scale: { attack: 0.6, spirit: 0.25 }, kind: 'physical', vfx: 'sword_shard' },
+                { do: 'damage', target: { kind: 'enemiesAroundTarget', radius: 1 }, scale: { attack: 0.6, spirit: 0.25 }, kind: 'physical', vfx: 'frost_sword_rain' },
                 { do: 'status', target: { kind: 'enemiesAroundTarget', radius: 1 }, status: 'frost', stacks: 8, duration: 5 },
               ],
             },
@@ -1028,7 +1028,7 @@ export const HEROES: HeroDef[] = [
               times: 3,
               interval: 0.25,
               actions: [
-                { do: 'damage', target: { kind: 'enemiesAroundTarget', radius: 1 }, scale: { attack: 0.6, spirit: 0.25 }, kind: 'physical', vfx: 'sword_shard' },
+                { do: 'damage', target: { kind: 'enemiesAroundTarget', radius: 1 }, scale: { attack: 0.6, spirit: 0.25 }, kind: 'physical', vfx: 'frost_sword_rain' },
                 { do: 'status', target: { kind: 'enemiesAroundTarget', radius: 1 }, status: 'frost', stacks: 12, duration: 5 },
               ],
             },

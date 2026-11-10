@@ -49,10 +49,13 @@ const STAT_SHORT: Record<string, string> = {
 };
 
 /** Flipbook sheets (4×4 frames on black, played additively) under public/assets/art/fx. */
-export const FLIPBOOK_SHEETS = ['fx_qi_cast', 'fx_fire_burst', 'fx_frost_burst', 'fx_lightning_strike', 'fx_heal_bloom', 'fx_shadow_burst', 'fx_slash_arc', 'fx_poison_cloud', 'fx_water_splash', 'fx_death_burst', 'fx_impact_hit', 'fx_blood_burst', 'fx_buff_rise'];
+export const FLIPBOOK_SHEETS = ['fx_qi_cast', 'fx_fire_burst', 'fx_frost_burst', 'fx_lightning_strike', 'fx_heal_bloom', 'fx_shadow_burst', 'fx_slash_arc', 'fx_poison_cloud', 'fx_water_splash', 'fx_death_burst', 'fx_impact_hit', 'fx_blood_burst', 'fx_buff_rise', 'fx_frost_swords'];
 
-/** Which flipbook plays for an ability VFX key, on top of the procedural effect. */
-const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: number; ground?: boolean; fps?: number; directional?: boolean; behind?: boolean }> = {
+/**
+ * Which flipbook plays for an ability VFX key, on top of the procedural effect. `jitter` moves each play up to that
+ * many pixels sideways, so repeated hits on one foe land in different spots instead of piling up into one white flare.
+ */
+const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: number; ground?: boolean; fps?: number; directional?: boolean; behind?: boolean; alpha?: number; jitter?: number }> = {
   lotus_fire: { sheet: 'fx_fire_burst', scale: 1.3 },
   lotus_bloom: { sheet: 'fx_fire_burst', scale: 1.2 },
   phoenix_strike: { sheet: 'fx_fire_burst', scale: 1.5 },
@@ -80,6 +83,9 @@ const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: numbe
   spear_sweep: { sheet: 'fx_slash_arc', tint: 0x5ad6a5, scale: 1.2, directional: true },
   flying_sword: { sheet: 'fx_slash_arc', tint: 0xe8f1ff, scale: 1.2, directional: true },
   sword_shard: { sheet: 'fx_slash_arc', tint: 0xe8f1ff, scale: 0.8, directional: true },
+  // Ling Shuang's Nine Frost Swords: an ice sword plunges onto each foe of a wave and shatters
+  // (tinted, softened and scattered so three waves on the same foes stay readable swords, not a white flare)
+  frost_sword_rain: { sheet: 'fx_frost_swords', tint: 0xb8e6ff, scale: 1.15, ground: true, fps: 26, alpha: 0.8, jitter: 34 },
   tiger_roar: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 1.7, ground: true },
   impact: { sheet: 'fx_impact_hit', scale: 0.9 },
   fist_flurry: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 0.7 },
@@ -103,6 +109,7 @@ const TECHNIQUE_SFX: Record<string, { key: string; rate?: number; volume?: numbe
   zhu_sha: { key: 'poison', rate: 0.9, volume: 0.65 },
   gu_lao: { key: 'heal', rate: 0.75, volume: 0.6 },
   feng_huang: { key: 'fire', rate: 1.25, volume: 0.7 },
+  ling_shuang: { key: 'frost', rate: 1.15, volume: 0.7 },
   blood_moon_sovereign: { key: 'tribulation', rate: 0.8, volume: 0.5 },
   flood_dragon: { key: 'frost', rate: 0.6, volume: 0.75 },
 };
@@ -1275,7 +1282,8 @@ export class BattleView {
     const fb = FLIPBOOK_FOR[key];
     if (fb) {
       const size = at ? Math.max(0.8, at.bodyHeight / 180) : 1;
-      (fb.behind ? this.fxBack : this.fx).flipbook(fb.sheet, p.x, fb.ground ? p.y + 6 : p.y + chest, { scale: (fb.scale ?? 1) * size, tint: fb.tint, anchorY: fb.ground ? 0.92 : 0.5, fps: fb.fps ?? 24, flipX: facing < 0 && !!fb.directional });
+      const jx = fb.jitter ? (Math.random() * 2 - 1) * fb.jitter : 0;
+      (fb.behind ? this.fxBack : this.fx).flipbook(fb.sheet, p.x + jx, fb.ground ? p.y + 6 : p.y + chest, { scale: (fb.scale ?? 1) * size, tint: fb.tint, alpha: fb.alpha, anchorY: fb.ground ? 0.92 : 0.5, fps: fb.fps ?? 24, flipX: facing < 0 && !!fb.directional });
     }
     switch (key) {
       case 'lightning':
@@ -1348,6 +1356,15 @@ export class BattleView {
         audio.sfx('fire', { volume: 0.5, throttleMs: 200 });
         break;
       }
+      case 'frost_sword_rain':
+        // the shatter lands when the painted sword hits the ground (about frame 5 of the flipbook)
+        gsap.delayedCall(0.16, () => {
+          this.fx.shards(p.x, p.y, 0xbfe9ff, 8, 1);
+          this.fx.ring(p.x, p.y, 0xa8e4ff, 70, 3, 0.45, hexLayout.squash);
+          this.shake(2);
+        });
+        audio.sfx('sword', { volume: 0.4, rate: 1.2, throttleMs: 90 });
+        break;
       case 'frost_array':
       case 'frost_burst':
       case 'freeze':

@@ -38,7 +38,9 @@ unlock, the Ladder leaderboard, run counters and the Compendium's discovery list
     Lattice (more Frost, +30% damage to Frozen enemies) and Formation Ward (shields and Attack Speed for the allies
     beside her).
   - Art: a ChatGPT portrait, an AutoSprite pack (idle, walk, attack, cast, hurt, death) and painted icons for her
-    three paths and for the hall.
+    three paths and for the hall. Her technique also has its own flipbook (`fx_frost_swords`, the
+    `frost_sword_rain` effect key): an ice sword plunges onto each foe a wave strikes and shatters into frost.
+    Every other disciple uses one of the shared element flipbooks.
   - Balance: in fights against the same foes she sits with the other carries. At Rank II she wins 12–13 of 40,
     against 6–13 for Li Jian, Xuan Bing, Feng Huang and Lei Zhen. Her damage is a little lower than theirs, and her
     Frost makes up for it.
