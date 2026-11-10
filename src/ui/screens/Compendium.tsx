@@ -4,7 +4,8 @@ import { compendiumReturn, meta, screen } from '@/app/store';
 import { emptySeen, type SeenKind } from '@/app/discovery';
 import { HEROES, HERO_BY_ID } from '@/content/heroes';
 import { ENEMIES, ENEMY_BY_ID } from '@/content/enemies';
-import { THEME_BY_ID, lookFilter } from '@/content/themes';
+import { THEMES, THEME_BY_ID, lookFilter } from '@/content/themes';
+import { DIFFICULTIES } from '@/content/difficulties';
 import { ITEMS, ITEM_BY_ID } from '@/content/items';
 import { RELICS, RELIC_BY_ID } from '@/content/relics';
 import { CLASSES } from '@/content/classes';
@@ -94,6 +95,16 @@ const GROUPS: Record<Tab, Group[]> = {
       ],
     },
     { id: 'realm', chips: [{ id: '1', label: 'Realm 1' }, { id: '2', label: 'Realm 2' }] },
+    // one seal per contract whose battlefields are built (Mortal holds the original foes and the Thunder Ape)
+    {
+      id: 'contract',
+      chips: DIFFICULTIES.filter((d) => d.tier === 0 || THEMES.some((t) => t.tier === d.tier && t.ready)).map((d) => ({
+        id: String(d.tier),
+        label: d.hanzi,
+        hint: d.tier === 0 ? 'Mortal battlefields' : `${d.name} battlefields`,
+        cls: 'seal',
+      })),
+    },
   ],
   treasures: [
     { id: 'rarity', chips: ['common', 'rare', 'epic', 'unique'].map(rarityChip) },
@@ -107,6 +118,8 @@ const GROUPS: Record<Tab, Group[]> = {
 
 const hay = (...parts: (string | undefined)[]) => parts.filter(Boolean).join(' ').toLowerCase();
 const enemyKind = (e: EnemyDef) => (e.boss ? 'boss' : e.elite ? 'elite' : 'regular');
+/** The contract whose battlefields a foe walks (0 = Mortal). */
+const enemyContract = (e: EnemyDef) => (e.theme ? (THEME_BY_ID[e.theme]?.tier ?? 0) : 0);
 
 function heroMatch(h: HeroDef, sel: Sel, q: string): boolean {
   if (sel.class && !h.classes.includes(sel.class as ClassId)) return false;
@@ -115,6 +128,7 @@ function heroMatch(h: HeroDef, sel: Sel, q: string): boolean {
 function enemyMatch(e: EnemyDef, sel: Sel, q: string): boolean {
   if (sel.kind && enemyKind(e) !== sel.kind) return false;
   if (sel.realm && e.realm !== 'any' && String(e.realm) !== sel.realm) return false;
+  if (sel.contract && String(enemyContract(e)) !== sel.contract) return false;
   return !q || hay(e.name, e.ability?.name, ...(e.passives ?? []).map((p) => p.name)).includes(q);
 }
 function itemMatch(i: ItemDef, sel: Sel, q: string): boolean {

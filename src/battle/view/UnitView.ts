@@ -6,6 +6,7 @@ import { loadSpritePack, type SpriteAnimDef, type SpritePack } from './SpritePac
 import { loadUnitTexture } from './textures';
 import { teamPalette } from './palette';
 import { GlowFilter } from 'pixi-filters';
+import { lookMatrix } from '@/content/themes';
 
 /** Status medallion art: painted icons in assets/art/ui/status when present, else the tinted keyword glyph. */
 const STATUS_GLYPH: Record<string, string> = { burn: 'kw_burn', poison: 'kw_poison', frost: 'kw_frost', bleed: 'kw_bleed', taunt: 'kw_taunt', stun: 'kw_lightning' };
@@ -114,9 +115,7 @@ export class UnitView extends Container {
     // a recoloured variant (Mist Wolf from the Spirit Wolf's sprite...) keeps its colour shift under every other effect
     if (unit.look) {
       const look = new ColorMatrixFilter();
-      if (unit.look.hue) look.hue(unit.look.hue, true);
-      if (unit.look.saturate !== undefined) look.saturate(unit.look.saturate - 1, true);
-      if (unit.look.brightness !== undefined) look.brightness(unit.look.brightness, true);
+      look.matrix = lookMatrix(unit.look) as typeof look.matrix;
       this.look = look;
     }
     this.body.filters = this.filterChain();

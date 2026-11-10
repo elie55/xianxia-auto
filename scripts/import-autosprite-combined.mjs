@@ -14,7 +14,21 @@ const folder = process.argv[2] ?? join(homedir(), 'Downloads');
 const prefix = process.argv[3] ?? 'as';
 const manifest = JSON.parse(readFileSync(join(folder, `${prefix}_manifest.json`), 'utf8'));
 const KNOWN = ['idle', 'walk', 'run', 'hurt', 'death', 'cast', 'jump'];
-const classify = (raw) => (KNOWN.includes(raw) ? raw : /hurt|hit|damage/.test(raw) ? 'hurt' : /death|die|dead/.test(raw) ? 'death' : 'attack');
+// custom clips are named after what they do: hover_idle / fly_walk (flyers), strike_attack, hurt_recoil, fall_death, cast
+const classify = (raw) =>
+  KNOWN.includes(raw)
+    ? raw
+    : /hurt|hit|damage|flinch/.test(raw)
+      ? 'hurt'
+      : /death|die|dead|topple/.test(raw)
+        ? 'death'
+        : /idle|hover/.test(raw)
+          ? 'idle'
+          : /walk|fly/.test(raw)
+            ? 'walk'
+            : /cast/.test(raw)
+              ? 'cast'
+              : 'attack';
 const inbox = join(root, '.autosprite-inbox');
 const ids = [];
 for (const [id, entry] of Object.entries(manifest)) {

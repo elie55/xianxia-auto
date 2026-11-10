@@ -40,7 +40,7 @@ import { run } from './store';
  *   ?demo=challenge    → challenge offers
  *   ?demo=insight      → class Insight choice (rank 2 breakthrough)
  *   ?demo=cleared      → realm cleared
- *   &realm=1|2|3       → arena painting of that realm (with any board scene)
+ *   &realm=1|2|3       → that realm's arena and foes (with any board scene; with boss, its guardian)
  *   &tier=0..7         → the demo run's contract (its battlefields and foes)
  *   ?demo=end          → run end (victory)
  */
@@ -80,6 +80,9 @@ export function applyDebugQuery(): boolean {
   addItemToInventory(s, 'jade_vitality_pendant');
   equipItem(s, 'azure_sword_talisman', s.roster[0].uid);
   addRelic(s, RELICS[0].id);
+  // the realm is set before the node is entered, so its foes (and the guardian) come from that realm
+  const realm = Number(params.get('realm'));
+  if (realm === 1 || realm === 2 || realm === 3) s.realm = realm;
   if (value === 'boss') s.nodeIndex = 11;
   if (eventId) {
     s.nodeIndex = 2;
@@ -93,8 +96,6 @@ export function applyDebugQuery(): boolean {
     enterNode(s);
     applyScene(s, value);
   }
-  const realm = Number(params.get('realm'));
-  if (realm === 1 || realm === 2 || realm === 3) s.realm = realm;
   setRun(s);
   screen.value = 'run';
   return true;

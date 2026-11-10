@@ -1,4 +1,5 @@
 import type { EnemyDef } from '@/core/types';
+import { THEME_FOES } from './themeFoes';
 
 export const ENEMIES: EnemyDef[] = [
   // ───────────── Realm I: Azure Bamboo Province ─────────────
@@ -529,5 +530,8 @@ export const ENEMIES: EnemyDef[] = [
     bounty: 15,
   },
 ];
+
+// the foes of the other contract battlefields (src/content/themeFoes.ts)
+ENEMIES.push(...THEME_FOES);
 
 export const ENEMY_BY_ID: Record<string, EnemyDef> = Object.fromEntries(ENEMIES.map((e) => [e.id, e]));
