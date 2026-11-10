@@ -398,8 +398,14 @@ New hooks are needed for:
 
 - **Main menu:**
   - a profile plate: avatar, sect name, sect rank, Renown bar, title
-  - a **Sect** plaque beside New Run, from Renown 2
-  - a dot on the plaque when something can be bought or claimed
+  - a painted **sect banner** hanging at the right (`src/ui/components/SectBanner.tsx`), built 2026-11-10 because
+    a small button was easy to miss. It invites the player in:
+    - what the sect offers: heirloom Treasures, new Dao Insights, bounties and rewards, and new disciples (the
+      Recruitment Hall, shown as coming soon). A part still locked shows the Renown that opens it.
+    - one status line (`sectInvite` in `src/meta/sect.ts`): the first thing that can be crafted, studied or raised,
+      else the next building to open, else the bounties
+    - it glows when something can be done
+    - before Renown 2 it is faded, shows the way to founding the sect and opens the Renown track
 - **New Run:**
   - a **Doctrine** picker and a **Heirloom** picker, once those are unlocked
   - a **Pure run** toggle under "Advanced"

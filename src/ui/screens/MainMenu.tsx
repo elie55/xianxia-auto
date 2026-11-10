@@ -4,7 +4,7 @@ import { audio } from '@/audio/AudioManager';
 import { useEffect, useRef } from 'preact/hooks';
 import { isDesktop, quitGame } from '@/app/desktop';
 import { SectPlate } from '@/ui/components/MetaBits';
-import { isOpen, sectHasNews } from '@/meta/sect';
+import { SectBanner } from '@/ui/components/SectBanner';
 import { ladderFloorOf } from '@/core/run';
 
 
@@ -93,6 +93,7 @@ export function MainMenu() {
       </div>
 
       <SectPlate class="menu-plate" onClick={() => go('renown')} />
+      <SectBanner onOpen={() => go('sect', 'ui_confirm')} onRenown={() => go('renown')} />
 
       <div class="menu-logo-wrap">
         <div class="menu-logo-halo" />
@@ -116,12 +117,6 @@ export function MainMenu() {
           </button>
         </div>
         <div class="menu-secondary stagger">
-          {isOpen('hall', m.renown?.xp ?? 0) && (
-            <button class="btn small menu-sect-btn" onClick={() => go('sect')}>
-              <span class="btn-glyph">宗</span> The Sect
-              {sectHasNews(m) && <i class="menu-news-dot" aria-label="Something can be built" />}
-            </button>
-          )}
           <button class="btn small" onClick={() => go('compendium')}>
             <span class="btn-glyph">典</span> Compendium
           </button>

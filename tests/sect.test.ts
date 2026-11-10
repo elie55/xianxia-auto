@@ -18,7 +18,9 @@ import {
   refillBounties,
   runSectFor,
   sectHasNews,
+  sectInvite,
   sectOf,
+  sectToDo,
   studyRelics,
 } from '@/meta/sect';
 
@@ -156,5 +158,28 @@ describe('Buildings, the board and the save', () => {
     m.sect = { purse: { funds: 80, herbs: 0, cores: 6, jade: 0 } };
     expect(canAfford(sectOf(m).purse, RECIPES[0].cost)).toBe(true);
     expect(sectHasNews(m)).toBe(true);
+  });
+});
+
+describe('The main menu sect banner', () => {
+  it('shows a new player the way to Renown 2, with their progress', () => {
+    const inv = sectInvite(metaWith({ renown: { xp: 60 } }));
+    expect(inv).toMatchObject({ open: false, ready: false });
+    expect(inv.progress).toBeCloseTo(60 / cumulativeXp(2));
+    expect(inv.headline).toContain('Renown 2');
+  });
+  it('names the first thing to do: craft, then study, then raise a hall', () => {
+    const m = metaWith({ renown: { xp: cumulativeXp(10) }, sect: { purse: { funds: 1000, herbs: 100, cores: 100, jade: 10 } } });
+    const todo = sectToDo(m);
+    expect(todo[0]).toBe("The Artifact Forge can craft the Sect Founder's Sword.");
+    expect(todo).toContain('The Scripture Pavilion can study the Scrolls of the Five Phases.');
+    expect(todo.at(-1)).toBe('The Scripture Pavilion can rise to level II.');
+    expect(sectInvite(m)).toMatchObject({ open: true, ready: true, headline: todo[0] });
+    expect(sectHasNews(m)).toBe(true);
+  });
+  it('otherwise shows the next building to open, then the bounties', () => {
+    expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(3) } }))).toMatchObject({ open: true, ready: false, headline: 'Renown 5 opens the Artifact Forge.' });
+    const all = metaWith({ renown: { xp: cumulativeXp(6) }, sect: { bounties: { active: ['win_six', 'two_elites', 'realm_one'], done: [] } } });
+    expect(sectInvite(all)).toMatchObject({ ready: false, headline: '3 bounties wait on the Bounty Board.' });
   });
 });

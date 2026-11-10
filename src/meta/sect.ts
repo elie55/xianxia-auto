@@ -2,7 +2,7 @@ import type { MetaSave } from '@/app/store';
 import type { RunSect, RunState } from '@/core/run';
 import { RESEARCH_RELICS } from '@/content/relics';
 import { HEIRLOOM_MAX_LEVEL, HEIRLOOM_RECIPES } from '@/content/heirlooms';
-import { contractMultiplier, levelOf, rankOf } from '@/meta/renown';
+import { contractMultiplier, cumulativeXp, levelOf, rankOf } from '@/meta/renown';
 
 /**
  * The Sect (docs/META_PROGRESSION.md, section 6), phase 2: Sect Funds and three materials paid by every run, the Main
@@ -239,17 +239,51 @@ export function runSectFor(m: MetaSave, heirloom: string): RunSect {
   };
 }
 
-/** Anything the player can do in the sect right now (a dot on the menu's Sect plaque). */
-export function sectHasNews(m: MetaSave): boolean {
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
+
+/** What the player can do in the sect right now and afford, the most tempting first: craft, study, then raise a hall. */
+export function sectToDo(m: MetaSave): string[] {
   const xp = m.renown?.xp ?? 0;
-  if (!isOpen('hall', xp)) return false;
+  if (!isOpen('hall', xp)) return [];
   const s = sectOf(m);
+  const out: string[] = [];
+  if (isOpen('forge', xp))
+    for (const r of RECIPES) if (!s.heirlooms.some((h) => h.id === r.id) && r.forge <= s.buildings.forge && canAfford(s.purse, r.cost)) out.push(`The Artifact Forge can craft the ${r.name}.`);
+  if (isOpen('pavilion', xp))
+    for (const st of STUDIES) if (!s.research.includes(st.id) && st.level <= s.buildings.pavilion && canAfford(s.purse, st.cost)) out.push(`The Scripture Pavilion can study the ${st.name}.`);
   const cap = levelCap(xp);
-  for (const id of ['pavilion', 'forge'] as const) {
+  for (const id of ['forge', 'pavilion'] as const) {
     const lvl = s.buildings[id];
-    if (isOpen(id, xp) && lvl < cap && canAfford(s.purse, levelCost(lvl + 1, BUILDING_BY_ID[id].material!))) return true;
+    if (isOpen(id, xp) && lvl < cap && canAfford(s.purse, levelCost(lvl + 1, BUILDING_BY_ID[id].material!))) out.push(`The ${BUILDING_BY_ID[id].name} can rise to level ${ROMAN[lvl + 1]}.`);
   }
-  if (isOpen('pavilion', xp) && STUDIES.some((st) => !s.research.includes(st.id) && st.level <= s.buildings.pavilion && canAfford(s.purse, st.cost))) return true;
-  if (isOpen('forge', xp) && RECIPES.some((r) => !s.heirlooms.some((h) => h.id === r.id) && r.forge <= s.buildings.forge && canAfford(s.purse, r.cost))) return true;
-  return false;
+  return out;
+}
+
+/** Anything the player can do in the sect right now (the glow on the main menu's sect banner). */
+export function sectHasNews(m: MetaSave): boolean {
+  return sectToDo(m).length > 0;
+}
+
+export interface SectInvite {
+  /** The sect is founded (Renown 2): the banner opens the Sect screen. */
+  open: boolean;
+  /** Something can be crafted, studied or raised right now. */
+  ready: boolean;
+  /** One line: the first thing to do, else the next building to open, else the bounties. */
+  headline: string;
+  /** Renown progress (0–1) towards what the headline waits for: founding the sect or the next building. */
+  progress?: number;
+}
+
+/** The main menu's sect banner. */
+export function sectInvite(m: MetaSave): SectInvite {
+  const xp = m.renown?.xp ?? 0;
+  if (!isOpen('hall', xp))
+    return { open: false, ready: false, headline: `Every run earns Sect Renown. At Renown ${SECT_OPENS} your sect is founded.`, progress: Math.min(1, xp / cumulativeXp(SECT_OPENS)) };
+  const todo = sectToDo(m);
+  if (todo.length) return { open: true, ready: true, headline: todo[0] };
+  const next = BUILDINGS.find((b) => !isOpen(b.id, xp));
+  if (next) return { open: true, ready: false, headline: `Renown ${next.unlock} opens the ${next.name}.`, progress: Math.min(1, xp / cumulativeXp(next.unlock)) };
+  const n = sectOf(m).bounties.active.length;
+  return { open: true, ready: false, headline: n ? `${n} ${n === 1 ? 'bounty waits' : 'bounties wait'} on the Bounty Board.` : 'Bring Sect Funds home from your runs to raise its halls.' };
 }
