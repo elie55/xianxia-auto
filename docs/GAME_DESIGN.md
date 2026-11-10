@@ -51,6 +51,22 @@ decision between fights: the shop, events, **rank-ups** (cultivation breakthroug
 - **Realm II — Blood Moon Abyss** (demon wastes: crimson wasteland, ruined demon palace). Boss: **Blood Moon Demon Sovereign**.
 - **Endless — Heavenly Ladder**: floors with scaling enemies until defeat; local leaderboard (floor reached).
 
+**Contract battlefields.** Every contract (difficulty tier) has its own two battlefields: a painted arena with its own
+ambience, four foes of its own (two regulars, an elite, a guardian), three recoloured Mortal foes and the roaming Thunder
+Ape (src/content/themes.ts, src/content/themeFoes.ts). Realm II guardians summon on the Blood Moon Sovereign's rhythm.
+Each battlefield is tuned with the run simulator against the same contract played on the Mortal fields.
+
+| Contract | Realm I | Realm II |
+| --- | --- | --- |
+| 0 Mortal | **Azure Bamboo Province** 竹 (petals) · elite Moss Golem · guardian **Flood Dragon of the Jade River** | **Blood Moon Abyss** 渊 (embers) · elite Demon General · guardian **Blood Moon Demon Sovereign** |
+| 1 Qi Condensation | **Misty Herb Valley** 药 (mist) · elite Three-Tailed Mist Fox · guardian **Thousand-Year Ginseng King** | **Wailing Bone Marsh** 尸 (wisps) · elite Corpse Puppeteer · guardian **Jiangshi Patriarch** |
+| 2 Foundation | **Jade Quarry Peaks** 玉 (dust) · elite Stone Guardian Lion · guardian **Jade Colossus** | **Drowned Sect Ruins** 溺 (bubbles) · elite Coral-Bound Elder · guardian **Abyssal Kraken Elder** |
+| 3 Golden Core | **Vermilion Furnace Volcano** 炉 (embers) · elite Molten Golem · guardian **Furnace Tyrant** | **Ashen Pill Wastes** 灰 (ash) · elite Pill-Fed Brute · guardian **Mad Alchemist Elder** |
+| 4 Nascent Soul | **Frozen Northern Wastes** 冰 (snow) · elite Frost Maiden · guardian **Glacier Qilin** | **Soul-Devouring Forest** 噬 (spores) · elite Hollow Hunter · guardian **Heart Demon Tree** |
+| 5 Soul Formation | **Thunder Plateau** 雷 (storm) · elite Thunder Drum Shaman · guardian **Thunder Roc** | **Shattered Sky Isles** 空 (wind) · elite Sky Pirate Swordsman · guardian **Tempest Demon Lord** |
+| 6 Void Refinement | **Starfall Desert** 星 (sand) · elite Desert Star Witch · guardian **Star-Eating Sandworm** | **Void Rift** 虚 (void) · elite Rift Warden · guardian **Void Devourer** |
+| 7 Heavenly Tribulation | **Tribulation Peak** 劫 (tribulation) · elite Tribulation Enforcer · guardian **Lightning Tribulation Avatar** | **Ninth Heaven Gate** 天 (celestial) · elite Celestial General · guardian **Heavenly Dao Enforcer** |
+
 Each Realm has 12 nodes, shown on the HUD timeline:
 
 | # | Node | Notes |

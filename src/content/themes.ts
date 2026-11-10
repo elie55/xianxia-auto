@@ -190,7 +190,7 @@ export const THEMES: ArenaTheme[] = [
     guardians: ['mad_alchemist'],
     escort: ['ash_ghoul', 'ash_ghoul'],
     teaser: 'The ashes of a great pill gone wrong, and the Mad Alchemist who brewed it.',
-    ready: false,
+    ready: true,
   },
   {
     id: 'frozen_north',
@@ -207,7 +207,7 @@ export const THEMES: ArenaTheme[] = [
     guardians: ['glacier_qilin'],
     escort: ['frost_wolf', 'frost_wolf'],
     teaser: 'A frozen outpost under the aurora, watched by the Glacier Qilin.',
-    ready: false,
+    ready: true,
   },
   {
     id: 'soul_forest',
@@ -224,7 +224,7 @@ export const THEMES: ArenaTheme[] = [
     guardians: ['heart_demon_tree'],
     escort: ['soul_bat', 'soul_bat'],
     teaser: 'A forest that feeds on souls, rooted in the Heart Demon Tree.',
-    ready: false,
+    ready: true,
   },
   {
     id: 'thunder_plateau',
@@ -241,7 +241,7 @@ export const THEMES: ArenaTheme[] = [
     guardians: ['thunder_roc'],
     escort: ['storm_wolf', 'storm_wolf'],
     teaser: 'A plateau of endless storms, where the Thunder Roc nests.',
-    ready: false,
+    ready: true,
   },
   {
     id: 'sky_isles',
@@ -258,7 +258,7 @@ export const THEMES: ArenaTheme[] = [
     guardians: ['tempest_lord'],
     escort: ['gale_bat', 'gale_bat'],
     teaser: 'Islands broken loose above the clouds, where the Tempest Demon Lord reigns.',
-    ready: false,
+    ready: true,
   },
   {
     id: 'starfall_desert',
@@ -309,7 +309,7 @@ export const THEMES: ArenaTheme[] = [
     guardians: ['trib_avatar'],
     escort: ['tribulation_wolf', 'tribulation_wolf'],
     teaser: 'The summit of the heavenly tribulation, where the lightning itself takes form.',
-    ready: false,
+    ready: true,
   },
   {
     id: 'heaven_gate',
@@ -326,7 +326,7 @@ export const THEMES: ArenaTheme[] = [
     guardians: ['dao_enforcer'],
     escort: ['golden_crow', 'golden_crow'],
     teaser: 'The last gate of heaven, held by the Heavenly Dao Enforcer.',
-    ready: false,
+    ready: true,
   },
 ];
 
