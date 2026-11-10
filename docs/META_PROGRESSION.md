@@ -22,8 +22,8 @@ unlock, the Ladder leaderboard, run counters and the Compendium's discovery list
   - Pavilion: 3 studies of 3 new Dao Insights, and seals.
   - Forge: 4 heirloom recipes with 3 levels each, carried from the New Run screen.
   - Bounty Board: 12 bounties, checked when a run ends.
-- Phase 2 reuses existing art: the old key art for the sect and existing painted icons for the new Insights and
-  heirlooms. Dedicated art can come later.
+- Phase 2 reuses existing art for the sect (the old key art) and for the new Insights (existing painted icons).
+  Dedicated art can come later. The four heirlooms have their own icons and sect-wide effects (section 6.4).
 
 Phases 3–5 are not started.
 
@@ -216,10 +216,18 @@ Doctrines give the most replay value for the least art. Each one has an upside a
 - **Bringing one into a run:** on the New Run screen you pick one, and it starts in the inventory.
 - **Growth:** each victory while it is carried raises it a level (max 3) and improves its effect. This builds
   attachment across runs.
-- **Example recipes:**
-  - *Sect Founder's Sword*: +10 Attack; at level 3, the first technique each fight costs no Qi.
-  - *Ancestral Jade Seal*: start each fight with a 10% Max HP Qi Shield.
-  - *Wandering Elder's Gourd*: heal 3% Max HP each second for 5 s after the first fall.
+- **The four heirlooms (built, `src/content/heirlooms.ts`):** each has its own painted icon and an effect no shop
+  Treasure has. Shop Treasures only ever help their bearer or hurt foes; heirlooms act for the whole sect.
+  - *Sect Founder's Sword*: Attack and Crit. When an ally falls, the bearer gains +10/12/15% Attack and
+    +10/12/15 Attack Speed for the rest of the fight, up to 3 times. At level 3 each fall also gives 25 Qi.
+  - *Ancestral Jade Seal*: Max HP. At the start of each fight every ally gains a Qi Shield worth 5/7/9% of the
+    bearer's Max HP for 10 s.
+  - *Wandering Elder's Gourd*: Max HP and Spirit. Every 8/7/6 s the most wounded ally (the bearer included) is
+    healed for 4/5/6% of the bearer's Max HP plus 40/50/60% Spirit and gains 6/8/10 Qi. At level 3 it also
+    cleanses them.
+  - *Storm-Calling Banner*: Spirit (and Attack Speed at level 3). Each time the bearer casts their technique,
+    every ally gains +12/16/20 Attack Speed for 4/4/5 s and lightning strikes the bearer's target for
+    50/65/80% Spirit.
 
 ### 6.5 Spirit Vein (capped sidegrades)
 
