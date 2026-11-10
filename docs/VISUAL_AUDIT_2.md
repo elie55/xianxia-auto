@@ -455,6 +455,19 @@ How to read it:
 
 **Status (2026-11-10):** all ten are done in the current build. B1 was a false alarm: the Quit plaque already existed in the desktop build (the audit ran in a browser, where it is hidden); it now goes through the Electron bridge. D1 is improved in the view (overlapping fighters ease apart, shorter lunge); spreading rows further apart would need deeper painted floors. Since then, C2 (painted node timeline with preview cards), D3 (guardian bar and arrival splash) and the Tribulation counter label from A7 are done too. Also done since: G1 (Victory banner painted in ink with a stamped seal, an MVP card, Spirit Stones counting up and flying to the counter), G2 in part (palette colours, MVP crown, empty columns hidden), G5 (Rift Sealed shows the painting, the guardian sealed under a talisman, medallion stats and the next realm), G6 (Ascended / Fallen banner, one name per hero, painted star pips, a run timeline), B5 + I4 (tabbed Settings: Audio, Display, Gameplay, Accessibility, Controls; the pause menu pauses the fight and adds Settings, Compendium, Abandon run and Quit), I5 (colour-vision palettes for team colours), I6 (Reduce flashes and motion, following the OS by default), C6 (live HP / Qi under the party portraits and a cast glow) and D6 (a battle camera that frames the fight and leans in on techniques and kills). Every disciple and the realm 2 guardian also have their own ability animation, and all 30 other characters a death animation.
 
+**Status, second pass (2026-11-10):** also done in the current build:
+- **F1, F3, F4:** reward cards with a Skip (+10 Spirit Stones), fuller event texts and an outcome panel after each choice.
+- **D4, C8:** a heal glow, living arenas (petals or leaves, embers, drifting clouds) and a sound per technique.
+- **H1:** ink-wash screen transitions.
+- **E2, E3, C10:** the Rank Up ribbon, a sell brazier that names the refund, and a shake with a red price when you cannot afford an offer.
+- **A4, A3:** cultivation seals for ranks and painted stat icons.
+- **C5, C4, C7:** Dao Insight medallions, a folding Treasure drawer and an encounter banner that names the foes and the reward.
+- **B10, G4, H2:** a richer loading veil with tips, a dramatic defeat (grey arena, cracked seal) and a soft tutorial spotlight.
+- **I7, I8:** click-to-place for disciples and Treasures, and arrow-key focus with a gold ring.
+- **B7, B8:** the Compendium records what you meet in runs (found / total per tab), with filter chips, a search, a detail page per entry (animated sprite with Idle / Attack / Technique, stats, Dao Paths, prices) and one class per page.
+- **B4:** New Run has tier cards with difficulty pips and cleared marks, modifier chips, the seed under "Advanced" in a lacquer field, and a Ladder panel with personal bests and the next unlock.
+- **A8** (a brush cursor) was tried and reverted at the player's request: the game keeps the system cursor.
+
 1. **C1:** make the placement hexes clearly visible during deployment (S).
 2. **G3:** stop "Reverse Time" from wrapping onto two lines (S).
 3. **A6:** move the keyword chips off the portraits into a trait strip (S).

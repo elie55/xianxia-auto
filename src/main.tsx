@@ -12,6 +12,7 @@ import { installHotkeys } from '@/ui/hotkeys';
 import { applyDebugQuery } from '@/app/debug';
 import { startPreload } from '@/app/preload';
 import { installUiSounds } from '@/ui/flourish';
+import { installDiscovery } from '@/app/discovery';
 
 const uiRoot = document.getElementById('ui-root')!;
 installScaling(uiRoot);
@@ -22,6 +23,7 @@ const qa = new URLSearchParams(location.search);
 startPreload(qa.has('demo') || qa.has('screen') || qa.has('noanim'));
 installUiSounds();
 installHotkeys();
+installDiscovery();
 applyDebugQuery();
 render(<App />, uiRoot);
 

@@ -12,7 +12,7 @@ import { RichText } from './RichText';
 import { hideTooltip, showTooltip, tip } from './Tooltip';
 import { ITEM_BY_ID } from '@/content/items';
 
-const EMPTY_CTX: TeamContext = { relics: [], itemSlotBonus: 0, itemSlotsPerRank: false, warriorBlessing: false, qualityBlessing: false };
+export const EMPTY_CTX: TeamContext = { relics: [], itemSlotBonus: 0, itemSlotsPerRank: false, warriorBlessing: false, qualityBlessing: false };
 
 export function tempHero(defId: string, rank: Rank): HeroState {
   return { uid: `tmp-${defId}`, defId, rank, insightIds: [], items: [], permanent: [] };

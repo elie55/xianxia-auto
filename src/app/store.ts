@@ -41,6 +41,8 @@ export interface MetaSave {
   tutorialSeen: string[];
   /** Player skipped the tutorial: never show chapters again. */
   tutorialDisabled: boolean;
+  /** Compendium discovery: ids of the disciples, Treasures, Dao Insights and foes met in any run. */
+  seen?: { heroes: string[]; items: string[]; relics: string[]; enemies: string[] };
 }
 
 const META_KEY = 'nine-heavens:meta';
