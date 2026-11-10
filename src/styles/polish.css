@@ -5485,3 +5485,196 @@ input[type='range']:hover::-webkit-slider-thumb {
   text-align: center;
   line-height: 1.2;
 }
+
+/* ───────── CURSOR: a jade-and-gold calligraphy brush (A8) ───────── */
+html,
+body {
+  cursor: image-set(url('/assets/art/ui/cursor_brush.png') 1x, url('/assets/art/ui/cursor_brush@2x.png') 2x) 2 2, auto;
+}
+button:not(:disabled),
+a,
+[role='button'],
+.clickable,
+.hero-card.clickable,
+.shop-row:not(.sold),
+.reward-card,
+.event-choice:not(.disabled),
+.settings-tab,
+.drawer-tab,
+.champion-pick,
+.codex-tab,
+.codex-card,
+.rt-node,
+.tl-node {
+  cursor: image-set(url('/assets/art/ui/cursor_brush_hover.png') 1x, url('/assets/art/ui/cursor_brush_hover@2x.png') 2x) 2 2, pointer;
+}
+html:active,
+html:active * {
+  cursor: image-set(url('/assets/art/ui/cursor_brush_down.png') 1x, url('/assets/art/ui/cursor_brush_down@2x.png') 2x) 2 2, auto;
+}
+input[type='text'],
+input:not([type]),
+textarea {
+  cursor: text;
+}
+
+/* ───────── LOADING VEIL v2: a painted bar and gameplay tips with an icon (B10) ───────── */
+.veil-bar.v2 {
+  width: 520px;
+  height: 14px;
+  padding: 2px;
+  border-radius: 8px;
+  border: 0;
+  background: linear-gradient(180deg, rgba(3, 7, 8, 0.95), rgba(14, 24, 24, 0.95));
+  box-shadow: 0 0 0 1px #6d5320, 0 0 0 2px #e6c26a, 0 0 0 4px rgba(10, 16, 16, 0.9), 0 6px 16px rgba(0, 0, 0, 0.6);
+  overflow: visible;
+}
+.veil-bar.v2 > i {
+  position: relative;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #8ff5d8 0%, #3fbf9f 50%, #1f7f66 100%);
+  box-shadow: 0 0 16px rgba(122, 240, 207, 0.55);
+}
+.veil-bar.v2 > i::after {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0%, #bff8e8 35%, rgba(122, 240, 207, 0) 70%);
+}
+.veil-mood {
+  font-size: calc(15px * var(--ts, 1));
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.veil-tip.v2 {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 640px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: calc(16px * var(--ts, 1));
+  letter-spacing: 0.02em;
+  line-height: 1.45;
+  color: var(--paper);
+  background: rgba(5, 11, 11, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 75, 0.35);
+  animation: rise-in 0.4s ease-out both;
+}
+.veil-tip-icon {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 35%, #24413c, #0b1514 75%);
+  box-shadow: 0 0 0 2px rgba(212, 168, 75, 0.7);
+}
+
+/* ───────── DEFEAT DRAMA: grey arena, crimson vignette, a cracked seal (G4) ───────── */
+.defeat-drama {
+  position: absolute;
+  inset: calc(-1 * var(--bleed-y, 0px)) calc(-1 * var(--bleed-x, 0px));
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+}
+.defeat-drama.settled {
+  pointer-events: none;
+  z-index: 0;
+}
+.drama-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 48%, rgba(60, 0, 0, 0) 30%, rgba(70, 4, 4, 0.55) 72%, rgba(30, 0, 0, 0.85) 100%);
+  animation: fade-in 0.8s ease-out both;
+}
+.drama-seal {
+  position: relative;
+  width: 210px;
+  height: 210px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: radial-gradient(circle at 34% 28%, #c63a2a, #7d1510 72%);
+  box-shadow: inset 0 0 0 5px rgba(255, 220, 205, 0.28), inset 0 0 30px rgba(50, 0, 0, 0.7), 0 20px 50px rgba(0, 0, 0, 0.7);
+  rotate: -6deg;
+  animation: drama-stamp 0.5s 0.35s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+.drama-seal .brush {
+  font-size: 150px;
+  line-height: 1;
+  color: #ffe9dc;
+  text-shadow: 0 2px 0 rgba(70, 0, 0, 0.7);
+}
+.drama-crack {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.drama-crack path {
+  fill: none;
+  stroke: #1a0303;
+  stroke-width: 3.2;
+  stroke-linejoin: round;
+  stroke-dasharray: 140;
+  stroke-dashoffset: 140;
+  animation: crack-draw 0.45s 0.85s ease-out forwards;
+}
+@keyframes drama-stamp {
+  0% {
+    opacity: 0;
+    scale: 2.4;
+  }
+  65% {
+    opacity: 1;
+    scale: 0.92;
+  }
+  100% {
+    opacity: 1;
+    scale: 1;
+  }
+}
+@keyframes crack-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ───────── TUTORIAL: a soft elliptical spotlight and a bobbing pointer (H2) ───────── */
+.tut-hole.soft {
+  border-radius: 50%;
+  box-shadow: 0 0 70px 9999px rgba(3, 8, 9, 0.62);
+  animation: none;
+}
+.tut-pointer {
+  position: absolute;
+  width: 36px;
+  height: 44px;
+  pointer-events: none;
+  background: linear-gradient(180deg, #fff3c8, #e1b456 60%, #9d7024);
+  clip-path: polygon(30% 0, 70% 0, 70% 52%, 100% 52%, 50% 100%, 0 52%, 30% 52%);
+  filter: drop-shadow(0 0 8px rgba(243, 207, 120, 0.9));
+  animation: tut-bob 0.9s ease-in-out infinite alternate;
+}
+.tut-pointer.up {
+  rotate: 180deg;
+}
+@keyframes tut-bob {
+  from {
+    translate: 0 -6px;
+  }
+  to {
+    translate: 0 6px;
+  }
+}

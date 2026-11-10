@@ -54,6 +54,22 @@ export function BattleResult() {
   const [tab, setTab] = useState<'tracker' | 'stats'>('tracker');
   const b = s.lastBreakdown;
   const calm = reducedMotion();
+  // defeat: the arena drains of colour under a crimson vignette and a cracked seal stamps in before the panel
+  const [drama, setDrama] = useState(!won && !calm);
+  useEffect(() => {
+    if (won) return;
+    // the arena's container exists even before the battle view has finished mounting
+    const canvas = document.getElementById('pixi-root');
+    if (canvas) {
+      canvas.style.transition = 'filter 0.9s ease-out';
+      canvas.style.filter = 'grayscale(0.85) brightness(0.62)';
+    }
+    const t = setTimeout(() => setDrama(false), 1600);
+    return () => {
+      clearTimeout(t);
+      if (canvas) canvas.style.filter = '';
+    };
+  }, []);
   const [shownTotal, setShownTotal] = useState(won && b && !calm ? 0 : b?.total ?? 0);
   const totalRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -107,6 +123,22 @@ export function BattleResult() {
   return (
     <div class="screen">
       <Hud showTracker={false}>
+        {!won && (
+          <div class={`defeat-drama ${drama ? '' : 'settled'}`} onClick={() => setDrama(false)}>
+            <div class="drama-vignette" />
+            {drama && (
+              <div class="drama-seal">
+                <span class="brush">败</span>
+                <svg class="drama-crack" viewBox="0 0 100 100" aria-hidden="true">
+                  <path d="M54 2 L47 24 L58 38 L43 55 L55 70 L46 86 L52 99" />
+                  <path d="M58 38 L74 44" />
+                  <path d="M43 55 L27 60" />
+                </svg>
+              </div>
+            )}
+          </div>
+        )}
+        {(won || !drama) && (
         <div class="modal-backdrop soft">
           <div class={`result-wrap v2 ${won ? 'won' : 'lost'}`}>
             <BrushBanner
@@ -293,6 +325,7 @@ export function BattleResult() {
             </div>
           </div>
         </div>
+        )}
       </Hud>
     </div>
   );

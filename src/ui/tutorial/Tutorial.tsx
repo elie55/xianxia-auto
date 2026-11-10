@@ -369,7 +369,9 @@ export function TutorialLayer() {
   const total = t.chapter.steps.length;
   return (
     <div class="tut-layer">
-      {hole ? <div class="tut-hole" style={{ left: hole.x, top: hole.y, width: hole.w, height: hole.h }} /> : <div class="tut-dim" />}
+      {/* a soft elliptical spotlight a little larger than the target, and a pointer bobbing toward it */}
+      {hole ? <div class="tut-hole soft" style={{ left: hole.x - 26, top: hole.y - 20, width: hole.w + 52, height: hole.h + 40 }} /> : <div class="tut-dim" />}
+      {hole && <div class={`tut-pointer ${hole.y < 140 ? 'up' : ''}`} style={{ left: hole.x + hole.w / 2 - 18, top: hole.y < 140 ? hole.y + hole.h + 18 : hole.y - 62 }} />}
       {hole && step.glyph && <div class="tut-pulse-glyph" style={{ left: hole.x + hole.w - 22, top: hole.y - 40 }}>{step.glyph}</div>}
       <div class="tut-card panel" style={{ left, top }}>
         <div class="tut-step display">
