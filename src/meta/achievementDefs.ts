@@ -73,8 +73,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     A({
       id: `ACH_CONTRACT_${t}`,
       name: CONTRACT_NAMES[t] ?? d.name,
-      // the last contract's achievement also calls the eighth exclusive disciple (RECRUITS in src/meta/sect.ts)
-      desc: `Clear both realms on the ${d.name} contract.${t === DIFFICULTIES.length - 1 ? " Huang Quan, the Corpse Immortal, answers the sect's call." : ''}`,
+      desc: `Clear both realms on the ${d.name} contract.`,
       category: 'contracts',
       xp: CONTRACT_XP[t] ?? 300,
       hanzi: d.hanzi,

@@ -1611,7 +1611,7 @@ export const HEROES: HeroDef[] = [
     exclusive: true,
   },
   {
-    // the eighth exclusive disciple (the achievement Tribulation Survivor): the fallen rise and fight for him
+    // the eighth exclusive disciple (Renown 50, the Immortal Sect): the fallen rise and fight for him
     id: 'huang_quan',
     name: 'Huang Quan',
     hanzi: '黄泉',
@@ -1693,7 +1693,7 @@ export const HEROES: HeroDef[] = [
       },
     ],
     tags: ['Jiangshi', 'Poison'],
-    lore: 'Lightning found him in his Ninth Tribulation and left only a corpse. The corpse got up. He walks the night roads ringing a bronze bell, and the dead of every battlefield fall in behind him. He answers only a sect that has survived the storm that killed him.',
+    lore: 'Lightning found him in his Ninth Tribulation and left only a corpse. The corpse got up. He walks the night roads ringing a bronze bell, and the dead of every battlefield fall in behind him. He answers no sect until it has become an Immortal Sect.',
     portrait: 'huang_quan',
     sprite: 'huang_quan',
     accent: '#7fe6c0',

@@ -566,13 +566,7 @@ function RecruitPanel() {
                   {st === 'recruited' ? (
                     <span class="sect-note">Joins your drafts and shops.</span>
                   ) : st === 'locked' ? (
-                    <span class="sect-note">
-                      {r.achievement
-                        ? `Answers the call when the sect earns ${r.achievement.name}: ${r.achievement.how}.`
-                        : r.hall
-                          ? `Answers the call when this hall reaches level ${ROMAN[r.hall]}.`
-                          : `Answers the sect's call at Renown ${r.renown}.`}
-                    </span>
+                    <span class="sect-note">{r.hall ? `Answers the call when this hall reaches level ${ROMAN[r.hall]}.` : `Answers the sect's call at Renown ${r.renown}.`}</span>
                   ) : (
                     <>
                       <Cost cost={r.cost} purse={s.purse} />

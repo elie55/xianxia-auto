@@ -7,11 +7,10 @@ import { hexDistance, offsetToAxial } from '@/battle/sim/hex';
 import { ENEMY_BY_ID } from '@/content/enemies';
 import { HERO_BY_ID, JIANGSHI_MAX } from '@/content/heroes';
 import { RECRUIT_BY_HERO, recruitGate, recruitState } from '@/meta/sect';
-import { ACH_BY_ID } from '@/meta/achievementDefs';
 import { heroPool, newRun } from '@/core/run';
-import { cumulativeXp } from '@/meta/renown';
+import { cumulativeXp, rankOf } from '@/meta/renown';
 
-/** Huang Quan, the eighth exclusive disciple (the achievement Tribulation Survivor): the fallen rise as his Jiangshi. */
+/** Huang Quan, the eighth exclusive disciple (Renown 50, the Immortal Sect): the fallen rise as his Jiangshi. */
 const ctx: TeamContext = { relics: [], itemSlotBonus: 0, itemSlotsPerRank: false, warriorBlessing: false, qualityBlessing: false };
 const hq = (daoPathId?: string): HeroState => ({ uid: 'hq', defId: 'huang_quan', rank: 1, insightIds: [], items: [], permanent: [], daoPathId });
 const ally = (defId: string, uid: string): HeroState => ({ uid, defId, rank: 1, insightIds: [], items: [], permanent: [], daoPathId: HERO_BY_ID[defId].daoPaths[0].id });
@@ -57,23 +56,19 @@ const runTo = (b: Battle, t: number) => {
 const slay = (b: Battle, by: Unit, u: Unit) => b.dealDamage(by, u, 99999, 'true');
 
 describe('Huang Quan, the Corpse Immortal', () => {
-  it('is an exclusive Talisman Master and Shadow Walker who answers a sect that earned Tribulation Survivor', () => {
+  it('is an exclusive Talisman Master and Shadow Walker who answers the call at Renown 50, the Immortal Sect', () => {
     const def = HERO_BY_ID.huang_quan;
     expect(def.exclusive).toBe(true);
     expect(def.classes).toEqual(['talisman', 'shadow']);
     const r = RECRUIT_BY_HERO.huang_quan;
-    expect(r).toMatchObject({ achievement: { id: 'ACH_CONTRACT_7' }, cost: { funds: 600, jade: 15 } });
-    // the gate names the real achievement, and the achievement says he answers
-    expect(ACH_BY_ID[r.achievement!.id].name).toBe(r.achievement!.name);
-    expect(ACH_BY_ID[r.achievement!.id].desc).toContain('Huang Quan');
-    expect(recruitGate(r)).toBe('Tribulation Survivor');
+    expect(r).toMatchObject({ renown: 50, cost: { funds: 600, jade: 15 } });
+    expect(r.hall).toBeUndefined();
+    expect(recruitGate(r)).toBe('Renown 50');
+    expect(rankOf(50).name).toBe('Immortal Sect');
     expect(heroPool(newRun(0, 3)).some((h) => h.id === 'huang_quan')).toBe(false);
     expect(heroPool(newRun(0, 3, { seals: [], research: [], disciples: ['huang_quan'] })).some((h) => h.id === 'huang_quan')).toBe(true);
-    // neither Renown nor the hall calls him: only the achievement does
-    const sect = { buildings: { recruit: 5 } } as MetaSave['sect'];
-    const xp = cumulativeXp(50);
-    expect(recruitState(metaWith({ renown: { xp }, sect }), 'huang_quan')).toBe('locked');
-    expect(recruitState(metaWith({ renown: { xp }, sect, achievements: { ACH_CONTRACT_7: 1 } }), 'huang_quan')).toBe('waiting');
+    expect(recruitState(metaWith({ renown: { xp: cumulativeXp(49) } }), 'huang_quan')).toBe('locked');
+    expect(recruitState(metaWith({ renown: { xp: cumulativeXp(50) } }), 'huang_quan')).toBe('waiting');
   });
 
   it('raises a Jiangshi from each enemy that falls: 30% of his Max HP, 50% of his Spirit as Attack, his Defense', () => {

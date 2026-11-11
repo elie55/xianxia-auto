@@ -233,10 +233,11 @@ disciple mastery (sections 6.3, 6.5, 6.6 and 10).
 
 **The eighth and last exclusive disciple is built** (2026-11-11):
 - **Huang Quan** (黄泉, "Corpse Immortal") is the necromancer the user asked for in place of the planned lightning
-  rider. He answers the call when the sect earns the achievement Tribulation Survivor (both realms cleared on the
-  Heavenly Tribulation contract), whatever its Renown or hall level. Recruiting him costs 600 Funds and 15 Heavenly
-  Jade. His lore ties the two together: lightning killed him in his Ninth Tribulation, the corpse got up, and he answers
-  only a sect that has survived the storm that killed him. The achievement's description says he answers.
+  rider. He answers the sect's call at Renown 50, when it becomes an Immortal Sect, and recruiting him costs 600 Funds
+  and 15 Heavenly Jade. He was first gated by the achievement Tribulation Survivor (both realms cleared on the
+  Heavenly Tribulation contract), as planned for #8, which kept him behind the hardest contract; the user moved him to
+  Renown 50. His lore: lightning killed him in his Ninth Tribulation, the corpse got up, and he answers no sect until
+  it has become an Immortal Sect.
 - Kit: a Talisman Master and Shadow Walker who commands jiangshi (hopping corpses).
   - Corpse Driving (passive): when an enemy falls, a Jiangshi claws its way out of the corpse to fight for him, up to
     3 at once. A Jiangshi has 30% of his Max HP, Attack equal to 50% of his Spirit and his Defense. They crumble when
@@ -259,8 +260,7 @@ disciple mastery (sections 6.3, 6.5, 6.6 and 10).
   - The keyword Jiangshi (glyph, colour, tooltip text), and "Jiangshi of Huang Quan" in the arena tooltip.
   - In the view, a Jiangshi rises out of the ground (dirt, ghost fire, a stiff rise from below). When destroyed it plays
     its death clip and crumbles, where a Reflection or the Snow Qilin shatters.
-  - `RecruitDef.achievement` gates a disciple by an achievement. The hall card's badge names it and its note says
-    how to earn it.
+  - A sect card's long badge moves under the name instead of squeezing it onto two lines.
 - Art:
   - A ChatGPT portrait of him ringing his bell with a jiangshi behind him, then a clean pose of each.
   - Two AutoSprite packs: Huang Quan has 6 clips. His jiangshi has 5 (a stiff idle, a two-footed hop, a claw lunge,
@@ -746,7 +746,7 @@ AutoSprite credits are being topped up, so exclusive disciples and enemies can b
 
 | Content | Count | Unlocked by |
 | --- | --- | --- |
-| **Exclusive disciples** | 8 | Renown 10, 20, 25, 35, 45; Recruitment Hall L2 and L4; the achievement "Tribulation Survivor" |
+| **Exclusive disciples** | 8 | Renown 10, 20, 25, 35, 45, 50; Recruitment Hall L2 and L4 |
 | Mastery passives | 17 (one per disciple) + 1 per new disciple | disciple mastery 5 |
 | Dao Insights | 24 | Scripture Pavilion research, the Renown track |
 | Treasures | 12 + 10 heirlooms | the Renown track, Artifact Forge recipes |
@@ -767,7 +767,7 @@ This content also moves the game toward its v1.0 targets in GAME_DESIGN.md: 25 d
 - a Martial Artist who builds rage with every hit taken (built: Xiu Luo, at Recruitment Hall level II)
 - an Array Master with a spirit-beast companion (built: Bei Ming and her Snow Qilin, at Recruitment Hall level IV)
 - a mythic Tribulation disciple for the final contract (built as a necromancer at the user's request: Huang Quan, the
-  Corpse Immortal, whose fallen enemies rise as his jiangshi; the achievement Tribulation Survivor calls him)
+  Corpse Immortal, whose fallen enemies rise as his jiangshi; he answers at Renown 50 instead of the final contract)
 
 **Assets per disciple:**
 - a ChatGPT portrait
@@ -791,7 +791,7 @@ teach something: try Frost, try Poison, take the Single Combat trial, field a Da
 | ACH_LADDER_10 | Above the Clouds | Reach floor 10 | 150 XP |
 | ACH_LADDER_20 | Touching Heaven | Reach floor 20 | 250 XP, title |
 | **Contracts** | | | |
-| ACH_CONTRACT_0 … _7 | Mortal Path, Qi Condensed, Foundation Laid, Golden Core Formed, Nascent Soul Born, Soul Formed, Void Refined, Tribulation Survivor | Clear both realms on that contract | 50 → 300 XP, rising Jade; the last one unlocks an exclusive disciple and a title |
+| ACH_CONTRACT_0 … _7 | Mortal Path, Qi Condensed, Foundation Laid, Golden Core Formed, Nascent Soul Born, Soul Formed, Void Refined, Tribulation Survivor | Clear both realms on that contract | 50 → 300 XP, rising Jade; the last one gives a title |
 | **Mastery** | | | |
 | ACH_CLASS_SWORD … _ARRAY (7) | Way of the Sword, Way of the Body, … | Win a run with 3+ disciples of that class in the final fight | 75 XP, a class banner |
 | ACH_HUNDRED_SCHOOLS | Hundred Schools | Win a run with each of the 16 disciples (over many runs) | 300 XP, avatar |

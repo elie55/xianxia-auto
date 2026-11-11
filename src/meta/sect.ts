@@ -215,8 +215,8 @@ export const blessingCountFor = (level: number) => (level >= 5 ? 4 : 3);
 // ───────────────────────── Recruitment Hall ─────────────────────────
 
 /**
- * An exclusive disciple: what makes them answer the sect's call (a Renown level, a Recruitment Hall level or an
- * achievement) and what recruiting them costs.
+ * An exclusive disciple: what makes them answer the sect's call (a Renown level, or a Recruitment Hall level) and what
+ * recruiting them costs.
  */
 export interface RecruitDef {
   hero: string;
@@ -224,8 +224,6 @@ export interface RecruitDef {
   renown?: number;
   /** The Recruitment Hall level at which they answer the call (docs/META_PROGRESSION.md, section 7). */
   hall?: number;
-  /** The achievement the sect must have earned (its id in src/meta/achievementDefs.ts, its name, and how it is earned). */
-  achievement?: { id: string; name: string; how: string };
   cost: Partial<Purse>;
   /** One line for the Recruitment Hall. */
   blurb: string;
@@ -239,9 +237,10 @@ export const RECRUITS: RecruitDef[] = [
   { hero: 'jin_ding', renown: 35, cost: { funds: 450, jade: 10 }, blurb: "An Alchemist and Body Refiner whose golden cauldron turns the sect's Spirit Stones into healing for the whole party." },
   { hero: 'qian_mian', renown: 45, cost: { funds: 550, jade: 12 }, blurb: 'A Shadow Walker and Martial Artist whose mirror Reflections step out to fight beside him, take the blows meant for him and shatter when they fall.' },
   { hero: 'bei_ming', hall: 4, cost: { funds: 450, jade: 10 }, blurb: 'An Array Master and Alchemist from the frozen north whose Snow Qilin holds the front line while her ice arrays bind the enemies around it.' },
+  // the last of them, at the top of the Renown track (the Immortal Sect)
   {
     hero: 'huang_quan',
-    achievement: { id: 'ACH_CONTRACT_7', name: 'Tribulation Survivor', how: 'clear both realms on the Heavenly Tribulation contract' },
+    renown: 50,
     cost: { funds: 600, jade: 15 },
     blurb: 'A Talisman Master and Shadow Walker who died in his Ninth Tribulation and rose again: every enemy that falls gets up as a Jiangshi to fight for him.',
   },
@@ -439,22 +438,18 @@ export function omensFor(omens: SectOmen[], pure: boolean): SectOmen[] {
   return omens.filter((o) => !(pure && OMEN_BY_ID[o.id]?.boon));
 }
 
-/**
- * Where an exclusive disciple stands: not yet at the gate (Renown, Hall level or achievement missing), waiting to be
- * recruited, or recruited.
- */
+/** Where an exclusive disciple stands: not yet at the gate (Renown or Hall missing), waiting to be recruited, or recruited. */
 export function recruitState(m: MetaSave, hero: string): 'locked' | 'waiting' | 'recruited' {
   const r = RECRUIT_BY_HERO[hero];
   const xp = m.renown?.xp ?? 0;
   const s = sectOf(m);
   if (s.disciples.includes(hero)) return 'recruited';
-  const earned = !r?.achievement || !!m.achievements?.[r.achievement.id];
-  return r && isOpen('recruit', xp) && levelOf(xp).level >= (r.renown ?? 0) && s.buildings.recruit >= (r.hall ?? 0) && earned ? 'waiting' : 'locked';
+  return r && isOpen('recruit', xp) && levelOf(xp).level >= (r.renown ?? 0) && s.buildings.recruit >= (r.hall ?? 0) ? 'waiting' : 'locked';
 }
 
-/** What an exclusive disciple waits for, for the Recruitment Hall: "Renown 20", "Hall level II" or an achievement's name. */
+/** What an exclusive disciple waits for, for the Recruitment Hall: "Renown 20" or "Hall level II". */
 export function recruitGate(r: RecruitDef): string {
-  return r.achievement ? r.achievement.name : r.hall ? `Hall level ${ROMAN[r.hall]}` : `Renown ${r.renown ?? 0}`;
+  return r.hall ? `Hall level ${ROMAN[r.hall]}` : `Renown ${r.renown ?? 0}`;
 }
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
