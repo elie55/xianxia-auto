@@ -124,8 +124,44 @@ disciple mastery (sections 6.3, 6.5, 6.6 and 10).
   - Jin Ding with no Stones: 116 to 141. With 30 Stones: 154 to 171. With 60 Stones: 182 to 210.
   - Saving Stones instead of spending them is the trade: a poor run gets a weak healer, a thrifty run a strong one.
 
+**The fifth exclusive disciple is built** (2026-11-11):
+- **Qian Mian** (千面, "Thousand Faces") answers the sect's call at Renown 45. Recruiting him costs 550 Funds and 12
+  Heavenly Jade.
+- Kit: a Shadow Walker and Martial Artist whose mirror Reflections fight beside him.
+  - Mirror Flower, Water Moon (60 Qi): he leaves 2 Reflections where he stands, then blinks behind the lowest-HP
+    enemy and strikes for 180% Attack. A Reflection has 40% of his Attack, 35% of his Max HP and his other combat
+    stats, attacks the nearest enemy, fights for 6 s and vanishes if he falls.
+  - Shattered Mirror: a Reflection that is destroyed or fades shatters for 60% Attack on the enemies beside it.
+  - Dao Paths:
+    - Hall of Mirrors: 3 Reflections, +10 Crit.
+    - Unbroken Mirror: +200 HP and +15 Defense; Reflections have 60% of his Max HP and fight for 10 s.
+    - The Moon Returns: +20 Attack Speed; each shattering Reflection gives him 15 Qi.
+  - Mastery: a second lore page, the title "Master of a Thousand Faces" and the passive Moon in the Water (the
+    technique leaves one more Reflection beside its target).
+- Engine:
+  - the action `clone` makes Reflections: summons with an `ownerId` and an `expiresAt`, drawn as see-through
+    moonlit-lavender copies with a soft rim. A shattered Reflection's view is removed after its flash.
+  - Their damage, the damage they take and their kills go to the owner's record; they leave no record of their own.
+  - Their blows give the enemy no Qi.
+  - Heals, shields, Qi and buffs meant for allies never pick them.
+  - They never count as a fallen ally (`allyDied`) or give the enemy a kill.
+  - The trigger `cloneShattered` fires on the owner when one ends.
+  - The keyword Reflection.
+- Art: a ChatGPT portrait, an AutoSprite pack, painted icons for his three paths, his own flipbook
+  (`fx_sig_qian_mian`: a bronze mirror cracks and bursts into shards and ghostly figures) over a `mirror_split` base, a
+  small replay of it for each shatter, and a synthesised glass `shatter` sound.
+- Balance: `npx tsx scripts/carry-balance.mts [rank] [fights] [carries]` (team Shan Tie, Bai Hu, Mei Yao). Out of
+  300 fights:
+  - Rank I: his paths win 191 to 205 (Ying Wu 169 to 216, Li Jian 185 to 209, Tie Quan 164 to 224).
+  - Rank II: 229 to 230, with a margin of 38.
+  - Rank III: 253 to 261, with a margin of 44 to 45 (Ying Wu 39 to 41, Li Jian 38 to 42, Tie Quan's Breaker 50).
+  - Without Reflections he would win 64% at rank II instead of 77%: they are most of his worth, as decoys.
+  - Two findings fixed before these numbers: Reflections' blows used to feed the enemy Qi, which made bosses cast
+    far more often, and the healers' "most wounded ally" used to pick dying Reflections. Reflections lasted 8 s
+    first; 6 s brought him down to the top carries.
+
 Sect events are built too (6.8), with the first four new foes, and so is the Hall of Ancestors (6.9): phase 4's scope
-is done. Phase 5 (Steam) is not started, nor are exclusive disciples #5 to #8 (listed under "Later").
+is done. Phase 5 (Steam) is not started, nor are exclusive disciples #6 to #8 (listed under "Later").
 
 ---
 
@@ -609,7 +645,7 @@ This content also moves the game toward its v1.0 targets in GAME_DESIGN.md: 25 d
 - a Body Refiner who stores damage taken and releases it as a shockwave (built: Zhong Ming)
 - a Talisman Master whose talismans explode after a delay (built: Wen Yan)
 - an Alchemist who turns Spirit Stones into healing (built: Jin Ding)
-- a Shadow Walker who leaves mirror clones
+- a Shadow Walker who leaves mirror clones (built: Qian Mian)
 - a Martial Artist who builds rage with every hit taken
 - an Array Master with a spirit-beast companion
 - a mythic Tribulation disciple who rides the lightning, for the final contract

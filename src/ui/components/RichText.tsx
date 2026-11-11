@@ -35,6 +35,8 @@ const KEYWORDS = new Set([
   'Seal',
   'Seals',
   'Sealed',
+  'Reflection',
+  'Reflections',
 ]);
 
 const KEYWORD_CLASS: Record<string, string> = {
@@ -55,6 +57,7 @@ const KEYWORD_CLASS: Record<string, string> = {
   Stall: 'Enlightenment',
   Seals: 'Seal',
   Sealed: 'Seal',
+  Reflections: 'Reflection',
 };
 
 const CLASS_NAMES = new Map<string, string>();

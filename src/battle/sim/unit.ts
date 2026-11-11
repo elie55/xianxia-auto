@@ -69,6 +69,10 @@ export interface UnitInit {
   portrait?: string;
   /** Item slot count for "items per rank" difficulty, informational. */
   isSummon?: boolean;
+  /** A Reflection (the `clone` action): the unit it copies, which its damage and kills count for. */
+  ownerId?: number;
+  /** Battle time at which a Reflection fades. */
+  expiresAt?: number;
   /** Non-stat tunables set by items/upgrades. */
   extras?: Partial<Record<'surgeBonus' | 'enlightenmentBonus' | 'shatterPct' | 'burnHealPct' | 'companionMult' | 'permafrost', number>>;
 }
@@ -93,6 +97,10 @@ export class Unit {
   readonly flying: boolean;
   readonly portrait?: string;
   readonly isSummon: boolean;
+  /** Set on a Reflection (the `clone` action): the id of the unit it copies. */
+  readonly ownerId: number | null;
+  /** When a Reflection fades (Infinity for every other unit). */
+  readonly expiresAt: number;
   readonly targeting: 'nearest' | 'lowestHp' | 'farthest' | 'random';
   readonly attackInterval: number;
   readonly attackScale: Scale;
@@ -191,6 +199,8 @@ export class Unit {
     this.masteryPassive = !!init.masteryPassive;
     this.portrait = init.portrait;
     this.isSummon = !!init.isSummon;
+    this.ownerId = init.ownerId ?? null;
+    this.expiresAt = init.expiresAt ?? Infinity;
     this.targeting = init.targeting ?? (init.classes.includes('shadow') ? 'lowestHp' : 'nearest');
     this.attackInterval = init.attackInterval ?? 1.0;
     this.attackScale = init.attackScale ?? { attack: 1 };

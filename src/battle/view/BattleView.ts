@@ -69,6 +69,7 @@ export const FLIPBOOK_SHEETS = [
   'fx_sig_zhong_ming',
   'fx_sig_wen_yan',
   'fx_sig_jin_ding',
+  'fx_sig_qian_mian',
   ...SIGNATURE_HEROES.map((h) => `fx_sig_${h}`),
 ];
 
@@ -114,6 +115,10 @@ const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: numbe
   // Jin Ding's Golden Elixir: her cauldron tips over her and pours golden elixir around her (drawn in front, light
   // over the party, since behind her a melee cluster hides the cauldron)
   sig_jin_ding: { sheet: 'fx_sig_jin_ding', scale: 1.45, ground: true, fps: 22 },
+  // Qian Mian's Mirror Flower, Water Moon: a mirror bursts where he stood as his Reflections step out of it; each
+  // Reflection's end replays it small where it stood (Shattered Mirror)
+  sig_qian_mian: { sheet: 'fx_sig_qian_mian', scale: 1.3, fps: 24 },
+  mirror_shatter: { sheet: 'fx_sig_qian_mian', scale: 0.75, fps: 30, alpha: 0.85, jitter: 8 },
   tiger_roar: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 1.7, ground: true },
   impact: { sheet: 'fx_impact_hit', scale: 0.9 },
   fist_flurry: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 0.7 },
@@ -141,6 +146,7 @@ const SIGNATURE_BASE: Record<string, string> = {
   sig_zhong_ming: 'bell_toll',
   sig_wen_yan: 'talisman_blast',
   sig_jin_ding: 'golden_rain',
+  sig_qian_mian: 'mirror_split',
   sig_li_jian: 'sword_slash',
   sig_shan_tie: 'shield_pop',
   sig_hong_lian: 'lotus_bloom',
@@ -181,6 +187,7 @@ const TECHNIQUE_SFX: Record<string, { key: string; rate?: number; volume?: numbe
   ling_shuang: { key: 'frost', rate: 1.15, volume: 0.7 },
   wen_yan: { key: 'swing', rate: 1.35, volume: 0.5 },
   jin_ding: { key: 'heal', rate: 0.85, volume: 0.65 },
+  qian_mian: { key: 'shatter', rate: 1, volume: 0.6 },
   blood_moon_sovereign: { key: 'tribulation', rate: 0.8, volume: 0.5 },
   flood_dragon: { key: 'frost', rate: 0.6, volume: 0.75 },
 };
@@ -1206,6 +1213,20 @@ export class BattleView {
       case 'death': {
         const v = this.viewOf(e.id);
         if (!v) break;
+        // a Reflection leaves without a death of its own: it flashes and is gone (Shattered Mirror plays its shards)
+        if (e.vanish) {
+          v.shatterAnim();
+          this.fx.motes(v.x, v.y, 0xc3b8ff, 5, 90);
+          // a Reflection never comes back: drop its view (and its rim filter) once the flash has played, so a long
+          // fight full of Reflections does not keep a dozen invisible filtered sprites in the scene
+          gsap.delayedCall(0.4, () => {
+            if (this.views.get(e.id) !== v || v.destroyed) return;
+            if (this.lifted === v) this.lifted = null;
+            this.views.delete(e.id);
+            v.destroy({ children: true });
+          });
+          break;
+        }
         v.dieAnim();
         if (v.unit.side === 'enemy' || v.unit.boss) this.punchCamera(v.x + this.boardOrigin.x, v.y + this.boardOrigin.y - v.bodyHeight * 0.5, v.unit.boss ? 0.06 : v.unit.elite ? 0.035 : 0.018);
         const col = v.unit.side === 'ally' ? 0x9fd5ff : 0xff6b5a;
@@ -1479,6 +1500,24 @@ export class BattleView {
         this.fx.shockwave(p.x, p.y, 0xff6a3d, 110, 0.5);
         this.shake(3);
         audio.sfx('fire', { volume: 0.55, throttleMs: 120 });
+        break;
+      case 'mirror_split':
+        // Qian Mian's Mirror Flower, Water Moon: a moonlit flash and mirror shards where he steps out of himself
+        this.fx.flash(p.x, p.y + chest, 0xe6e0ff, 200, 0.4);
+        this.fx.shards(p.x, p.y, 0xd8d0ff, 12, 1.1);
+        this.fx.ring(p.x, p.y, 0xc3b8ff, 150, 3, 0.6, hexLayout.squash);
+        this.screenFlash(0xd8d0ff, 0.08, 0.35);
+        break;
+      case 'reflection':
+        // a Reflection steps out: a silver glint on it
+        this.fx.flash(p.x, p.y + chest, 0xe6e0ff, 110, 0.3);
+        this.fx.motes(p.x, p.y, 0xc3b8ff, 6, 120);
+        break;
+      case 'mirror_shatter':
+        // Shattered Mirror: the Reflection bursts into shards on the enemies beside it
+        this.fx.shards(p.x, p.y, 0xd8d0ff, 10, 0.9);
+        this.fx.shockwave(p.x, p.y, 0xc3b8ff, 110, 0.4);
+        audio.sfx('shatter', { volume: 0.45, throttleMs: 90 });
         break;
       case 'golden_rain':
         // Jin Ding's Golden Elixir: the cauldron tips and golden light pours over the party

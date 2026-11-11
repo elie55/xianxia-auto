@@ -50,6 +50,8 @@ const SFX: Record<string, string[]> = {
   boss_roar: ['boss_roar.ogg'],
   // a struck temple bell (Zhong Ming), synthesised with ffmpeg from inharmonic bell partials
   bell: ['bell.ogg'],
+  // a mirror shattering (Qian Mian's Reflections), synthesised with ffmpeg: a noise crack and scattered glassy pings
+  shatter: ['shatter.ogg'],
 };
 
 class AudioManager {

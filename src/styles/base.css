@@ -376,6 +376,10 @@ button:disabled {
 .kw-Seal {
   color: #ff7a4a;
 }
+.tag.kw-Reflection,
+.kw-Reflection {
+  color: #c3b8ff;
+}
 .tag.kw-Execute,
 .kw-Execute {
   color: #ff4d4d;

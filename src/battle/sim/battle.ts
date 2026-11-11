@@ -6,11 +6,14 @@ import type {
   Hex,
   Scale,
   Side,
+  SpriteLook,
   StatKey,
+  Stats,
   StatusKind,
   TargetSel,
   TriggerDef,
 } from '@/core/types';
+import { STAT_KEYS } from '@/core/types';
 import { Rng } from '@/core/rng';
 import { Unit, type UnitInit, type UnitTracker } from './unit';
 import type { BattleEvent, UnitSnapshot } from './events';
@@ -43,6 +46,9 @@ export interface BattleConfig {
 
 /** Stone-scaled actions count at most this many Spirit Stones. */
 export const STONES_SCALE_CAP = 60;
+
+/** A Reflection's colour: its owner's sprite paled to moonlit lavender (the view also makes it translucent and rims it). */
+export const REFLECTION_LOOK: SpriteLook = { hue: -20, saturate: 0.5, brightness: 1.3 };
 
 export interface QuestCounters {
   crits: number;
@@ -421,6 +427,12 @@ export class Battle {
 
     for (const u of this.units) {
       if (!u.alive) continue;
+      // a Reflection fades when its time is up (and shatters, for its owner's cloneShattered effects)
+      if (u.expiresAt <= now) {
+        this.endClone(u);
+        if (this.over) return;
+        continue;
+      }
       u.expire(now);
       // qi regen
       const regen = u.stat('qiRegen');
@@ -599,7 +611,8 @@ export class Battle {
       u.firstHitCrit = false;
       if (dealt > 0 || true) {
         this.gainQi(u, 5);
-        this.gainQi(target, 3);
+        // a Reflection's blows are illusions: they feed no Qi to the enemy they strike
+        if (u.ownerId === null) this.gainQi(target, 3);
       }
     });
   }
@@ -669,12 +682,14 @@ export class Battle {
     const hpDmg = amount - absorbed;
     tgt.hp -= hpDmg;
 
+    // a Reflection's blows, and the blows it takes, count for the unit it copies
+    const dealer = this.creditOf(src);
     if (src.id !== tgt.id) {
-      src.tracker.damageDealt += amount;
-      if (amount > src.tracker.bestHit) src.tracker.bestHit = amount;
+      dealer.tracker.damageDealt += amount;
+      if (amount > dealer.tracker.bestHit) dealer.tracker.bestHit = amount;
       if (src.side === 'ally') this.quest.damage += amount;
     }
-    tgt.tracker.damageTaken += amount;
+    this.creditOf(tgt).tracker.damageTaken += amount;
 
     this.emit({
       t: now,
@@ -694,7 +709,7 @@ export class Battle {
       const vamp = src.stat('omnivamp');
       if (vamp > 0) this.heal(src, src, (amount * vamp) / 100, { silentTrigger: true });
       if (crit) {
-        src.tracker.crits++;
+        dealer.tracker.crits++;
         if (src.side === 'ally') this.quest.crits++;
         this.fire(src, 'crit', { target: tgt, amount, crit, ability: o.ability });
       }
@@ -724,6 +739,11 @@ export class Battle {
     // death triggers may revive
     this.fire(victim, 'death', { target: killer });
     if (victim.hp > 0) return;
+    // a destroyed Reflection shatters: no death of its own, no kill for the enemy, no allyDied for its side
+    if (victim.ownerId !== null) {
+      this.endClone(victim);
+      return;
+    }
     victim.hp = 0;
     victim.alive = false;
     victim.deathTime = this.time;
@@ -735,7 +755,8 @@ export class Battle {
     this.emit({ t: this.time, type: 'death', id: victim.id });
     if (victim.boss && victim.side === 'enemy') this.killedBoss = true;
     if (killer.id !== victim.id && killer.side !== victim.side) {
-      killer.tracker.kills++;
+      // a Reflection's kill counts for the unit it copies (its kill triggers stay its own: it has none)
+      this.creditOf(killer).tracker.kills++;
       if (killer.side === 'ally') this.quest.kills++;
       this.fire(killer, 'kill', { target: victim });
     }
@@ -743,7 +764,41 @@ export class Battle {
       if (u.id === victim.id) continue;
       if (u.targetId === victim.id) u.targetId = null;
       if (u.tauntTargetId === victim.id) u.tauntTargetId = null;
-      if (u.alive && u.side === victim.side && u.onBoard) this.fire(u, 'allyDied', { target: victim });
+      if (u.alive && u.side === victim.side && u.onBoard && u.ownerId === null) this.fire(u, 'allyDied', { target: victim });
+    }
+    // its Reflections vanish with it
+    for (const c of this.units) if (c.alive && c.ownerId === victim.id) this.vanish(c);
+    this.checkEnd();
+  }
+
+  /** The unit whose record a unit's deeds go to: a Reflection's owner, else the unit itself. */
+  private creditOf(u: Unit): Unit {
+    return u.ownerId !== null ? (this.byId.get(u.ownerId) ?? u) : u;
+  }
+
+  /** A Reflection ends, destroyed or faded: its owner's cloneShattered effects fire while it still stands, then it goes. */
+  private endClone(c: Unit): void {
+    if (!c.alive) return;
+    const owner = c.ownerId !== null ? this.byId.get(c.ownerId) : undefined;
+    if (owner && owner.alive) this.fire(owner, 'cloneShattered', { target: c });
+    this.vanish(c);
+  }
+
+  /** Takes a unit off the field without a death of its own: no death triggers, no kill, no allyDied. */
+  private vanish(c: Unit): void {
+    if (!c.alive) return;
+    c.hp = 0;
+    c.alive = false;
+    c.deathTime = this.time;
+    c.moving = null;
+    c.burns = [];
+    c.bleeds = [];
+    c.seals = [];
+    c.shields = [];
+    this.emit({ t: this.time, type: 'death', id: c.id, vanish: true });
+    for (const u of this.units) {
+      if (u.targetId === c.id) u.targetId = null;
+      if (u.tauntTargetId === c.id) u.tauntTargetId = null;
     }
     this.checkEnd();
   }
@@ -1011,7 +1066,8 @@ export class Battle {
     const radius = typeof sel === 'object' ? (sel.radius ?? 1) : 1;
     const includeSelf = typeof sel === 'object' ? !!sel.includeSelf : false;
     const foes = this.aliveOnBoard(u.side === 'ally' ? 'enemy' : 'ally').filter((e) => e.pos);
-    const friends = this.aliveOnBoard(u.side).filter((e) => e.pos);
+    // Reflections are illusions: heals, shields, Qi and buffs meant for allies never go to them
+    const friends = this.aliveOnBoard(u.side).filter((e) => e.pos && e.ownerId === null);
     const ref = ctx.target && ctx.target.alive ? ctx.target : undefined;
     const curTarget = ref ?? (u.targetId !== null ? this.byId.get(u.targetId) : undefined);
     const anchor = u.pos ?? curTarget?.pos ?? null;
@@ -1269,6 +1325,54 @@ export class Battle {
         }
         break;
       }
+      case 'clone': {
+        // Reflections (Qian Mian): copies of the unit, stepping out on the free hexes nearest the enemy
+        const anchor = a.at === 'target' ? (this.resolveTargets('target', u, ctx)[0]?.pos ?? u.pos) : u.pos;
+        if (!anchor) break;
+        const stats = {} as Stats;
+        for (const k of STAT_KEYS) stats[k] = u.stat(k);
+        stats.attack = u.stat('attack') * a.attackShare;
+        stats.spirit = u.stat('spirit') * a.attackShare;
+        stats.hp = u.maxHp * a.hpShare;
+        stats.qi = 0;
+        stats.qiRegen = 0;
+        stats.omnivamp = 0;
+        const foes = this.aliveOnBoard(u.side === 'ally' ? 'enemy' : 'ally').filter((e) => e.pos);
+        const toFoe = (h: Hex) => foes.reduce((m, e) => Math.min(m, hexDistance(h, e.pos!)), 99);
+        for (let i = 0; i < a.count; i++) {
+          let free: Hex[] = [];
+          for (let r = 1; r <= 3 && free.length === 0; r++) free = hexesInRange(anchor, r, true).filter((h) => !this.unitAt(h));
+          if (free.length === 0) break;
+          const best = Math.min(...free.map(toFoe));
+          const pos = this.rng.pick(free.filter((h) => toFoe(h) === best));
+          const c = this.addUnit({
+            id: this.nextId,
+            side: u.side,
+            defId: u.defId,
+            name: 'Reflection',
+            hanzi: '镜影',
+            classes: u.classes,
+            rank: u.rank,
+            stats: { ...stats },
+            attackInterval: u.attackInterval,
+            attackScale: u.attackScale,
+            pos,
+            onBoard: true,
+            targeting: 'nearest',
+            sprite: u.sprite,
+            scale: u.visualScale,
+            accent: u.accent,
+            portrait: u.portrait,
+            look: REFLECTION_LOOK,
+            isSummon: true,
+            ownerId: u.id,
+            expiresAt: now + a.duration,
+          });
+          c.facing = u.facing;
+          this.emit({ t: now, type: 'vfx', key: 'reflection', id: c.id });
+        }
+        break;
+      }
       case 'vfx': {
         const targets = a.target ? this.resolveTargets(a.target, u, ctx) : [u];
         for (const t of targets) this.emit({ t: now, type: 'vfx', key: a.key, id: u.id, targetId: t.id, pos: t.pos ?? undefined });
@@ -1312,7 +1416,8 @@ export class Battle {
       winner,
       duration: this.time,
       survivors: this.aliveOnBoard('ally').filter((u) => !u.isSummon).length,
-      units: this.units.map((u) => ({
+      // Reflections leave no record of their own: their deeds are already their owner's
+      units: this.units.filter((u) => u.ownerId === null).map((u) => ({
         id: u.id,
         defId: u.defId,
         heroUid: u.heroUid,

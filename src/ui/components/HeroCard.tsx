@@ -366,6 +366,7 @@ export const KEYWORD_DESC: Record<string, string> = {
   Qi: 'Qi fills from attacks; at full Qi the disciple casts their ability.',
   Resonance: 'Part of the damage she takes is stored as Resonance. Ringing the Golden Bell releases it as a shockwave.',
   Seal: 'A talisman sealed on an enemy explodes a few seconds later. If the enemy dies first, it burns out.',
+  Reflection: 'A mirror copy of the disciple with part of his Attack and Max HP. It fights the nearest enemy and draws blows meant for him, then shatters when destroyed, when its time runs out or when he falls. What it does counts for him.',
 };
 
 export const STAT_DESC: Record<string, string> = {

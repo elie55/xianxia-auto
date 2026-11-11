@@ -60,7 +60,9 @@ export type Keyword =
   /** Zhong Ming's stored damage (the `resonance` counter). */
   | 'Resonance'
   /** Wen Yan's delayed talismans (the `delay` action's seal mark). */
-  | 'Seal';
+  | 'Seal'
+  /** Qian Mian's mirror clones (the `clone` action). */
+  | 'Reflection';
 
 export type StatusKind = 'burn' | 'poison' | 'frost' | 'stun' | 'taunt' | 'bleed' | 'weaken' | 'sunder';
 
@@ -134,6 +136,8 @@ export type TriggerDef =
   | { on: 'hpBelow'; pct: number }
   | { on: 'surgeEnd' }
   | { on: 'stonesEarned' }
+  /** One of this unit's Reflections (the `clone` action) is destroyed or fades; `triggerTarget` is the Reflection. */
+  | { on: 'cloneShattered' }
   | { on: 'passive' };
 
 export type ConditionDef =
@@ -213,6 +217,13 @@ export type ActionDef =
   | { do: 'stones'; amount: number }
   | { do: 'permanentBuff'; stat: StatKey; flat?: number; pct?: number; target?: TargetSel }
   | { do: 'summon'; enemyId: string; count: number }
+  /**
+   * Reflections of the unit (Qian Mian): `count` copies on free hexes beside it (`at: 'self'`, the default) or beside
+   * its target (`at: 'target'`), with `attackShare` of its Attack, `hpShare` of its Max HP and its other combat stats.
+   * They auto-attack the nearest enemy, never cast, fade after `duration` seconds and vanish when their owner falls;
+   * their damage and kills count for the owner, and their end fires the owner's `cloneShattered` effects.
+   */
+  | { do: 'clone'; count: number; attackShare: number; hpShare: number; duration: number; at?: 'self' | 'target' }
   | { do: 'vfx'; key: string; target?: TargetSel }
   | { do: 'custom'; id: string; params?: Record<string, number | string> };
 

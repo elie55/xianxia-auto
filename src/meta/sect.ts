@@ -228,6 +228,7 @@ export const RECRUITS: RecruitDef[] = [
   { hero: 'zhong_ming', renown: 20, cost: { funds: 250, jade: 6 }, blurb: 'A Body Refiner and Martial Artist whose Golden Bell drinks in every blow she takes and rings it back out as a shockwave.' },
   { hero: 'wen_yan', renown: 25, cost: { funds: 350, jade: 8 }, blurb: 'A Talisman Master and Array Master whose paper seals wait two breaths, then explode on the enemies they mark.' },
   { hero: 'jin_ding', renown: 35, cost: { funds: 450, jade: 10 }, blurb: "An Alchemist and Body Refiner whose golden cauldron turns the sect's Spirit Stones into healing for the whole party." },
+  { hero: 'qian_mian', renown: 45, cost: { funds: 550, jade: 12 }, blurb: 'A Shadow Walker and Martial Artist whose mirror Reflections step out to fight beside him, take the blows meant for him and shatter when they fall.' },
 ];
 export const RECRUIT_BY_HERO = Object.fromEntries(RECRUITS.map((r) => [r.hero, r])) as Record<string, RecruitDef>;
 

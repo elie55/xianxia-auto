@@ -7,6 +7,7 @@ import { RichText } from './RichText';
 import { STATUS_COLORS } from '@/battle/view/Vfx';
 import { MASTERY_PASSIVES } from '@/content/mastery';
 import { MasteryPassiveLine } from './HeroCard';
+import { getBattleView } from '@/battle/view/BattleView';
 
 const SHOWN = ['attack', 'attackSpeed', 'spirit', 'crit', 'defense', 'range'] as const;
 
@@ -35,7 +36,17 @@ export function UnitTip({ unit }: { unit: Unit }) {
       <h4 style={{ color: u.side === 'ally' ? 'var(--jade-bright)' : 'var(--vermilion-bright)' }}>
         {u.name} {u.hanzi && <span class="brush gold">{u.hanzi}</span>}
       </h4>
-      <div class="sub">{u.side === 'ally' ? `${RANK_NAMES[u.rank].name} disciple` : u.boss ? 'Realm Guardian' : u.elite ? 'Elite' : 'Enemy'}</div>
+      <div class="sub">
+        {u.ownerId !== null
+          ? `Reflection · fades in ${Math.max(0, Math.ceil(u.expiresAt - (getBattleView().battle?.time ?? 0)))} s`
+          : u.side === 'ally'
+            ? `${RANK_NAMES[u.rank].name} disciple`
+            : u.boss
+              ? 'Realm Guardian'
+              : u.elite
+                ? 'Elite'
+                : 'Enemy'}
+      </div>
       {u.classes.length > 0 && (
         <div class="tip-classes">
           {u.classes.map((c) => (

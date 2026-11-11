@@ -46,7 +46,8 @@ export type BattleEvent =
   | { t: number; type: 'shield'; id: number; amount: number; shield: number; lasting: boolean }
   | { t: number; type: 'status'; id: number; status: StatusKind; stacks: number; duration: number }
   | { t: number; type: 'cleanse'; id: number }
-  | { t: number; type: 'death'; id: number }
+  /** `vanish`: the unit left without a death of its own (a Reflection shattering or fading). */
+  | { t: number; type: 'death'; id: number; vanish?: boolean }
   | { t: number; type: 'revive'; id: number; hp: number }
   | { t: number; type: 'qi'; id: number; qi: number; maxQi: number }
   | { t: number; type: 'buff'; id: number; stat: StatKey; flat: number; pct: number; label?: string }

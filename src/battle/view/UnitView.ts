@@ -93,10 +93,12 @@ export class UnitView extends Container {
   private glow: GlowFilter | null = null;
   /** Colour shift of a recoloured variant. */
   private look: ColorMatrixFilter | null = null;
+  /** A Reflection's steady moonlit rim (kept apart from `glow`, which flashes and switches itself off). */
+  private rim: GlowFilter | null = null;
 
-  /** The body's filters in order: variant colour, flash / grey-out, outline glow. */
+  /** The body's filters in order: variant colour, flash / grey-out, outline glow, a Reflection's rim. */
   private filterChain() {
-    return [this.look, this.brightness, this.glow].filter((f): f is NonNullable<typeof f> => !!f);
+    return [this.look, this.brightness, this.glow, this.rim].filter((f): f is NonNullable<typeof f> => !!f);
   }
   private bob = Math.random() * Math.PI * 2;
   private baseScale: number;
@@ -134,8 +136,10 @@ export class UnitView extends Container {
       look.matrix = lookMatrix(unit.look) as typeof look.matrix;
       this.look = look;
     }
+    if (unit.ownerId !== null) this.rim = new GlowFilter({ distance: 10, outerStrength: 1.6, innerStrength: 0, color: 0xd8d0ff, quality: 0.2, alpha: 0.8 });
     this.body.filters = this.filterChain();
     this.brightness.enabled = false;
+    this.body.alpha = this.ghost;
 
     this.buildPlaceholder();
     void this.tryLoadArt();
@@ -188,7 +192,26 @@ export class UnitView extends Container {
   setOcclusion(target: number, dt: number): void {
     if (this.dead) return;
     this.occlude += (target - this.occlude) * Math.min(1, dt * 8);
-    this.body.alpha = this.occlude;
+    this.body.alpha = this.occlude * this.ghost;
+  }
+
+  /** A Reflection (the `clone` action) is drawn see-through, its owner's sprite paled by its `look`. */
+  private get ghost(): number {
+    return this.unit.ownerId !== null ? 0.7 : 1;
+  }
+
+  /** A Reflection ends: a bright flash outward and it is gone (no death clip). */
+  shatterAnim(): void {
+    this.dead = true;
+    this.bars.visible = false;
+    gsap.killTweensOf(this);
+    gsap.to(this.shadow, { alpha: 0, duration: 0.2 });
+    gsap.to(this.aura, { alpha: 0, duration: 0.2 });
+    this.brightness.reset();
+    this.brightness.brightness(1.9, false);
+    this.brightness.enabled = true;
+    gsap.to(this.body.scale, { x: this.body.scale.x * 1.12, y: this.body.scale.y * 1.12, duration: 0.3, ease: 'power2.out' });
+    gsap.to(this, { alpha: 0, duration: 0.3, ease: 'power1.in' });
   }
 
   private drawAura(color: number): void {

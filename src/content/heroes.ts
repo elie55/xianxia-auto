@@ -1,4 +1,17 @@
-import type { HeroDef } from '@/core/types';
+import type { ActionDef, HeroDef } from '@/core/types';
+
+/**
+ * Qian Mian's Mirror Flower, Water Moon with `count` Reflections of `hpShare` of his Max HP lasting `seconds`: the
+ * Reflections step out where he stands, then he blinks behind the lowest-HP enemy and strikes.
+ */
+function QIAN_MIRROR(count: number, hpShare: number, seconds: number): ActionDef[] {
+  return [
+    { do: 'vfx', key: 'sig_qian_mian', target: 'self' },
+    { do: 'clone', count, attackShare: 0.4, hpShare, duration: seconds },
+    { do: 'blink', target: 'lowestHpEnemy' },
+    { do: 'damage', target: 'lowestHpEnemy', scale: { attack: 1.8 }, kind: 'physical', vfx: 'shadow_blink' },
+  ];
+}
 
 /**
  * The 16 launch disciples, then the exclusive disciples the sect recruits. Stats are Rank C (Qi Condensation) values.
@@ -1323,6 +1336,71 @@ export const HEROES: HeroDef[] = [
     sprite: 'jin_ding',
     accent: '#f2c14e',
     projectile: 'gold_pill',
+    exclusive: true,
+  },
+  {
+    // the fifth exclusive disciple (Renown 45): his mirror Reflections hold the line while he hunts the weakest enemy
+    id: 'qian_mian',
+    name: 'Qian Mian',
+    hanzi: '千面',
+    title: 'Thousand Faces',
+    classes: ['shadow', 'martial'],
+    baseStats: { hp: 820, attack: 46, crit: 30, defense: 24, attackSpeed: 10, range: 1 },
+    attackInterval: 0.85,
+    ability: {
+      id: 'mirror_flower',
+      name: 'Mirror Flower, Water Moon',
+      desc: 'He leaves [2 Reflections] where he stands, then blinks behind the lowest-HP enemy and strikes for [180% Attack]. Each Reflection has [40%] of his Attack and [35%] of his Max HP, fights for [6 s] and vanishes if he falls.',
+      qiCost: 60,
+      castTime: 0.5,
+      vfx: 'shadow_blink',
+      actions: QIAN_MIRROR(2, 0.35, 6),
+      keywords: ['Reflection', 'Crit'],
+    },
+    passives: [
+      {
+        id: 'shattered_mirror',
+        name: 'Shattered Mirror',
+        desc: 'When a [Reflection] is destroyed or fades, it shatters, dealing [60% Attack] to the enemies beside it.',
+        trigger: { on: 'cloneShattered' },
+        actions: [
+          { do: 'vfx', key: 'mirror_shatter', target: 'triggerTarget' },
+          { do: 'damage', target: { kind: 'enemiesAroundTarget', radius: 1 }, scale: { attack: 0.6 }, kind: 'physical' },
+        ],
+        keywords: ['Reflection'],
+      },
+    ],
+    daoPaths: [
+      {
+        id: 'qian_hall_of_mirrors',
+        name: 'Hall of Mirrors',
+        desc: 'Mirror Flower, Water Moon leaves [3 Reflections] instead of 2. Gain [10 Crit].',
+        stats: { crit: 10 },
+        ability: { actions: QIAN_MIRROR(3, 0.35, 6) },
+        keywords: ['Reflection'],
+      },
+      {
+        id: 'qian_unbroken_mirror',
+        name: 'Unbroken Mirror',
+        desc: 'Gain [200 HP] and [15 Defense]. His Reflections have [60%] of his Max HP and fight for [10 s].',
+        stats: { hp: 200, defense: 15 },
+        ability: { actions: QIAN_MIRROR(2, 0.6, 10) },
+        keywords: ['Reflection'],
+      },
+      {
+        id: 'qian_moon_returns',
+        name: 'The Moon Returns',
+        desc: 'Gain [20 Attack Speed]. Each time one of his [Reflections] shatters, he gains [15 Qi].',
+        stats: { attackSpeed: 20 },
+        effects: [{ id: 'moon_returns', desc: 'Shattering Reflections give him 15 Qi.', trigger: { on: 'cloneShattered' }, actions: [{ do: 'qi', target: 'self', amount: 15 }] }],
+        keywords: ['Reflection', 'Qi'],
+      },
+    ],
+    tags: ['Reflection', 'Crit'],
+    lore: 'No two people who have met him agree on his face. He sparred with his reflection in a still pond for nine years; in the tenth, it stepped out of the water to help.',
+    portrait: 'qian_mian',
+    sprite: 'qian_mian',
+    accent: '#c3b8ff',
     exclusive: true,
   },
 ];

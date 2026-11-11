@@ -355,7 +355,8 @@ const trackerTab = signal<'damageDealt' | 'damageTaken' | 'healing'>('damageDeal
 function RightRail({ s }: { s: RunState }) {
   void battleTick.value;
   const view = getBattleView();
-  const units = view.battle?.units.filter((u) => u.side === 'ally' && u.onBoard) ?? [];
+  // a Reflection's deeds are already its owner's: it gets no row of its own
+  const units = view.battle?.units.filter((u) => u.side === 'ally' && u.onBoard && u.ownerId === null) ?? [];
   const tab = trackerTab.value;
   const rows =
     units.length > 0
