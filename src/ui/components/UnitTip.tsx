@@ -26,6 +26,8 @@ export function UnitTip({ unit }: { unit: Unit }) {
   if (u.bleeds.length) statuses.push({ label: 'Bleeding', color: hex(STATUS_COLORS.bleed) });
   if (u.tauntTargetId !== null) statuses.push({ label: 'Taunted', color: hex(STATUS_COLORS.taunt) });
   if (u.shield > 0) statuses.push({ label: `Shield ${Math.round(u.shield)}`, color: '#bfe4ff' });
+  // Zhong Ming's stored damage, released by her Golden Bell
+  if (u.counter('resonance') > 0) statuses.push({ label: `Resonance ${Math.round(u.counter('resonance'))}`, color: '#f0b45a' });
   const passive = u.masteryPassive ? MASTERY_PASSIVES[u.defId] : undefined;
   return (
     <>

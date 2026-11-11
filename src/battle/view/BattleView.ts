@@ -66,6 +66,7 @@ export const FLIPBOOK_SHEETS = [
   'fx_blood_burst',
   'fx_buff_rise',
   'fx_frost_swords',
+  'fx_sig_zhong_ming',
   ...SIGNATURE_HEROES.map((h) => `fx_sig_${h}`),
 ];
 
@@ -104,6 +105,8 @@ const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: numbe
   // Ling Shuang's Nine Frost Swords: an ice sword plunges onto each foe of a wave and shatters
   // (tinted, softened and scattered so three waves on the same foes stay readable swords, not a white flare)
   frost_sword_rain: { sheet: 'fx_frost_swords', tint: 0xb8e6ff, scale: 1.15, ground: true, fps: 26, alpha: 0.8, jitter: 34 },
+  // Zhong Ming's Ten Thousand Echoes: the Golden Bell rings behind her and its rings sweep the ground
+  sig_zhong_ming: { sheet: 'fx_sig_zhong_ming', scale: 1.6, ground: true, behind: true, fps: 22 },
   tiger_roar: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 1.7, ground: true },
   impact: { sheet: 'fx_impact_hit', scale: 0.9 },
   fist_flurry: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 0.7 },
@@ -128,6 +131,7 @@ const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: numbe
 
 /** A signature technique key keeps the procedural part (sparks, rings, sounds) of the shared effect it replaced. */
 const SIGNATURE_BASE: Record<string, string> = {
+  sig_zhong_ming: 'bell_toll',
   sig_li_jian: 'sword_slash',
   sig_shan_tie: 'shield_pop',
   sig_hong_lian: 'lotus_bloom',
@@ -1450,6 +1454,13 @@ export class BattleView {
         this.screenFlash(0xffb347, 0.14, 0.4);
         this.shake(6);
         audio.sfx('boss_roar', { volume: 0.4 });
+        break;
+      case 'bell_toll':
+        // Zhong Ming's Golden Bell: a deep toll and a gold shockwave as wide as its 2-hex reach
+        this.fx.shockwave(p.x, p.y, 0xffc86b, 200, 0.8);
+        this.screenFlash(0xffd27f, 0.12, 0.35);
+        this.shake(5);
+        audio.sfx('bell', { volume: 0.85 });
         break;
       case 'moon_pulse':
         this.fx.ring(p.x, p.y, 0xc9d8ff, 220, 4, 0.9, hexLayout.squash);

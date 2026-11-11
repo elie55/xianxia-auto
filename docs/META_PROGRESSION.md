@@ -47,8 +47,33 @@ unlock, the Ladder leaderboard, run counters and the Compendium's discovery list
     Frost makes up for it.
 - The achievements that ask for "every disciple" still count the 16 launch disciples (`BASE_HEROES`).
 
-Phase 3 and phase 5 are not started; the rest of phase 4 (more exclusive disciples, sect events, the Hall of
-Ancestors) is not either.
+**Phase 3 is built** (2026-11-11): the Doctrine Hall, the Spirit Vein with Pure runs, the Training Grounds and
+disciple mastery (sections 6.3, 6.5, 6.6 and 10).
+
+**The second exclusive disciple is built** (2026-11-11, phase 4):
+- **Zhong Ming** (钟鸣, "Golden Bell") answers the sect's call at Renown 20. Recruiting her costs 250 Funds and
+  6 Heavenly Jade.
+- Kit: a Body Refiner and Martial Artist tank.
+  - Golden Bell Body: she stores 40% of the damage she takes as **Resonance**, a new keyword (the `resonance`
+    counter; the arena tooltip shows it).
+  - Ten Thousand Echoes (60 Qi): every enemy within 2 hexes takes 80% Attack plus 60% of her Resonance, and the
+    Resonance is spent.
+  - Dao Paths: Bronze Skin (+300 HP, +15 Defense, stores 60%), Thunderous Peal (+150 HP, the shockwave reaches
+    3 hexes and stuns for 0.75 s) and Echoing Fists (+25 Attack Speed, 10% Omnivamp, auto-attacks add 15% of the
+    Resonance).
+  - Mastery: a second lore page, the title "Master of the Golden Bell" and the passive Morning Bell (+100 HP; the
+    shockwave also Weakens by 10% for 4 s).
+- Engine: the `counter` action can now add a share of a value (`scale`, here 40% of the damage taken) or `set` it.
+- Art: a ChatGPT portrait, a second right-facing image for AutoSprite, an AutoSprite pack (idle, walk, palm strike,
+  bell-ringing cast, hurt, death), painted icons for her three paths and her own flipbook (`fx_sig_zhong_ming`:
+  the Golden Bell rings and gold rings sweep the ground). Her technique's bell toll is a sound synthesised with
+  ffmpeg from inharmonic bell partials (`bell.ogg`).
+- Balance: `npx tsx scripts/tank-balance.mts [rank] [fights] [tanks]` puts each tank on each of its paths in front
+  of the same team through Realm I elite and guardian fights from four contracts. At Foundation over 300 fights her
+  paths win 69 to 109, against 58 to 109 for Bai Hu and 61 to 73 for Hei Yan. Shan Tie stays the strongest tank.
+
+Phase 5 is not started. The rest of phase 4 (more exclusive disciples, sect events, the Hall of Ancestors) is not
+either.
 
 ---
 
@@ -450,8 +475,8 @@ This content also moves the game toward its v1.0 targets in GAME_DESIGN.md: 25 d
 120 Dao Insights and 30 enemies.
 
 **Working concepts for the exclusive disciples (names are placeholders):**
-- a Sword–Array hybrid who lays frozen sword formations
-- a Body Refiner who stores damage taken and releases it as a shockwave
+- a Sword–Array hybrid who lays frozen sword formations (built: Ling Shuang)
+- a Body Refiner who stores damage taken and releases it as a shockwave (built: Zhong Ming)
 - a Talisman Master whose talismans explode after a delay
 - an Alchemist who turns Spirit Stones into healing
 - a Shadow Walker who leaves mirror clones
@@ -669,6 +694,8 @@ bounties: { id: string; progress: number }[];
      - the Recruitment Hall
      - sect events with the first new foes
      - the Hall of Ancestors
+   - Status (2026-11-11): the Recruitment Hall, Ling Shuang (Renown 10) and Zhong Ming (Renown 20) are built.
+     Left: the third exclusive disciple, sect events and the Hall of Ancestors.
 5. **Steam.**
    - Scope:
      - Steamworks bridge, achievements mirror

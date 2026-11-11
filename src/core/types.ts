@@ -56,7 +56,9 @@ export type Keyword =
   | 'Omnivamp'
   | 'Heal'
   | 'Execute'
-  | 'Qi';
+  | 'Qi'
+  /** Zhong Ming's stored damage (the `resonance` counter). */
+  | 'Resonance';
 
 export type StatusKind = 'burn' | 'poison' | 'frost' | 'stun' | 'taunt' | 'bleed' | 'weaken' | 'sunder';
 
@@ -193,7 +195,11 @@ export type ActionDef =
   | { do: 'blink'; target: TargetSel }
   | { do: 'repeat'; times: number; interval: number; actions: ActionDef[] }
   | { do: 'convertStat'; from: StatKey; to: StatKey; ratio: number }
-  | { do: 'counter'; key: string; add: number; target?: TargetSel }
+  /**
+   * A named counter on the unit: `add` a fixed amount, plus `scale` (e.g. a share of the triggering damage), or `set`
+   * it outright (Zhong Ming's Resonance stores damage taken, and her technique releases it and sets it back to 0).
+   */
+  | { do: 'counter'; key: string; add?: number; scale?: Scale; set?: number; target?: TargetSel }
   | { do: 'stones'; amount: number }
   | { do: 'permanentBuff'; stat: StatKey; flat?: number; pct?: number; target?: TargetSel }
   | { do: 'summon'; enemyId: string; count: number }

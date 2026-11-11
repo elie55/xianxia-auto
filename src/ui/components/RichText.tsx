@@ -31,6 +31,7 @@ const KEYWORDS = new Set([
   'Cleanses',
   'Bleed',
   'Stall',
+  'Resonance',
 ]);
 
 const KEYWORD_CLASS: Record<string, string> = {

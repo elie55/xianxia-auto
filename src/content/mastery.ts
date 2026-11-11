@@ -24,6 +24,7 @@ export const LORE_II: Record<string, string> = {
   gu_lao: 'He was a general before he was a monk, and he remembers every soldier he lost by name. He chants them each morning. The list stopped growing the day he started walking beside his companions instead of ahead of them.',
   feng_huang: 'Each time she rises from the ashes she keeps one thing from the life before: a scar, a song, a grudge. She will not say which she kept this time, only that it was worth dying for.',
   ling_shuang: 'The nine swords belonged to nine elders who sealed a calamity beneath the glacier. When the swords followed her out, the elders came along to see who had woken them. They have not decided yet whether to be pleased.',
+  zhong_ming: 'The temple was rebuilt around the bell, not around her, so she took the bell. It rings louder on her back than it ever did in the tower, and the bandits who come back to hear it again do not stay long.',
 };
 
 /** The mastery level from which a disciple carries its passive in every run. */
@@ -177,6 +178,15 @@ export const MASTERY_PASSIVES: Record<string, UpgradeDef> = {
       ],
     },
     keywords: ['Frost'],
+  },
+  zhong_ming: {
+    id: 'zhong_morning_bell',
+    name: 'Morning Bell',
+    desc: 'Gain [100 HP]. Ten Thousand Echoes also [Weakens] the enemies within 2 hexes: [-10% Attack] for 4 s.',
+    stats: { hp: 100 },
+    ability: {
+      extraActions: [{ do: 'status', target: { kind: 'enemiesAdjacent', radius: 2 }, status: 'weaken', stacks: 10, duration: 4 }],
+    },
   },
   mei_yao: {
     id: 'mei_blossom_rain',

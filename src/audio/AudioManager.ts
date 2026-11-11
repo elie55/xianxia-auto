@@ -48,6 +48,8 @@ const SFX: Record<string, string[]> = {
   fight_start: ['fight_start.ogg'],
   tribulation: ['tribulation.ogg'],
   boss_roar: ['boss_roar.ogg'],
+  // a struck temple bell (Zhong Ming), synthesised with ffmpeg from inharmonic bell partials
+  bell: ['bell.ogg'],
 };
 
 class AudioManager {

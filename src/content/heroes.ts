@@ -1060,6 +1060,77 @@ export const HEROES: HeroDef[] = [
     projectile: 'ice_shard',
     exclusive: true,
   },
+  {
+    id: 'zhong_ming',
+    name: 'Zhong Ming',
+    hanzi: '钟鸣',
+    title: 'Golden Bell',
+    classes: ['body', 'martial'],
+    baseStats: { hp: 1250, attack: 44, spirit: 10, crit: 5, defense: 40, range: 1 },
+    attackInterval: 1.05,
+    ability: {
+      id: 'ten_thousand_echoes',
+      name: 'Ten Thousand Echoes',
+      desc: 'She strikes the Golden Bell: every enemy within 2 hexes takes [80% Attack] + [60%] of her stored [Resonance], and the Resonance is spent.',
+      qiCost: 60,
+      castTime: 0.5,
+      vfx: 'tiger_roar',
+      actions: [
+        { do: 'vfx', key: 'sig_zhong_ming', target: 'self' },
+        { do: 'damage', target: { kind: 'enemiesAdjacent', radius: 2 }, scale: { attack: 0.8, counter: { key: 'resonance', mult: 0.6 } }, kind: 'physical', vfx: 'impact' },
+        { do: 'counter', key: 'resonance', set: 0 },
+      ],
+      keywords: ['Resonance'],
+    },
+    passives: [
+      {
+        id: 'golden_bell_body',
+        name: 'Golden Bell Body',
+        desc: 'She stores [40%] of the damage she takes as [Resonance].',
+        trigger: { on: 'damaged' },
+        actions: [{ do: 'counter', key: 'resonance', scale: { triggerAmount: 0.4 } }],
+        keywords: ['Resonance'],
+      },
+    ],
+    daoPaths: [
+      {
+        id: 'zhong_bronze_skin',
+        name: 'Bronze Skin',
+        desc: 'Gain [300 HP] and [15 Defense]. She stores [60%] of the damage she takes instead of 40%.',
+        stats: { hp: 300, defense: 15 },
+        effects: [{ id: 'bronze_skin', desc: 'Stores a further 20% of the damage taken.', trigger: { on: 'damaged' }, actions: [{ do: 'counter', key: 'resonance', scale: { triggerAmount: 0.2 } }] }],
+        keywords: ['Resonance'],
+      },
+      {
+        id: 'zhong_thunder_peal',
+        name: 'Thunderous Peal',
+        desc: 'Gain [150 HP]. Ten Thousand Echoes reaches every enemy within [3 hexes] and [Stuns] them for 0.75 s.',
+        stats: { hp: 150 },
+        ability: {
+          actions: [
+            { do: 'vfx', key: 'sig_zhong_ming', target: 'self' },
+            { do: 'damage', target: { kind: 'enemiesAdjacent', radius: 3 }, scale: { attack: 0.8, counter: { key: 'resonance', mult: 0.6 } }, kind: 'physical', vfx: 'impact' },
+            { do: 'status', target: { kind: 'enemiesAdjacent', radius: 3 }, status: 'stun', duration: 0.75 },
+            { do: 'counter', key: 'resonance', set: 0 },
+          ],
+        },
+      },
+      {
+        id: 'zhong_echoing_fists',
+        name: 'Echoing Fists',
+        desc: 'Gain [25 Attack Speed] and [10% Omnivamp]. Her auto-attacks deal bonus damage equal to [15%] of her [Resonance].',
+        stats: { attackSpeed: 25, omnivamp: 10 },
+        effects: [{ id: 'echoing_fists', desc: 'Auto-attacks echo the Resonance.', trigger: { on: 'autoAttack' }, actions: [{ do: 'damage', target: 'triggerTarget', scale: { counter: { key: 'resonance', mult: 0.15 } }, kind: 'physical', canCrit: false }] }],
+        keywords: ['Resonance'],
+      },
+    ],
+    tags: ['Resonance'],
+    lore: 'She was the bell-ringer of a mountain temple that bandits burned. She held the gate with her back while the monks fled, and the bell rang with every blow until the bandits ran out of strength.',
+    portrait: 'zhong_ming',
+    sprite: 'zhong_ming',
+    accent: '#e2a64b',
+    exclusive: true,
+  },
 ];
 
 export const HERO_BY_ID: Record<string, HeroDef> = Object.fromEntries(HEROES.map((h) => [h.id, h]));

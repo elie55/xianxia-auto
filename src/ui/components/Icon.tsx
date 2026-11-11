@@ -104,4 +104,5 @@ export const KEYWORD_ICON: Record<string, string> = {
   Omnivamp: 'kw_omnivamp',
   Execute: 'kw_execute',
   Qi: 'kw_qi',
+  Resonance: 'kw_resonance',
 };

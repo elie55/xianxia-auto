@@ -368,6 +368,10 @@ button:disabled {
 .kw-Omnivamp {
   color: #ff7a9a;
 }
+.tag.kw-Resonance,
+.kw-Resonance {
+  color: #f0b45a;
+}
 .tag.kw-Execute,
 .kw-Execute {
   color: #ff4d4d;

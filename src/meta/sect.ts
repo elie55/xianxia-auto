@@ -215,6 +215,7 @@ export interface RecruitDef {
 
 export const RECRUITS: RecruitDef[] = [
   { hero: 'ling_shuang', renown: 10, cost: { funds: 150, jade: 4 }, blurb: 'A Sword Cultivator and Array Master in one: her frost swords fall in waves and freeze what they strike.' },
+  { hero: 'zhong_ming', renown: 20, cost: { funds: 250, jade: 6 }, blurb: 'A Body Refiner and Martial Artist whose Golden Bell drinks in every blow she takes and rings it back out as a shockwave.' },
 ];
 export const RECRUIT_BY_HERO = Object.fromEntries(RECRUITS.map((r) => [r.hero, r])) as Record<string, RecruitDef>;
 

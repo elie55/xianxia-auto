@@ -364,6 +364,7 @@ export const KEYWORD_DESC: Record<string, string> = {
   Omnivamp: 'Heals for a percentage of all damage dealt.',
   Execute: 'Instantly slays enemies below an HP threshold.',
   Qi: 'Qi fills from attacks; at full Qi the disciple casts their ability.',
+  Resonance: 'Part of the damage she takes is stored as Resonance. Ringing the Golden Bell releases it as a shockwave.',
 };
 
 export const STAT_DESC: Record<string, string> = {

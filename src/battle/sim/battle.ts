@@ -1181,7 +1181,10 @@ export class Battle {
         break;
       }
       case 'counter': {
-        for (const t of this.resolveTargets(a.target ?? 'self', u, ctx)) t.addCounter(a.key, a.add);
+        for (const t of this.resolveTargets(a.target ?? 'self', u, ctx)) {
+          if (a.set !== undefined) t.addCounter(a.key, a.set - t.counter(a.key));
+          else t.addCounter(a.key, (a.add ?? 0) + (a.scale ? this.evalScale(a.scale, u, t, ctx) : 0));
+        }
         break;
       }
       case 'stones': {
