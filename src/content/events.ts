@@ -136,6 +136,24 @@ export const EVENTS: EventDef[] = [
     ],
   },
   {
+    // a sect event's omen (src/content/sectEvents.ts): the Heart Demon the sect chose to hunt waits at Realm I's trial
+    id: 'heart_demon_trial',
+    title: 'Heavenly Trial: The Heart Demon',
+    hanzi: '心魔',
+    text: 'The binding seal your elders drew glows on the road ahead. Inside it the Heart Demon waits, wearing the face of whoever looks at it. Only one disciple may step in.',
+    art: 'sect_heart_demon',
+    only: 'trial',
+    choices: [
+      {
+        id: 'duel',
+        label: 'Face it alone',
+        desc: 'Defeat the [Heart Demon] in [1v1]: your champion permanently gains [+20% Attack, Spirit and Max HP], and the sect [2 Heavenly Jade].',
+        resolve: () => ({ text: 'Choose your champion.', fight: { encounterId: 'heart_demon', reward: [], rewardDesc: '+20% Attack, Spirit and Max HP', single: true } }),
+      },
+      { id: 'skip', label: 'Leave it sealed', desc: 'Gain [5 Spirit Stones].', resolve: (ctx) => ((ctx.addStones(5)), { text: 'The seal holds. For now.', stonesDelta: 5 }) },
+    ],
+  },
+  {
     id: 'sect_rest',
     title: 'Sect Rest',
     hanzi: '歇',

@@ -102,6 +102,10 @@ export interface MetaSave {
     pure?: boolean;
     /** Spirit Vein node ranks. */
     vein?: Record<string, number>;
+    /** The sect event waiting for a decision, the omens waiting for the next run and the events' pacing (src/meta/sectEvents.ts). */
+    event?: { id: string; hero?: string } | null;
+    omens?: { id: string; hero?: string; reward?: Partial<Record<'funds' | 'herbs' | 'cores' | 'jade', number>> }[];
+    pace?: { since: number; last?: string };
   };
 }
 

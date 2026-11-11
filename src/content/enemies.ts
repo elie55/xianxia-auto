@@ -1,5 +1,6 @@
 import type { EnemyDef } from '@/core/types';
 import { THEME_FOES } from './themeFoes';
+import { SECT_FOES } from './sectFoes';
 
 export const ENEMIES: EnemyDef[] = [
   // ───────────── Realm I: Azure Bamboo Province ─────────────
@@ -533,5 +534,7 @@ export const ENEMIES: EnemyDef[] = [
 
 // the foes of the other contract battlefields (src/content/themeFoes.ts)
 ENEMIES.push(...THEME_FOES);
+// foes met through sect events: the Crimson Cloud rivals and the Heart Demon (src/content/sectFoes.ts)
+ENEMIES.push(...SECT_FOES);
 
 export const ENEMY_BY_ID: Record<string, EnemyDef> = Object.fromEntries(ENEMIES.map((e) => [e.id, e]));

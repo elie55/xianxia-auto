@@ -44,7 +44,9 @@ import { runSectFor } from '@/meta/sect';
  *   ?demo=cleared      → realm cleared
  *   &realm=1|2|3       → that realm's arena and foes (with any board scene; with boss, its guardian)
  *   &tier=0..7         → the demo run's contract (its battlefields and foes)
- *   &sect              → the demo run carries the sect: studies, seals, recruits, Training Grounds blessings, mastery
+ *   &sect              → the demo run carries the sect: studies, seals, recruits, Training Grounds blessings, mastery,
+ *                        and the omens sect events left waiting
+ *   &node=<index>      → the scene happens at that node (7 is Realm I's elite, where an accepted rivalry waits)
  *   &team=<heroIds>    → the party for any scene (the first one breaks through in rankup and insight)
  *   &mastery           → every disciple of the party at mastery V: each fights with its permanent passive
  *   ?demo=end          → run end (victory)
@@ -93,6 +95,9 @@ export function applyDebugQuery(): boolean {
   const realm = Number(params.get('realm'));
   if (realm === 1 || realm === 2 || realm === 3) s.realm = realm;
   if (value === 'boss') s.nodeIndex = 11;
+  // &node=<index>: the scene happens at that node of the realm's timeline (e.g. 7, Realm I's elite)
+  const node = Number(params.get('node'));
+  if (params.has('node') && Number.isInteger(node) && node >= 0 && node < s.timeline.length) s.nodeIndex = node;
   if (eventId) {
     s.nodeIndex = 2;
     s.currentEvent = { eventId, outcome: null, chosen: null };

@@ -25,7 +25,10 @@ import { realmElites, realmGuardians, tribulationLevel } from '@/core/encounters
 import { ENEMY_BY_ID } from '@/content/enemies';
 import { themeFor } from '@/content/themes';
 import { PAINTED_ICONS } from '@/ui/components/paintedIcons';
-import { baseWinStones, heroSellValue, itemSellValue } from '@/core/run';
+import { baseWinStones, heroSellValue, itemSellValue, runOmen } from '@/core/run';
+import { RIVAL_FOES } from '@/content/sectFoes';
+import { HEART_DEMON_JADE } from '@/content/sectEvents';
+import { purseText } from '@/meta/sectEvents';
 import { stonesHeld } from '@/ui/flourish';
 
 /** Incremented a few times per second during battle so tracker panels refresh. */
@@ -80,9 +83,20 @@ function NodeTip({ s, index }: { s: RunState; index: number }) {
     challenge: 'A rare or epic reward if you accept a hardship',
     trial: 'A choice of rare Treasures',
   };
+  // omens sect events sent into the run: the Crimson Cloud disciples at Realm I's elite, the Heart Demon at its trial
+  const rival = n.kind === 'elite' && s.realm === 1 ? runOmen(s, 'rival') : undefined;
+  const demon = n.kind === 'trial' && s.realm === 1 && !!runOmen(s, 'heart_demon');
+  if (rival) {
+    desc.elite = 'The Crimson Cloud Sect answers your challenge: their Senior Brother and two juniors bar the road.';
+    reward.elite = `${reward.elite}, and ${purseText(rival.reward)} for the sect`;
+  }
+  if (demon) {
+    desc.trial = 'The Heart Demon your sect chose to hunt waits here, to be fought alone.';
+    reward.trial = `+20% Attack, Spirit and Max HP for the champion, and ${HEART_DEMON_JADE} Heavenly Jade for the sect`;
+  }
   // foes: the real ones for the node you stand on, the known champion for elites and the guardian
   const live = state === 'current' && s.currentEncounter && FIGHT_NODES.includes(n.kind) ? s.currentEncounter.enemies.map((e) => e.defId) : [];
-  const known = n.kind === 'boss' ? realmGuardians(s.realm, s.tier) : n.kind === 'elite' ? realmElites(s.realm, s.tier) : [];
+  const known = n.kind === 'boss' ? realmGuardians(s.realm, s.tier) : rival ? RIVAL_FOES : n.kind === 'elite' ? realmElites(s.realm, s.tier) : demon ? ['heart_demon'] : [];
   const foes = [...new Set(live.length ? live : known)].slice(0, 5);
   return (
     <div class="node-tip">

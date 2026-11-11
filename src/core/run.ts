@@ -2,7 +2,7 @@ import type { ActionDef, BlessingDef, EventOutcome, Hex, ItemDef, NodeDef, NodeK
 import { HERO_PRICE_BY_RANK, ITEM_PRICE_BY_RARITY, RELIC_PRICE_BY_RARITY } from '@/core/types';
 import { Rng } from '@/core/rng';
 import { buildEnemyUnit, buildHeroUnit, heroClasses, heroDaoPath, heroItemSlots, type HeroState, type TeamContext } from '@/core/builder';
-import { generateEncounter, type Encounter } from '@/core/encounters';
+import { generateEncounter, placeEnemies, tribulationLevel, type Encounter } from '@/core/encounters';
 import type { BattleConfig, BattleResult } from '@/battle/sim/battle';
 import { HEROES, HERO_BY_ID } from '@/content/heroes';
 import { ITEM_BY_ID, SHOP_ITEMS } from '@/content/items';
@@ -13,6 +13,8 @@ import { EVENT_BY_ID, RANDOM_EVENTS } from '@/content/events';
 import { ALL_BLESSINGS, BLESSINGS, DIFFICULTIES, TRAINING_BLESSINGS } from '@/content/difficulties';
 import { DOCTRINE_BY_ID, type DoctrineDef } from '@/content/doctrines';
 import { MASTERY_PASSIVE_LEVEL } from '@/content/mastery';
+import { HEART_DEMON_BOON, HEART_DEMON_TRIAL, type OmenId, type SectOmen } from '@/content/sectEvents';
+import { RIVAL_FOES } from '@/content/sectFoes';
 import { classInsights } from '@/content/classes';
 import { ALLY_MAX_COL, BOARD_ROWS, hexKey, offsetToAxial } from '@/battle/sim/hex';
 import { emitRunEvent } from '@/core/runEvents';
@@ -237,6 +239,13 @@ export interface RunSect {
   blessingCount?: number;
   /** The sect's mastery of each disciple (src/meta/mastery.ts): III offers an exclusive Dao Path, II a golden aura. */
   mastery?: Record<string, number>;
+  /** Omens sect events sent into this run (src/content/sectEvents.ts). */
+  omens?: SectOmen[];
+}
+
+/** An omen a sect event sent into this run, if it carries one of that kind. */
+export function runOmen(s: RunState, id: OmenId): SectOmen | undefined {
+  return s.sect?.omens?.find((o) => o.id === id);
 }
 
 /** A Spirit Vein node's rank in this run (0 when not taken, or in a Pure run). */
@@ -264,6 +273,10 @@ export interface RunPayout {
   masteryUp?: { hero: string; level: number }[];
   /** The carried heirloom grew a level with this victory. */
   heirloomUp?: { id: string; level: number };
+  /** Omens the run fulfilled (a challenge won, a seclusion ended) and what they paid (src/meta/sectEvents.ts). */
+  omens?: { id: OmenId; text: string; purse?: Partial<Record<'funds' | 'herbs' | 'cores' | 'jade', number>> }[];
+  /** A sect event that came home with this run. */
+  sectEvent?: string;
 }
 
 export const CHALLENGES: ChallengeOffer[] = [
@@ -300,6 +313,8 @@ export function difficultyMods(s: RunState) {
   }
   // the Shadow Pavilion's price
   mods.enemyHpPct += runDoctrine(s)?.run?.enemyHpPct ?? 0;
+  // Tempered in the Storm (a sect event): Tribulation lightning comes 10 s later
+  if (runOmen(s, 'storm')) mods.tribulationAt += 10;
   return mods;
 }
 
@@ -327,8 +342,9 @@ export function teamContext(s: RunState): TeamContext {
   let itemSlotBonus = 0;
   for (const r of relicDefs(s)) if (r.run?.itemSlots) itemSlotBonus += r.run.itemSlots;
   return {
-    // the doctrine's team stats and battle effects ride along as Dao Insights only the team reads
-    relics: [...relicDefs(s), ...(runDoctrine(s)?.relics ?? [])],
+    // the doctrine's team stats and battle effects ride along as Dao Insights only the team reads, and so do the
+    // pills a sect event sent into the run
+    relics: [...relicDefs(s), ...(runDoctrine(s)?.relics ?? []), ...omenRelics(s)],
     itemSlotBonus,
     itemSlotsPerRank: mods.itemSlotsPerRank,
     warriorBlessing: s.blessing === 'warrior',
@@ -337,6 +353,15 @@ export function teamContext(s: RunState): TeamContext {
     swiftBlessing: s.blessing === 'swift',
     masteryPassives: masteryPassiveIds(s),
   };
+}
+
+/** The pills a sect event sent into this run (the Wandering Alchemist), as Dao Insights only the team reads. */
+function omenRelics(s: RunState): RelicDef[] {
+  const out: RelicDef[] = [];
+  if (runOmen(s, 'vitality_pill')) out.push({ id: 'omen_vitality_pill', name: 'Vitality Pill', rarity: 'unique', icon: 'creed', desc: '', teamStats: { statsPct: { hp: 12 } } });
+  if (runOmen(s, 'qi_pill'))
+    out.push({ id: 'omen_qi_pill', name: 'Qi-Gathering Pill', rarity: 'unique', icon: 'creed', desc: '', effects: [{ id: 'omen_qi_pill', desc: '', trigger: { on: 'combatStart' }, actions: [{ do: 'qi', target: 'self', amount: 20 }] }] });
+  return out;
 }
 
 /** Disciples whose mastery V passive is active this run: those the sect has mastered, and none in a Pure run. */
@@ -444,10 +469,11 @@ export function newRun(tier: number, seed: number, sect?: RunSect): RunState {
   return s;
 }
 
-/** The disciples a run can offer: the launch roster plus the exclusive disciples the sect has recruited. */
+/** The disciples a run can offer: the launch roster plus the exclusive disciples the sect has recruited, minus one in seclusion. */
 export function heroPool(s: RunState): typeof HEROES {
   const recruited = s.sect?.disciples ?? [];
-  return HEROES.filter((h) => !h.exclusive || recruited.includes(h.id));
+  const away = runOmen(s, 'seclusion')?.hero;
+  return HEROES.filter((h) => (!h.exclusive || recruited.includes(h.id)) && h.id !== away);
 }
 
 function rollDraft(s: RunState, rng: Rng): void {
@@ -1077,7 +1103,8 @@ export function enterNode(s: RunState): void {
     case 'fight':
     case 'elite':
     case 'boss': {
-      s.currentEncounter = generateEncounter(s.realm, node.index, node.kind, s.tier, rng, s.floor);
+      // an accepted Crimson Cloud challenge (a sect event): their disciples take Realm I's elite's place
+      s.currentEncounter = node.kind === 'elite' && s.realm === 1 && runOmen(s, 'rival') ? rivalEncounter(s, node.index, rng) : generateEncounter(s.realm, node.index, node.kind, s.tier, rng, s.floor);
       s.phase = 'board';
       break;
     }
@@ -1088,7 +1115,8 @@ export function enterNode(s: RunState): void {
       break;
     }
     case 'trial': {
-      s.currentEvent = { eventId: 'heavenly_trial', outcome: null, chosen: null };
+      // a hunted Heart Demon (a sect event) waits at Realm I's Heavenly Trial
+      s.currentEvent = { eventId: s.realm === 1 && runOmen(s, 'heart_demon') ? HEART_DEMON_TRIAL : 'heavenly_trial', outcome: null, chosen: null };
       s.phase = 'event';
       break;
     }
@@ -1106,6 +1134,16 @@ export function enterNode(s: RunState): void {
     }
   }
   commit(s, rng);
+}
+
+/** The Crimson Cloud disciples, in place of Realm I's elite once the sect has accepted their challenge (a sect event). */
+export function rivalEncounter(s: RunState, nodeIndex: number, rng: Rng): Encounter {
+  return { id: `${s.realm}-${nodeIndex}-rival`, label: 'Crimson Cloud Challenge', enemies: placeEnemies(RIVAL_FOES, rng), level: tribulationLevel(s.realm, nodeIndex, s.tier, s.floor), kind: 'elite' };
+}
+
+/** The Heart Demon, met alone at the Heavenly Trial a sect event turned into a duel. */
+export function heartDemonEncounter(s: RunState, nodeIndex: number, rng: Rng): Encounter {
+  return { id: `${s.realm}-${nodeIndex}-heart_demon`, label: 'Heavenly Trial: Heart Demon', enemies: placeEnemies(['heart_demon'], rng), level: tribulationLevel(s.realm, nodeIndex, s.tier, s.floor), kind: 'single' };
 }
 
 export function acceptChallenge(s: RunState, id: string | null): void {
@@ -1178,7 +1216,8 @@ export function resolveEventChoice(s: RunState, choiceId: string, heroUid?: stri
   }
   if (outcome.fight) {
     const encRng = rngOf(s);
-    s.currentEncounter = generateEncounter(s.realm, currentNode(s).index, 'single', s.tier, encRng, s.floor);
+    s.currentEncounter =
+      outcome.fight.encounterId === 'heart_demon' ? heartDemonEncounter(s, currentNode(s).index, encRng) : generateEncounter(s.realm, currentNode(s).index, 'single', s.tier, encRng, s.floor);
     commit(s, encRng);
     s.fightReward = { actions: outcome.fight.reward, desc: outcome.fight.rewardDesc, single: outcome.fight.single };
   }
@@ -1334,6 +1373,11 @@ export function finishBattle(s: RunState, result: BattleResult): void {
     return;
   }
   s.stats.wins++;
+  // the Heart Demon duel (a sect event): the champion who beats it grows for the rest of the run
+  if (enc0?.id.endsWith('-heart_demon') && s.singleChampion) {
+    const h = heroByUid(s, s.singleChampion);
+    if (h) for (const [stat, pct] of Object.entries(HEART_DEMON_BOON)) h.permanent.push({ stat: stat as StatKey, flat: 0, pct });
+  }
   // disciple mastery: a fight won with each disciple on the board
   for (const u of result.units) {
     if (u.side !== 'ally' || !u.heroUid || !u.onBoard) continue;

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import gsap from 'gsap';
 import { act, run, screen, meta } from '@/app/store';
-import { currentRewindCost, proceedFromResult, rewind, rewindAvailable, runDoctrine, type RunState } from '@/core/run';
+import { currentRewindCost, heroByUid, proceedFromResult, rewind, rewindAvailable, runDoctrine, type RunState } from '@/core/run';
 import { concludeRun } from '@/meta/runtime';
 import type { BattleResult as BattleRecord } from '@/battle/sim/battle';
 import { HERO_BY_ID } from '@/content/heroes';
@@ -272,6 +272,15 @@ export function BattleResult() {
                           <Line label="Total earned" value={shownTotal} big />
                         </div>
                       </>
+                    )}
+                    {/* the Heart Demon duel (a sect event): its prize is the champion's growth, not Spirit Stones */}
+                    {s.currentEncounter?.id.endsWith('-heart_demon') && s.singleChampion && (
+                      <div class="result-boon anim-rise">
+                        <Icon name="choice_cultivate" size={40} />
+                        <span>
+                          <b>{HERO_BY_ID[heroByUid(s, s.singleChampion)?.defId ?? '']?.name ?? 'Your champion'}</b> conquered the Heart Demon: <b>+20% Attack, Spirit and Max HP</b> for the rest of the run.
+                        </span>
+                      </div>
                     )}
                     <button
                       class="btn primary big"

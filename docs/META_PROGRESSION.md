@@ -97,8 +97,8 @@ disciple mastery (sections 6.3, 6.5, 6.6 and 10).
   Zhen, Long Mu and Ling Shuang. He deals the most damage of all of them; delayed area damage converts into wins a
   little less than burst on one target, so he sits with Hong Lian, below the best carries.
 
-Phase 5 is not started. The rest of phase 4 (sect events, the Hall of Ancestors and exclusive disciples #4 to #8) is
-not either.
+Sect events are built too (6.8), with the first four new foes. Phase 5 is not started. The rest of phase 4 (the Hall
+of Ancestors and exclusive disciples #4 to #8) is not either.
 
 ---
 
@@ -472,14 +472,65 @@ exclusive content without new animations.
 
 Sometimes, about one return in three, something happens at the sect: a short choice with one or two lines of story.
 
-**Examples:**
-- *A rival sect's envoy issues a challenge.* Accept, and the next run's enemies deal +15% damage. Win it for a cache
-  of Heavenly Jade.
-- *A wandering alchemist offers a pill recipe.* Pay Herbs to add it to the Forge.
-- *A disciple asks to go into seclusion.* That disciple skips the next run's draft and returns with a mastery level.
+**When.**
+- Events start once the sect is founded (Renown 2).
+- Each paid run rolls once: 1 chance in 3, seeded by the run. A fourth return in a row without an event always
+  brings one.
+- One event at a time: an event not decided yet waits, and the next one never repeats the last.
 
-New foes can debut here (rival sect cultivators, a Heart Demon), as well as on the Ladder and in a future Daily
-Tribulation.
+**Where.**
+- The run-end Sect Rewards say "Something stirs at the sect".
+- The main menu's sect banner names the event and glows.
+- Entering the Sect opens the event as a scroll over the painting. "Decide later" keeps it waiting; a button in the
+  header opens it again.
+
+**What a choice does.**
+- It pays or costs Funds and materials at once (event rewards in Funds, Herbs and Cores grow with the sect's rank),
+  or it sends an **omen** into the next run started.
+- The New Run screen lists the omens waiting.
+- A boon (more power) waits for a run that is not Pure; challenges and seclusion go with any run.
+
+**The first six events.**
+
+| Event | From Renown | Choices |
+| --- | --- | --- |
+| A Generous Patron | 2 | Silver: +60 Funds. Herbs: +8 Spirit Herbs. Beast parts: +5 Beast Cores. |
+| Storm over the Peak | 3 | Temper in the storm: in the next run, Tribulation lightning comes 10 s later. Gather the fallen jade: +2 Heavenly Jade. |
+| The Wandering Alchemist | 4 | Vitality Pill (10 Spirit Herbs): next run, disciples have +12% Max HP. Qi-Gathering Pill (10 Spirit Herbs): next run, disciples start every fight with 20 Qi. Send him away. |
+| A Disciple Seeks Seclusion | 4, and a disciple between mastery I progress and V | Grant it: that disciple sits out the next run (no draft, no shop) and comes back one mastery level higher. Not now. |
+| The Crimson Cloud Challenge | 5 | Accept: in the next run, three Crimson Cloud disciples wait in Realm I in place of the elite; beat them for 5 Heavenly Jade and 60 Funds. Decline. |
+| A Heart Demon Stirs | 6 | Hunt it: in the next run, Realm I's Heavenly Trial is a duel with the Heart Demon; the champion who beats it gains +20% Attack, Spirit and Max HP for the run, and the sect 2 Heavenly Jade. Let it be. |
+
+**New foes.**
+- The Crimson Cloud Sect, a rival sect:
+  - a Swordsman, melee;
+  - a Talisman Adept, a ranged caster who sets fires;
+  - their Senior Brother, the leader and an elite.
+- The Heart Demon: a cultivator's doubts given a body, met alone.
+
+They join the Compendium when met. Later they can also appear on the Ladder and in a Daily Tribulation.
+
+**Built (2026-11-11).**
+- Code:
+  - the events and omens are data in `src/content/sectEvents.ts`; the foes are in `src/content/sectFoes.ts`;
+  - the rules (the roll, the choices, what omens pay) are in `src/meta/sectEvents.ts`;
+  - the scroll is `src/ui/components/SectEventScroll.tsx`;
+  - the run reads its omens through `runOmen` in `src/core/run.ts`;
+  - tests are in `tests/sectEvents.test.ts`.
+- Art:
+  - six event paintings (`public/assets/art/events/sect_*.jpg`);
+  - four foes with AutoSprite packs (idle, walk, attack, hurt, death, and a cast for the Adept).
+- The Heart Demon takes its foe's shape. As the duel starts it rises to at least 70% of the champion's Attack and
+  Defense and to their Max HP. Then its doubt grows: +15% Attack every 6 s. A sturdy champion cannot simply outlast
+  it. Before this, it was a fixed stat check: tanks and the healer always won and the ranged carries never did.
+- Balance (`npx tsx scripts/sect-foes-balance.mts [fights] [rank]`, the first four contracts, 100 fights each):
+  - The Crimson Cloud fight is harder than the elite fight it replaces. A rank II team wins both every time, but
+    keeps less HP against the rivals (margin 63 to 70, against 79 to 97). A rank I team wins 98% against them on
+    the first two contracts and 68% on the next two (the elite fight: 93% to 100%).
+  - The Heart Demon is a real duel for a rank II champion: Li Jian wins 79% to 91%, Mei Yao 19% to 51%, and Shan
+    Tie and Bai Hu always. Hong Lian never wins; she is the weakest duelist in ordinary Heavenly Trials too.
+  - A rank I champion rarely beats it (Bai Hu 14% to 46%), so hunting it is a choice for a strong run. Leaving it
+    sealed still pays 5 Spirit Stones.
 
 ## 7. Exclusive content and how it is unlocked
 
@@ -720,7 +771,8 @@ bounties: { id: string; progress: number }[];
      - sect events with the first new foes
      - the Hall of Ancestors
    - Status (2026-11-11): the Recruitment Hall and the first three exclusive disciples are built: Ling Shuang
-     (Renown 10), Zhong Ming (Renown 20) and Wen Yan (Renown 25). Left: sect events and the Hall of Ancestors.
+     (Renown 10), Zhong Ming (Renown 20) and Wen Yan (Renown 25). Sect events are built with their first four foes
+     (6.8). Left: the Hall of Ancestors.
 5. **Steam.**
    - Scope:
      - Steamworks bridge, achievements mirror

@@ -137,6 +137,23 @@ const CUSTOM_ACTIONS: Record<string, CustomAction> = {
     if (amt <= 0) return;
     owner.addMod({ stat: 'attack', flat: amt, pct: 0, unique: 'shieldToAttack', source: 'custom' });
   },
+  /**
+   * The Heart Demon (a sect event's foe) wears the face of whoever faces it: at the start of the fight it rises to a
+   * share of its strongest foe's Attack and Defense and of their Max HP, so a sturdy champion meets a sturdy demon.
+   */
+  heartMirror(b, owner, _ctx, params) {
+    const foe = b.units.filter((u) => u.side !== owner.side && u.alive && u.onBoard).sort((x, y) => y.maxHp - x.maxHp)[0];
+    if (!foe) return;
+    const share = Number(params.share ?? 0.7);
+    const raise = (stat: 'attack' | 'defense' | 'hp', to: number) => {
+      const gap = to - owner.stat(stat);
+      if (gap > 0) owner.addMod({ stat, flat: gap, pct: 0, unique: `heart_mirror_${stat}`, source: 'custom' });
+    };
+    raise('attack', foe.stat('attack') * share);
+    raise('defense', foe.stat('defense') * share);
+    raise('hp', foe.maxHp * Number(params.hpShare ?? 1));
+    b.emit({ t: b.time, type: 'buff', id: owner.id, stat: 'attack', flat: 0, pct: 0, label: 'MIRRORED' });
+  },
   bossEnrage(b, owner) {
     owner.addMod({ stat: 'attack', flat: 0, pct: 40, source: 'enrage', unique: 'enrage' });
     owner.addMod({ stat: 'attackSpeed', flat: 40, pct: 0, source: 'enrage', unique: 'enrage-as' });

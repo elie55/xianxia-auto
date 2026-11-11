@@ -43,6 +43,8 @@ import { RelicTip } from '@/ui/hud/Hud';
 import { Icon } from '@/ui/components/Icon';
 import { RichText } from '@/ui/components/RichText';
 import { tip } from '@/ui/components/Tooltip';
+import { SectEventScroll } from '@/ui/components/SectEventScroll';
+import { pendingEvent } from '@/meta/sectEvents';
 import { audio } from '@/audio/AudioManager';
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
@@ -81,13 +83,16 @@ export function SectScreen() {
     audio.sfx('ui_click');
     setOpen((cur) => (cur === id ? null : id));
   };
+  // a sect event waiting for a decision opens as a scroll when the player arrives
+  const waiting = pendingEvent(m);
+  const [eventOpen, setEventOpen] = useState(() => !!pendingEvent(meta.peek()));
   return (
     <div class="screen sect-screen">
       <div class="sect-bg" />
       <div class="newrun-header sect-header">
         <button
           class="btn small ghost sect-back"
-          data-hotkey={open ? undefined : 'back'}
+          data-hotkey={open || eventOpen ? undefined : 'back'}
           onClick={() => {
             audio.sfx('ui_back');
             screen.value = 'menu';
@@ -98,6 +103,21 @@ export function SectScreen() {
         <div class="display newrun-title">The Sect</div>
         <PurseBar purse={s.purse} />
       </div>
+      {waiting && !eventOpen && (
+        <button
+          class="btn small sect-event-call"
+          onClick={() => {
+            audio.sfx('ui_click');
+            setOpen(null);
+            setEventOpen(true);
+          }}
+          {...tip(<><h4>{waiting.def.title}</h4><p>{waiting.text}</p></>, 'below')}
+        >
+          <span class="brush sect-event-call-hanzi">{waiting.def.hanzi}</span> {waiting.def.title}: a decision waits
+          <i class="sect-dot" />
+        </button>
+      )}
+      {eventOpen && <SectEventScroll onClose={() => setEventOpen(false)} />}
       <div class={`sect-map ${open ? 'dim' : ''}`}>
         {BUILDINGS.map((b) => {
           const unlocked = isOpen(b.id, xp);

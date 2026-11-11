@@ -15,9 +15,12 @@ import {
   sealSlots,
   sectOf,
   spend,
+  type Purse,
   type SectState,
   type UpgradableId,
 } from '@/meta/sect';
+import { omensLeft, resolveSectChoice } from '@/meta/sectEvents';
+import type { SectOmen } from '@/content/sectEvents';
 
 /** Writes a changed sect back into the save. */
 function save(fn: (s: SectState) => SectState | void): void {
@@ -185,5 +188,23 @@ export function veinRemove(id: string): SectResult {
 export function veinReset(): void {
   save((x) => {
     x.vein = {};
+  });
+}
+
+export type SectChoiceOutcome = { ok: true; outcome: string; gained: Partial<Purse>; spent?: Partial<Purse>; omen?: SectOmen } | { ok: false; reason: string };
+
+/** Answers the sect event waiting at the gate: its cost and gain are paid at once, its omen waits for the next run. */
+export function chooseSectEvent(choiceId: string): SectChoiceOutcome {
+  const r = resolveSectChoice(meta.peek(), choiceId);
+  if (!r.ok) return r;
+  save(() => r.sect);
+  return { ok: true, outcome: r.outcome, gained: r.gained, spent: r.spent, omen: r.omen };
+}
+
+/** A new run has taken these omens: they leave the save (a Pure run's boons stay for the next run). */
+export function takeOmens(taken: SectOmen[] | undefined): void {
+  if (!taken?.length) return;
+  save((x) => {
+    x.omens = omensLeft(x.omens, taken);
   });
 }

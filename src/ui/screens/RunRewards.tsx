@@ -14,6 +14,7 @@ import { BOUNTY_BY_ID, CURRENCIES } from '@/meta/sect';
 import { HEIRLOOM_RECIPES } from '@/content/heirlooms';
 import { masteryRewards } from '@/meta/mastery';
 import { HERO_BY_ID } from '@/content/heroes';
+import { OMEN_BY_ID, SECT_EVENT_BY_ID } from '@/content/sectEvents';
 
 /**
  * Sect Rewards, the second step of the run-end screen: what the run paid in Renown, line by line, then the Renown bar
@@ -217,6 +218,23 @@ function SectShare({ payout }: { payout: RunPayout }) {
           <Icon name={`item_${HEIRLOOM_RECIPES.find((r) => r.id === up.id)?.icon ?? 'pouch'}`} size={40} />
           <span class="rr-ach-name">
             {upName} grew to <b>level {ROMAN[up.level]}</b>
+          </span>
+        </div>
+      )}
+      {(payout.omens ?? []).map((o) => (
+        <div key={o.id} class="rr-ach omen">
+          <Icon name={OMEN_BY_ID[o.id]?.icon ?? 'choice_leave'} size={40} />
+          <span class="rr-ach-name">
+            {OMEN_BY_ID[o.id]?.name}: <b>{o.text}</b>
+          </span>
+          {o.purse && <span class="rr-ach-xp new">{fmtCost(o.purse)}</span>}
+        </div>
+      ))}
+      {payout.sectEvent && SECT_EVENT_BY_ID[payout.sectEvent] && (
+        <div class="rr-ach sect-event">
+          <span class="rr-bounty-seal brush">{SECT_EVENT_BY_ID[payout.sectEvent].hanzi.slice(0, 1)}</span>
+          <span class="rr-ach-name">
+            Something stirs at the sect: <b>{SECT_EVENT_BY_ID[payout.sectEvent].title}</b>
           </span>
         </div>
       )}

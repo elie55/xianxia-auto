@@ -7,6 +7,7 @@ import { DOCTRINES, DOCTRINE_BY_ID } from '@/content/doctrines';
 import { VEIN_BY_ID, veinPoints, veinSpent, veinValid, type VeinState } from '@/content/vein';
 import { TRAINING_BLESSINGS } from '@/content/difficulties';
 import { masteryLevels } from '@/meta/mastery';
+import { OMEN_BY_ID, SECT_EVENT_BY_ID, type OmenId, type SectOmen } from '@/content/sectEvents';
 import { contractMultiplier, cumulativeXp, levelOf, rankOf } from '@/meta/renown';
 
 /**
@@ -291,6 +292,23 @@ export interface SectState {
   pure: boolean;
   /** Spirit Vein node ranks (src/content/vein.ts). */
   vein: VeinState;
+  /** The sect event waiting for a decision (src/meta/sectEvents.ts), if any. */
+  event: PendingSectEvent | null;
+  /** Omens waiting for the next run (src/content/sectEvents.ts). */
+  omens: SectOmen[];
+  /** Returns since the last sect event, and which event it was. */
+  pace: EventPace;
+}
+
+/** A sect event come home with a run, waiting for the player's choice. */
+export interface PendingSectEvent {
+  id: string;
+  /** The disciple it is about (seclusion). */
+  hero?: string;
+}
+export interface EventPace {
+  since: number;
+  last?: string;
 }
 
 export const emptySect = (): SectState => ({
@@ -306,6 +324,9 @@ export const emptySect = (): SectState => ({
   doctrine: '',
   pure: false,
   vein: {},
+  event: null,
+  omens: [],
+  pace: { since: 0 },
 });
 
 /** The sect part of a save, with defaults for older saves. */
@@ -326,6 +347,9 @@ export function sectOf(m: MetaSave): SectState {
     doctrine: s.doctrine && DOCTRINE_BY_ID[s.doctrine] ? s.doctrine : '',
     pure: !!s.pure,
     vein: cleanVein(s.vein),
+    event: s.event && SECT_EVENT_BY_ID[s.event.id] ? { id: s.event.id, ...(s.event.hero && HERO_BY_ID[s.event.hero] ? { hero: s.event.hero } : {}) } : null,
+    omens: (s.omens ?? []).filter((o) => OMEN_BY_ID[o.id as OmenId] && (o.id !== 'seclusion' || (o.hero && HERO_BY_ID[o.hero]))) as SectOmen[],
+    pace: { since: Math.max(0, s.pace?.since ?? 0), ...(s.pace?.last ? { last: s.pace.last } : {}) },
   };
 }
 
@@ -378,7 +402,14 @@ export function runSectFor(m: MetaSave, heirloom: string, opts: { doctrine?: str
     // disciple mastery: options and looks, so a Pure run keeps it too
     mastery: masteryLevels(m),
     pure: pure || undefined,
+    // sect events' omens: a Pure run leaves the boons waiting for the next one
+    omens: omensFor(s.omens, pure).length ? omensFor(s.omens, pure) : undefined,
   };
+}
+
+/** The omens a new run takes: all that wait, but a Pure run leaves the boons (more power) for a later run. */
+export function omensFor(omens: SectOmen[], pure: boolean): SectOmen[] {
+  return omens.filter((o) => !(pure && OMEN_BY_ID[o.id]?.boon));
 }
 
 /** Where an exclusive disciple stands: not yet at the gate (Renown or Hall missing), waiting to be recruited, or recruited. */
@@ -397,6 +428,8 @@ export function sectToDo(m: MetaSave): string[] {
   if (!isOpen('hall', xp)) return [];
   const s = sectOf(m);
   const out: string[] = [];
+  // a sect event waiting for a decision comes first
+  if (s.event) out.push(`${SECT_EVENT_BY_ID[s.event.id].title}: a decision waits at the sect.`);
   for (const r of RECRUITS) if (recruitState(m, r.hero) === 'waiting' && canAfford(s.purse, r.cost)) out.push(`The Recruitment Hall can recruit ${HERO_BY_ID[r.hero].name}.`);
   if (isOpen('forge', xp))
     for (const r of RECIPES) if (!s.heirlooms.some((h) => h.id === r.id) && r.forge <= s.buildings.forge && canAfford(s.purse, r.cost)) out.push(`The Artifact Forge can craft the ${r.name}.`);

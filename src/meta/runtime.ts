@@ -7,6 +7,7 @@ import { defaultLifetime, migrateMeta } from '@/meta/migrate';
 import { computeRunRenown, levelOf } from '@/meta/renown';
 import { BOUNTY_BY_ID, SECT_OPENS, addPurse, computeRunPurse, nextHeirloomLevel, refillBounties, sectOf } from '@/meta/sect';
 import { addMastery } from '@/meta/mastery';
+import { omenResults, rollSectEvent } from '@/meta/sectEvents';
 
 /** Achievements earned but not shown yet: the toast layer shows them one by one. */
 export const achievementToasts = signal<string[]>([]);
@@ -108,6 +109,9 @@ export function finishRunMeta(s: RunState): void {
   const heirloomUp = won && owned && owned.level < nextHeirloomLevel(owned.level) ? { id: owned.id, level: nextHeirloomLevel(owned.level) } : undefined;
   // disciple mastery: the run's wins with each disciple on the board
   const mastered = addMastery(meta.peek().mastery, s.masteryWins);
+  // the omens sect events sent into the run: a challenge won, the Heart Demon beaten, a disciple back from seclusion
+  const omens = omenResults(s, mastered.mastery);
+  let sectEvent: string | undefined;
   updateMeta((m) => {
     m.runsPlayed++;
     if (won) m.runsWon++;
@@ -131,16 +135,33 @@ export function finishRunMeta(s: RunState): void {
       m.leaderboard = m.leaderboard.slice(0, 20);
     }
     m.renown = { xp: before + pay.total };
-    m.mastery = mastered.mastery;
+    m.mastery = omens.mastery;
     const sect = sectOf(m);
     sect.purse = addPurse(sect.purse, purse);
     for (const id of met) sect.purse = addPurse(sect.purse, BOUNTY_BY_ID[id].reward);
+    sect.purse = addPurse(sect.purse, omens.purse);
     if (heirloomUp) sect.heirlooms = sect.heirlooms.map((h) => (h.id === heirloomUp.id ? { ...h, level: heirloomUp.level } : h));
     // the board fills once the Sect is open (new bounties wait for the next run)
     if (levelOf(m.renown.xp).level >= SECT_OPENS) sect.bounties = refillBounties(sect.bounties.active.filter((id) => !met.includes(id)), [...sect.bounties.done, ...met]);
     m.sect = sect;
+    // about one return in three, something happens at the sect (it waits there for the player's choice)
+    const roll = rollSectEvent(m, s.seed);
+    m.sect = { ...sectOf(m), event: roll.event, pace: roll.pace };
+    if (roll.fresh && roll.event) sectEvent = roll.event.id;
   });
-  s.payout = { xpBefore: before, xpAfter: before + pay.total, total: pay.total, lines: pay.lines, achievements: earned.slice(), purse, bounties: met, heirloomUp, masteryUp: mastered.ups };
+  s.payout = {
+    xpBefore: before,
+    xpAfter: before + pay.total,
+    total: pay.total,
+    lines: pay.lines,
+    achievements: earned.slice(),
+    purse,
+    bounties: met,
+    heirloomUp,
+    masteryUp: [...mastered.ups, ...omens.ups],
+    omens: omens.results,
+    sectEvent,
+  };
 }
 
 /** Ends the run (victory or defeat) and pays it: every run-ending button goes through here. */

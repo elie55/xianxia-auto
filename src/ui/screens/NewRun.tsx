@@ -9,7 +9,9 @@ import { Icon } from '@/ui/components/Icon';
 import { tip } from '@/ui/components/Tooltip';
 import { HEIRLOOM_RECIPES, heirloomItemId } from '@/content/heirlooms';
 import { isOpen, runSectFor, sectOf } from '@/meta/sect';
-import { setCarry, setDoctrine, setPure } from '@/meta/sectActions';
+import { setCarry, setDoctrine, setPure, takeOmens } from '@/meta/sectActions';
+import { OMEN_BY_ID } from '@/content/sectEvents';
+import { omenText } from '@/meta/sectEvents';
 import { DOCTRINE_BY_ID } from '@/content/doctrines';
 import { ItemTip } from '@/ui/components/HeroCard';
 import { RichText } from '@/ui/components/RichText';
@@ -50,7 +52,10 @@ export function NewRun() {
     if (carry !== sect.carry) setCarry(carry);
     if (doctrine !== sect.doctrine) setDoctrine(doctrine);
     if (pure !== sect.pure) setPure(pure);
-    setRun(newRun(tier, seed, runSectFor(meta.value, carry, { doctrine, pure })));
+    const sectRun = runSectFor(meta.value, carry, { doctrine, pure });
+    setRun(newRun(tier, seed, sectRun));
+    // the omens go with this run (a Pure run leaves its boons for the next one)
+    takeOmens(sectRun.omens);
     screen.value = 'run';
     audio.sfx('ui_confirm');
   };
@@ -241,6 +246,33 @@ export function NewRun() {
                         ))}
                       </span>
                     </button>
+                  );
+                })}
+              </div>
+            )}
+            {sect.omens.length > 0 && (
+              <div class="heirloom-pick omen-pick">
+                <span class="heirloom-pick-label">Omens</span>
+                {sect.omens.map((o) => {
+                  const def = OMEN_BY_ID[o.id];
+                  const waits = pure && !!def.boon;
+                  return (
+                    <span
+                      key={`${o.id}-${o.hero ?? ''}`}
+                      class={`heirloom-chip omen-chip ${waits ? 'waits' : 'on'}`}
+                      {...tip(
+                        <>
+                          <h4>{def.name}</h4>
+                          <p>
+                            <RichText text={omenText(o)} />
+                          </p>
+                          <p class="muted">{waits ? 'A Pure run leaves this boon for your next run.' : 'From a sect event: it goes with this run.'}</p>
+                        </>,
+                        'below',
+                      )}
+                    >
+                      <Icon name={def.icon} size={30} />
+                    </span>
                   );
                 })}
               </div>

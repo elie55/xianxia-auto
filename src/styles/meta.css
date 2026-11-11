@@ -2179,3 +2179,146 @@
 .rr-ach.mastery .rr-bounty-seal {
   color: #f3cf78;
 }
+
+/* ───────── SECT EVENTS (docs/META_PROGRESSION.md 6.8): a scroll over the Sect's painting ───────── */
+.sect-event-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  background: radial-gradient(80% 70% at 50% 45%, rgba(5, 10, 11, 0.45), rgba(5, 10, 11, 0.82));
+  backdrop-filter: blur(2px);
+}
+.sect-event-backdrop .event-panel.sect-event {
+  left: 270px;
+  right: 270px;
+  top: 118px;
+  bottom: 92px;
+}
+.sect-event .event-choices {
+  gap: 10px;
+}
+.sect-event .price-inline {
+  display: inline-flex;
+  gap: 10px;
+  margin-left: 12px;
+  padding: 2px 10px;
+  vertical-align: middle;
+}
+.sect-event .price-inline > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.sect-event-short {
+  color: var(--vermilion-bright);
+}
+.sect-event-later {
+  align-self: flex-end;
+  margin-top: 6px;
+}
+.sect-omen-line {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border: 1px solid rgba(212, 168, 75, 0.45);
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(212, 168, 75, 0.16), rgba(212, 168, 75, 0.03));
+  color: var(--paper);
+  font-size: calc(16px * var(--ts, 1));
+  line-height: 1.45;
+}
+.sect-omen-line b {
+  color: var(--gold-bright);
+}
+/* the call under the title while an event waits */
+.sect-event-call {
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  top: 88px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 34px;
+  border-color: rgba(243, 207, 120, 0.85);
+  box-shadow: 0 0 22px rgba(243, 207, 120, 0.35);
+}
+.sect-event-call .sect-dot {
+  right: 8px;
+  top: 50%;
+  margin-top: -9px;
+}
+.sect-event-call-hanzi {
+  font-size: calc(24px * var(--ts, 1));
+  color: var(--gold-bright);
+}
+/* the omens waiting for the next run (New Run screen) and those a run fulfilled (run-end rewards) */
+.newrun-omens {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.newrun-omen {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: calc(15px * var(--ts, 1));
+  line-height: 1.4;
+  color: var(--paper);
+}
+.newrun-omen b {
+  color: var(--gold-bright);
+}
+.newrun-omen.waits {
+  opacity: 0.6;
+}
+.rr-ach.omen .rr-ach-name b,
+.rr-ach.sect-event .rr-ach-name b {
+  color: var(--gold-bright);
+}
+.rr-ach.sect-event .rr-bounty-seal {
+  color: #ff9a6b;
+}
+/* omens waiting for the next run, beside the doctrine and the heirloom (New Run screen) */
+.omen-chip {
+  cursor: help;
+}
+.omen-chip.on {
+  background: rgba(120, 60, 20, 0.45);
+  box-shadow: inset 0 0 0 2px rgba(243, 207, 120, 0.85), 0 0 14px rgba(243, 207, 120, 0.35);
+}
+.omen-chip.waits {
+  opacity: 0.45;
+  filter: grayscale(0.7);
+}
+/* the sect's stories are short: the scroll centres them with their choices instead of pinning the choices low */
+.sect-event .event-body {
+  justify-content: center;
+  padding: 40px 48px;
+}
+.sect-event .event-choices,
+.sect-event .event-outcome {
+  margin-top: 14px;
+}
+.btn.small.sect-event-call {
+  padding-right: 48px;
+}
+/* the Heart Demon duel's prize on the result screen */
+.result-boon {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(166, 120, 255, 0.55);
+  background: linear-gradient(90deg, rgba(120, 70, 220, 0.22), rgba(120, 70, 220, 0.04));
+  color: var(--paper);
+  font-size: calc(15px * var(--ts, 1));
+  line-height: 1.4;
+}
+.result-boon b {
+  color: var(--gold-bright);
+}
