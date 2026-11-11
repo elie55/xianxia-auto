@@ -2,7 +2,7 @@ import type { AbilityDef, ClassId, EffectDef, EnemyDef, Hex, Rank, RelicDef, Sta
 import { STAT_KEYS, emptyStats } from '@/core/types';
 import type { UnitInit } from '@/battle/sim/unit';
 import { HERO_BY_ID } from '@/content/heroes';
-import { masteryPathById } from '@/content/mastery';
+import { MASTERY_PASSIVES } from '@/content/mastery';
 import { CLASSES, classInsights } from '@/content/classes';
 import { ITEM_BY_ID } from '@/content/items';
 import { isFrontForSide } from '@/battle/sim/hex';
@@ -33,14 +33,20 @@ export interface TeamContext {
   /** Training Grounds blessings: +8% Max HP (Vital Breath), +8 Attack Speed (Swift Wind Steps). */
   vitalityBlessing?: boolean;
   swiftBlessing?: boolean;
+  /** Disciples whose mastery V passive is active this run (src/content/mastery.ts); none in a Pure run. */
+  masteryPassives?: string[];
 }
 
 export const BASE_ITEM_SLOTS = 3;
 
 export function heroDaoPath(h: HeroState): UpgradeDef | undefined {
   if (!h.daoPathId) return undefined;
-  // a disciple's three paths, or the exclusive fourth that mastery III offers
-  return HERO_BY_ID[h.defId]?.daoPaths.find((p) => p.id === h.daoPathId) ?? masteryPathById(h.defId, h.daoPathId);
+  return HERO_BY_ID[h.defId]?.daoPaths.find((p) => p.id === h.daoPathId);
+}
+
+/** The mastery V passive this disciple carries in the run, on top of its Dao Path, if the sect has mastered it. */
+export function heroMasteryPassive(h: HeroState, ctx?: TeamContext): UpgradeDef | undefined {
+  return ctx?.masteryPassives?.includes(h.defId) ? MASTERY_PASSIVES[h.defId] : undefined;
 }
 
 export function heroInsights(h: HeroState): UpgradeDef[] {
@@ -94,6 +100,7 @@ export function heroStats(h: HeroState, ctx: TeamContext, pos: Hex | null): Stat
   }
 
   applyUpgradeStats(flat, pct, heroDaoPath(h));
+  applyUpgradeStats(flat, pct, heroMasteryPassive(h, ctx));
   for (const ins of heroInsights(h)) applyUpgradeStats(flat, pct, ins);
 
   const slots = heroItemSlots(h, ctx);
@@ -131,7 +138,8 @@ export function heroStats(h: HeroState, ctx: TeamContext, pos: Hex | null): Stat
   return out;
 }
 
-export function heroAbility(h: HeroState): AbilityDef {
+/** The disciple's technique: its Dao Path may rewrite it; the mastery V passive (with `ctx`) only adds to it. */
+export function heroAbility(h: HeroState, ctx?: TeamContext): AbilityDef {
   const def = HERO_BY_ID[h.defId];
   const path = heroDaoPath(h);
   let ab: AbilityDef = { ...def.ability, actions: def.ability.actions.slice() };
@@ -140,6 +148,8 @@ export function heroAbility(h: HeroState): AbilityDef {
     ab = { ...ab, ...rest, actions: rest.actions ? rest.actions.slice() : ab.actions };
     if (extraActions) ab.actions = ab.actions.concat(extraActions);
   }
+  const passive = heroMasteryPassive(h, ctx)?.ability?.extraActions;
+  if (passive) ab.actions = ab.actions.concat(passive);
   return ab;
 }
 
@@ -150,6 +160,8 @@ export function heroEffects(h: HeroState, ctx: TeamContext): EffectDef[] {
   if (def.passives) out.push(...def.passives);
   const path = heroDaoPath(h);
   if (path?.effects) out.push(...path.effects);
+  const passive = heroMasteryPassive(h, ctx);
+  if (passive?.effects) out.push(...passive.effects);
   for (const ins of heroInsights(h)) if (ins.effects) out.push(...ins.effects);
   const slots = heroItemSlots(h, ctx);
   for (const itemId of h.items.slice(0, slots)) {
@@ -181,11 +193,12 @@ export function buildHeroUnit(h: HeroState, ctx: TeamContext, id: number, pos: H
     stats,
     attackInterval: def.attackInterval,
     attackScale: CLASSES[classes[0]].attackScale,
-    ability: heroAbility(h),
+    ability: heroAbility(h, ctx),
     effects: heroEffects(h, ctx),
     pos,
     onBoard,
     heroUid: h.uid,
+    masteryPassive: !!heroMasteryPassive(h, ctx),
     companion: def.companion,
     sprite: def.sprite,
     scale: def.scale,

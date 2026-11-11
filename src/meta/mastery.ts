@@ -1,6 +1,6 @@
 import type { MetaSave } from '@/app/store';
 import { HEROES, HERO_BY_ID } from '@/content/heroes';
-import { MASTERY_PATHS } from '@/content/mastery';
+import { MASTERY_PASSIVES, MASTERY_PASSIVE_LEVEL } from '@/content/mastery';
 
 /**
  * Disciple mastery (docs/META_PROGRESSION.md, section 6.6): every fight won with a disciple on the board counts towards
@@ -18,18 +18,24 @@ export function masteryLevel(wins: number): number {
 export const masteryWins = (m: MetaSave, hero: string) => m.mastery?.[hero] ?? 0;
 export const masteryOf = (m: MetaSave, hero: string) => masteryLevel(masteryWins(m, hero));
 
-/** What each mastery level brings (the third depends on whether the disciple has an exclusive path yet). */
+/** The levels that bring the title and the gilded frame (II brings the aura, V the passive: MASTERY_PASSIVE_LEVEL). */
+export const MASTERY_TITLE_LEVEL = 3;
+export const MASTERY_FRAME_LEVEL = 4;
+export { MASTERY_PASSIVE_LEVEL };
+
+/** What each mastery level brings, I to V. */
 export function masteryRewards(hero: string): string[] {
+  const passive = MASTERY_PASSIVES[hero];
   return [
     'A second page of lore in the Compendium',
     'A golden aura in the arena',
-    MASTERY_PATHS[hero] ? `An exclusive fourth Dao Path: ${MASTERY_PATHS[hero].name}` : 'An exclusive fourth Dao Path (to come)',
     `The title "${MASTER_TITLES[hero] ?? 'Master'}"`,
     'A gilded card frame',
+    passive ? `A permanent passive: ${passive.name}` : 'A permanent passive (to come)',
   ];
 }
 
-/** The title mastery IV grants, named after the disciple's technique. */
+/** The title mastery III grants, named after the disciple's technique. */
 export const MASTER_TITLES: Record<string, string> = {
   li_jian: 'Master of the Flying Sword',
   shan_tie: 'Master of the Unmoving Mountain',
@@ -54,7 +60,7 @@ export const masterTitleId = (hero: string) => `master_${hero}`;
 /** The disciple whose mastery title this is, if it is one. */
 export const heroOfMasterTitle = (id: string) => (id.startsWith('master_') && HERO_BY_ID[id.slice(7)] ? id.slice(7) : undefined);
 
-/** Every disciple's mastery level above 0, for the run (exclusive paths, golden auras). */
+/** Every disciple's mastery level above 0, for the run (golden auras, permanent passives). */
 export function masteryLevels(m: MetaSave): Record<string, number> {
   const out: Record<string, number> = {};
   for (const h of HEROES) {

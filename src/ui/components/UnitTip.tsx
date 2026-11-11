@@ -5,6 +5,8 @@ import { battleTick } from '@/ui/hud/Hud';
 import { Icon, STAT_COLOR, STAT_ICON, STAT_LABEL } from './Icon';
 import { RichText } from './RichText';
 import { STATUS_COLORS } from '@/battle/view/Vfx';
+import { MASTERY_PASSIVES } from '@/content/mastery';
+import { MasteryPassiveLine } from './HeroCard';
 
 const SHOWN = ['attack', 'attackSpeed', 'spirit', 'crit', 'defense', 'range'] as const;
 
@@ -24,15 +26,23 @@ export function UnitTip({ unit }: { unit: Unit }) {
   if (u.bleeds.length) statuses.push({ label: 'Bleeding', color: hex(STATUS_COLORS.bleed) });
   if (u.tauntTargetId !== null) statuses.push({ label: 'Taunted', color: hex(STATUS_COLORS.taunt) });
   if (u.shield > 0) statuses.push({ label: `Shield ${Math.round(u.shield)}`, color: '#bfe4ff' });
+  const passive = u.masteryPassive ? MASTERY_PASSIVES[u.defId] : undefined;
   return (
     <>
       <h4 style={{ color: u.side === 'ally' ? 'var(--jade-bright)' : 'var(--vermilion-bright)' }}>
         {u.name} {u.hanzi && <span class="brush gold">{u.hanzi}</span>}
       </h4>
-      <div class="sub">
-        {u.side === 'ally' ? `${RANK_NAMES[u.rank].name} disciple` : u.boss ? 'Realm Guardian' : u.elite ? 'Elite' : 'Enemy'}
-        {u.classes.length > 0 && ` · ${u.classes.map((c) => CLASSES[c]?.name ?? c).join(' / ')}`}
-      </div>
+      <div class="sub">{u.side === 'ally' ? `${RANK_NAMES[u.rank].name} disciple` : u.boss ? 'Realm Guardian' : u.elite ? 'Elite' : 'Enemy'}</div>
+      {u.classes.length > 0 && (
+        <div class="tip-classes">
+          {u.classes.map((c) => (
+            <span key={c} style={{ color: CLASSES[c]?.color }}>
+              {CLASSES[c] && <span class="brush">{CLASSES[c].hanzi}</span>} {CLASSES[c]?.name ?? c}
+              {CLASSES[c] && <span class="faint"> · {CLASSES[c].role}</span>}
+            </span>
+          ))}
+        </div>
+      )}
       <div class="tip-bar">
         <i style={{ width: `${hpPct}%`, background: u.side === 'ally' ? 'linear-gradient(180deg,#7ef29a,#2f9c4b)' : 'linear-gradient(180deg,#ff7a6b,#b82a1f)' }} />
         {shieldPct > 0 && <i style={{ left: `${hpPct}%`, width: `${shieldPct}%`, background: 'linear-gradient(180deg,#e6f3ff,#9fd5ff)' }} />}
@@ -61,6 +71,7 @@ export function UnitTip({ unit }: { unit: Unit }) {
           <RichText text={u.ability.desc} />
         </p>
       )}
+      {passive && <MasteryPassiveLine name={passive.name} desc={passive.desc} />}
       {statuses.length > 0 && (
         <div class="tip-statuses">
           {statuses.map((s) => (

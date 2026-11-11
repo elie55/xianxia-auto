@@ -14,7 +14,7 @@ import { Icon, STAT_COLOR, STAT_ICON, STAT_LABEL } from '@/ui/components/Icon';
 import { RichText } from '@/ui/components/RichText';
 import { tip } from '@/ui/components/Tooltip';
 import { MiniPortrait } from '@/ui/components/MiniPortrait';
-import { ItemChip, ItemTip, RankGlyph, AbilityTip, fmtStat } from '@/ui/components/HeroCard';
+import { ItemChip, ItemTip, RankGlyph, AbilityTip, ClassLine, fmtStat } from '@/ui/components/HeroCard';
 import { drag, startDrag, type DragPayload } from '@/ui/drag';
 import { getBattleView } from '@/battle/view/BattleView';
 import { audio } from '@/audio/AudioManager';
@@ -580,6 +580,7 @@ export function HeroSlotTip({ h, s, ctx, hint = true }: { h: HeroState; s: RunSt
       <div class="sub">
         {def.title} · {RANK_NAMES[h.rank].name}
       </div>
+      <ClassLine hero={h} />
       <div class="tip-bar" style={{ height: 13 }}>
         <i style={{ width: `${hpPct}%`, background: 'linear-gradient(180deg,#7ef29a,#2f9c4b)' }} />
         {shieldPct > 0 && <i style={{ left: `${hpPct}%`, width: `${shieldPct}%`, background: 'linear-gradient(180deg,#e6f3ff,#9fd5ff)' }} />}
@@ -613,7 +614,7 @@ export function HeroSlotTip({ h, s, ctx, hint = true }: { h: HeroState; s: RunSt
           </div>
         ))}
       </div>
-      <AbilityTip hero={h} />
+      <AbilityTip hero={h} ctx={ctx} />
       {hint && <p class="hint">{live ? 'Live combat values.' : 'Drag to the board, to the reserve, or onto the sell zone in the shop.'}</p>}
     </>
   );

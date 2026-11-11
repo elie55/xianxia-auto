@@ -17,7 +17,7 @@ import {
   type RunState,
 } from '@/core/run';
 import { HEROES } from '@/content/heroes';
-import { MASTERY_PATHS } from '@/content/mastery';
+import { MASTERY_PASSIVE_LEVEL } from '@/content/mastery';
 import { RELICS } from '@/content/relics';
 import { Battle } from '@/battle/sim/battle';
 import { getBattleView } from '@/battle/view/BattleView';
@@ -46,8 +46,7 @@ import { runSectFor } from '@/meta/sect';
  *   &tier=0..7         → the demo run's contract (its battlefields and foes)
  *   &sect              → the demo run carries the sect: studies, seals, recruits, Training Grounds blessings, mastery
  *   &team=<heroIds>    → the party for any scene (the first one breaks through in rankup and insight)
- *   &mastery           → every disciple of the party at mastery III: rankup offers its exclusive Dao Path, and the
- *                        others fight on theirs
+ *   &mastery           → every disciple of the party at mastery V: each fights with its permanent passive
  *   ?demo=end          → run end (victory)
  */
 export function applyDebugQuery(): boolean {
@@ -82,10 +81,9 @@ export function applyDebugQuery(): boolean {
   s.pendingRankUps = [];
   s.rankUpChoices = null;
   for (const id of ids.slice(1)) addHero(s, id, 1);
-  // &mastery: every disciple of the party at mastery III, so its exclusive path is offered (and taken by the others)
-  const mastered = params.has('mastery');
-  if (mastered) s.sect = { ...(s.sect ?? { seals: [], research: [] }), mastery: Object.fromEntries(s.roster.map((h) => [h.defId, 3])) };
-  for (const h of s.roster) if (h.rank >= 1 && !h.daoPathId) h.daoPathId = mastered ? MASTERY_PATHS[h.defId].id : HEROES.find((d) => d.id === h.defId)!.daoPaths[0].id;
+  // &mastery: every disciple of the party at mastery V, so each fights with its permanent passive
+  if (params.has('mastery')) s.sect = { ...(s.sect ?? { seals: [], research: [] }), mastery: Object.fromEntries(s.roster.map((h) => [h.defId, MASTERY_PASSIVE_LEVEL])) };
+  for (const h of s.roster) if (h.rank >= 1 && !h.daoPathId) h.daoPathId = HEROES.find((d) => d.id === h.defId)!.daoPaths[0].id;
   s.stones = 120;
   addItemToInventory(s, 'azure_sword_talisman');
   addItemToInventory(s, 'jade_vitality_pendant');

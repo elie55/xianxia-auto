@@ -404,6 +404,30 @@
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid currentColor;
 }
+/* a disciple's classes, each in its colour */
+.tooltip .tip-classes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin: 3px 0 4px;
+  font-size: calc(14px * var(--ts, 1));
+  font-weight: 700;
+}
+.tooltip .tip-classes .brush {
+  font-weight: 400;
+}
+.tooltip .tip-classes .faint {
+  font-weight: 400;
+}
+/* a mastery V passive: the gold of the mastery aura */
+.mastery-gold {
+  color: #f3cf78;
+  text-shadow: 0 0 8px rgba(243, 207, 120, 0.35);
+}
+.tooltip .tip-mastery {
+  border-left: 2px solid rgba(243, 207, 120, 0.6);
+  padding-left: 8px;
+}
 
 /* ───────── champion / encounter banner ───────── */
 .encounter-banner {

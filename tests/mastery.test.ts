@@ -1,15 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import type { MetaSave } from '@/app/store';
 import { Battle } from '@/battle/sim/battle';
-import { buildEnemyUnit, buildHeroUnit, heroAbility, heroDaoPath } from '@/core/builder';
+import { buildEnemyUnit, buildHeroUnit, heroAbility, heroDaoPath, heroEffects, heroStats, type TeamContext } from '@/core/builder';
+import type { ActionDef } from '@/core/types';
 import { generateEncounter } from '@/core/encounters';
 import { Rng } from '@/core/rng';
 import { offsetToAxial } from '@/battle/sim/hex';
 import { ENEMY_BY_ID } from '@/content/enemies';
-import { addHero, battleConfig, chooseUpgrade, draftPick, enterNode, finishBattle, newRun, prepareRankUp, queueRankUp, startBattle, type RunState } from '@/core/run';
+import { addHero, battleConfig, chooseUpgrade, draftPick, enterNode, finishBattle, newRun, prepareRankUp, queueRankUp, startBattle, teamContext, type RunState } from '@/core/run';
 import { HEROES, HERO_BY_ID } from '@/content/heroes';
-import { LORE_II, MASTERY_PATHS } from '@/content/mastery';
-import { MASTER_TITLES, MASTERY_THRESHOLDS, addMastery, masteryLevel, masteryLevels, masterTitleId } from '@/meta/mastery';
+import { LORE_II, MASTERY_PASSIVES } from '@/content/mastery';
+import { MASTER_TITLES, MASTERY_THRESHOLDS, addMastery, masteryLevel, masteryLevels, masteryRewards, masterTitleId } from '@/meta/mastery';
 import { TITLES } from '@/meta/cosmetics';
 import { howToUnlock, unlockedCosmetics } from '@/meta/unlocks';
 import { runSectFor } from '@/meta/sect';
@@ -44,34 +45,60 @@ describe('Disciple mastery', () => {
     ]);
   });
 
-  it('gives every disciple a second lore page, a title and an exclusive fourth path of its own', () => {
+  it('brings lore, the aura, the title, the gilded frame and then the permanent passive', () => {
+    expect(masteryRewards('li_jian')).toEqual([
+      'A second page of lore in the Compendium',
+      'A golden aura in the arena',
+      'The title "Master of the Flying Sword"',
+      'A gilded card frame',
+      'A permanent passive: Returning Sword',
+    ]);
+  });
+
+  it('gives every disciple a second lore page, a title and a permanent passive that only adds to its kit', () => {
+    const flat = (actions: ActionDef[]): ActionDef[] => actions.flatMap((a) => (a.do === 'repeat' ? [a, ...flat(a.actions)] : [a]));
     const ids = new Set<string>();
     for (const h of HEROES) {
       expect(LORE_II[h.id], h.id).toBeTruthy();
       expect(MASTER_TITLES[h.id], h.id).toBeTruthy();
       expect(TITLES.some((t) => t.id === masterTitleId(h.id)), h.id).toBe(true);
-      const path = MASTERY_PATHS[h.id];
-      expect(path, h.id).toBeTruthy();
-      expect(path.desc, h.id).toBeTruthy();
-      // a fourth path, not one of the three
-      expect(h.daoPaths.some((p) => p.id === path.id), h.id).toBe(false);
-      ids.add(path.id);
-      // it changes something: stats, effects or the technique
-      expect(!!(path.stats || path.statsPct || path.effects?.length || path.ability), h.id).toBe(true);
+      const passive = MASTERY_PASSIVES[h.id];
+      expect(passive?.desc, h.id).toBeTruthy();
+      expect(h.daoPaths.some((p) => p.id === passive.id), h.id).toBe(false);
+      ids.add(passive.id);
+      // it changes something: stats, effects or extra technique actions
+      expect(!!(passive.stats || passive.statsPct || passive.effects?.length || passive.ability?.extraActions?.length), h.id).toBe(true);
+      // and only adds: no rewritten technique, no Qi cost, no class, so it works on top of all three paths
+      expect(Object.keys(passive.ability ?? {}).filter((k) => k !== 'extraActions'), h.id).toEqual([]);
+      expect(passive.addClass, h.id).toBeUndefined();
+      // no forced move and no taunt (a taunt would steal the tank's)
+      const actions = flat([...(passive.ability?.extraActions ?? []), ...(passive.effects ?? []).flatMap((e) => e.actions)]);
+      expect(actions.some((a) => a.do === 'blink' || (a.do === 'status' && a.status === 'taunt')), h.id).toBe(false);
     }
     expect(ids.size).toBe(HEROES.length);
-    expect(Object.keys(MASTERY_PATHS).every((id) => HERO_BY_ID[id])).toBe(true);
+    expect(Object.keys(MASTERY_PASSIVES).every((id) => HERO_BY_ID[id])).toBe(true);
   });
 
-  it('every exclusive path plays in a real fight, and its disciple casts with it', () => {
-    const ctx = { relics: [], itemSlotBonus: 0, itemSlotsPerRank: false, warriorBlessing: false, qualityBlessing: false };
+  it('every passive works on top of each Dao Path, and plays in a real fight', () => {
+    const base: TeamContext = { relics: [], itemSlotBonus: 0, itemSlotsPerRank: false, warriorBlessing: false, qualityBlessing: false };
     for (const h of HEROES) {
-      const me = { uid: h.id, defId: h.id, rank: 1 as const, insightIds: [], items: [], permanent: [], daoPathId: MASTERY_PATHS[h.id].id };
+      const ctx: TeamContext = { ...base, masteryPassives: [h.id] };
+      const passive = MASTERY_PASSIVES[h.id];
+      for (const path of h.daoPaths) {
+        const me = { uid: h.id, defId: h.id, rank: 1 as const, insightIds: [], items: [], permanent: [], daoPathId: path.id };
+        // the technique as the path made it, plus the passive's actions
+        expect(heroAbility(me, ctx).actions.length, `${h.id} ${path.id}`).toBe(heroAbility(me).actions.length + (passive.ability?.extraActions?.length ?? 0));
+        expect(heroEffects(me, ctx).length, `${h.id} ${path.id}`).toBe(heroEffects(me, base).length + (passive.effects?.length ?? 0));
+        if (passive.stats?.hp) expect(heroStats(me, ctx, null).hp, `${h.id} ${path.id}`).toBeGreaterThan(heroStats(me, base, null).hp);
+      }
+      const me = { uid: h.id, defId: h.id, rank: 1 as const, insightIds: [], items: [], permanent: [], daoPathId: h.daoPaths[0].id };
       const tank = h.id === 'shan_tie' ? 'bai_hu' : 'shan_tie';
       const allies = [
         buildHeroUnit({ uid: tank, defId: tank, rank: 1, insightIds: [], items: [], permanent: [], daoPathId: HERO_BY_ID[tank].daoPaths[0].id }, ctx, 1, offsetToAxial(3, 1), true),
         buildHeroUnit(me, ctx, 2, offsetToAxial((h.baseStats.range ?? 1) <= 2 ? 3 : 1, 3), true),
       ];
+      expect(allies[1].masteryPassive, h.id).toBe(true);
+      expect(allies[0].masteryPassive, h.id).toBe(false);
       const enc = generateEncounter(1, 7, 'elite', 0, new Rng(9));
       const enemies = enc.enemies.map((e, i) => buildEnemyUnit(ENEMY_BY_ID[e.defId], enc.level, 100 + i, e.pos));
       const b = new Battle({ seed: 9, allies, enemies });
@@ -81,10 +108,10 @@ describe('Disciple mastery', () => {
     }
   });
 
-  it('unlocks the disciple title at mastery IV and says how', () => {
-    expect(unlockedCosmetics(metaWith({ mastery: { li_jian: 34 } })).has(`title:${masterTitleId('li_jian')}`)).toBe(false);
-    expect(unlockedCosmetics(metaWith({ mastery: { li_jian: 35 } })).has(`title:${masterTitleId('li_jian')}`)).toBe(true);
-    expect(howToUnlock('title', masterTitleId('li_jian'))).toBe('Reach mastery IV with Li Jian.');
+  it('unlocks the disciple title at mastery III and says how', () => {
+    expect(unlockedCosmetics(metaWith({ mastery: { li_jian: 19 } })).has(`title:${masterTitleId('li_jian')}`)).toBe(false);
+    expect(unlockedCosmetics(metaWith({ mastery: { li_jian: 20 } })).has(`title:${masterTitleId('li_jian')}`)).toBe(true);
+    expect(howToUnlock('title', masterTitleId('li_jian'))).toBe('Reach mastery III with Li Jian.');
   });
 
   it('sends the mastery levels into every run, a Pure one too', () => {
@@ -113,24 +140,38 @@ describe('Mastery in a run', () => {
     expect(s.masteryWins).toEqual({ li_jian: 1 });
   });
 
-  it('offers the exclusive fourth Dao Path at Foundation from mastery III, and it works as a path', () => {
-    const offered = (lvl: number) => {
-      const s = run({ li_jian: lvl });
-      const h = addHero(s, 'li_jian', 1);
-      queueRankUp(s, h.uid);
-      prepareRankUp(s);
-      return { s, h, ids: s.rankUpChoices!.options.map((o) => o.id) };
-    };
-    expect(offered(2).ids).not.toContain('li_returning_sword');
-    const { s, h, ids } = offered(3);
-    expect(ids).toHaveLength(4);
-    expect(ids).toContain('li_returning_sword');
-    chooseUpgrade(s, 'li_returning_sword');
-    expect(h.daoPathId).toBe('li_returning_sword');
-    expect(h.insightIds).toHaveLength(0);
-    expect(heroDaoPath(h)?.name).toBe('Returning Sword');
+  it('gives a mastery V disciple its passive on top of the Dao Path it chooses, and none in a Pure run', () => {
+    const s = run({ li_jian: 5, shan_tie: 4 });
+    expect(teamContext(s).masteryPassives).toEqual(['li_jian']);
+    const h = addHero(s, 'li_jian', 1);
+    queueRankUp(s, h.uid);
+    prepareRankUp(s);
+    // Foundation still offers the three paths, and no fourth
+    expect(s.rankUpChoices!.options.map((o) => o.id)).toEqual(HERO_BY_ID.li_jian.daoPaths.map((p) => p.id));
+    chooseUpgrade(s, 'li_sword_heart');
+    expect(heroDaoPath(h)?.id).toBe('li_sword_heart');
     // the Flying Sword gains its returning strike
-    expect(heroAbility(h).actions.length).toBe(HERO_BY_ID.li_jian.ability.actions.length + 1);
+    expect(heroAbility(h, teamContext(s)).actions.length).toBe(HERO_BY_ID.li_jian.ability.actions.length + 1);
+    const pure = newRun(0, 5, runSectFor(metaWith({ mastery: { li_jian: 50 } }), '', { pure: true }));
+    expect(pure.sect?.mastery).toEqual({ li_jian: 5 });
+    expect(teamContext(pure).masteryPassives).toEqual([]);
+  });
+
+  it('marks a mastered disciple in the arena so its tooltip names the passive', () => {
+    const s = run({ li_jian: 5 });
+    draftPick(s, 'li_jian', s.draft!.blessings[0]);
+    s.currentEvent = null;
+    s.phase = 'board';
+    s.nodeIndex = 0;
+    enterNode(s);
+    expect(battleConfig(s)!.allies[0].masteryPassive).toBe(true);
+    const plain = run({ li_jian: 4 });
+    draftPick(plain, 'li_jian', plain.draft!.blessings[0]);
+    plain.currentEvent = null;
+    plain.phase = 'board';
+    plain.nodeIndex = 0;
+    enterNode(plain);
+    expect(battleConfig(plain)!.allies[0].masteryPassive).toBe(false);
   });
 
   it('draws a golden aura from mastery II', () => {

@@ -146,7 +146,7 @@
 .frame-swatch.frame-celestial {
   background: linear-gradient(180deg, #fffbe6, #f3cf78 30%, #9fe6ff 62%, #fffbe6);
 }
-/* disciple mastery V: a gilded frame, whatever frame the sect has chosen */
+/* disciple mastery IV: a gilded frame, whatever frame the sect has chosen */
 .hero-card.gilded .pennant-border {
   background: linear-gradient(180deg, #fff6d0, #f3cf78 22%, #b8862b 50%, #f3cf78 78%, #fff6d0);
   filter: drop-shadow(0 0 6px rgba(243, 207, 120, 0.65));
@@ -2169,11 +2169,13 @@
 .drawer-path.mastery-path.locked {
   opacity: 0.55;
 }
+.mastery-path-note {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.9em;
+  font-style: italic;
+  opacity: 0.75;
+}
 .rr-ach.mastery .rr-bounty-seal {
   color: #f3cf78;
-}
-/* the rank-up screen marks a disciple's exclusive mastery path */
-.upgrade-kind.mastery {
-  color: #f3cf78;
-  text-shadow: 0 0 8px rgba(243, 207, 120, 0.45);
 }

@@ -6,13 +6,13 @@ import { RANK_NAMES } from '@/core/types';
 import { HERO_BY_ID } from '@/content/heroes';
 import type { HeroDef, Keyword } from '@/core/types';
 import { CLASSES } from '@/content/classes';
-import { heroAbility, heroClasses, heroDaoPath, heroInsights, heroStats, type HeroState, type TeamContext } from '@/core/builder';
+import { heroAbility, heroClasses, heroDaoPath, heroInsights, heroMasteryPassive, heroStats, type HeroState, type TeamContext } from '@/core/builder';
 import { Icon, KEYWORD_ICON, STAT_COLOR, STAT_ICON, STAT_LABEL } from './Icon';
 import { RichText } from './RichText';
 import { hideTooltip, showTooltip, tip } from './Tooltip';
 import { ITEM_BY_ID } from '@/content/items';
 import { meta } from '@/app/store';
-import { MAX_MASTERY, masteryOf } from '@/meta/mastery';
+import { MASTERY_FRAME_LEVEL, masteryOf } from '@/meta/mastery';
 
 export const EMPTY_CTX: TeamContext = { relics: [], itemSlotBonus: 0, itemSlotsPerRank: false, warriorBlessing: false, qualityBlessing: false };
 
@@ -127,13 +127,13 @@ export function HeroCard(p: HeroCardProps) {
   return (
     <div
       // the card frame the player picked in the sect profile (src/meta/cosmetics.ts)
-      class={`hero-card ${p.size ?? 'md'} frame-${meta.value.profile?.frame ?? 'gold'} ${masteryOf(meta.value, p.defId) >= MAX_MASTERY ? 'gilded' : ''} ${p.selected ? 'selected' : ''} ${p.dimmed ? 'dimmed' : ''} ${p.onClick ? 'clickable' : ''} ${showStats ? 'stats-open' : ''} ${p.class ?? ''}`}
+      class={`hero-card ${p.size ?? 'md'} frame-${meta.value.profile?.frame ?? 'gold'} ${masteryOf(meta.value, p.defId) >= MASTERY_FRAME_LEVEL ? 'gilded' : ''} ${p.selected ? 'selected' : ''} ${p.dimmed ? 'dimmed' : ''} ${p.onClick ? 'clickable' : ''} ${showStats ? 'stats-open' : ''} ${p.class ?? ''}`}
       style={{ ['--accent' as string]: def.accent }}
       onClick={p.onClick}
       onMouseEnter={() => setHover(true)}
       // hovering anywhere on the card shows the full ability; badges, traits and stats keep their own tooltips
       onMouseOver={(e) => {
-        if (!(e.target as HTMLElement).closest('.has-tip')) showTooltip(e, <AbilityTip hero={hero} />, 'right');
+        if (!(e.target as HTMLElement).closest('.has-tip')) showTooltip(e, <AbilityTip hero={hero} ctx={ctx} />, 'right');
       }}
       onMouseLeave={() => {
         setHover(false);
@@ -234,10 +234,36 @@ export function fmtStat(k: string, v: number): string {
   return `${Math.round(v)}`;
 }
 
-export function AbilityTip({ hero }: { hero: HeroState }) {
+/** A disciple's classes in their colours (tooltips). */
+export function ClassLine({ hero }: { hero: HeroState }) {
+  return (
+    <div class="tip-classes">
+      {heroClasses(hero).map((c) => (
+        <span key={c} style={{ color: CLASSES[c].color }}>
+          <span class="brush">{CLASSES[c].hanzi}</span> {CLASSES[c].name}
+          <span class="faint"> · {CLASSES[c].role}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/** A mastery V passive in a tooltip. */
+export function MasteryPassiveLine({ name, desc }: { name: string; desc: string }) {
+  return (
+    <p class="tip-mastery">
+      <b class="mastery-gold">{name}</b> <span class="faint">· Mastery V passive</span>
+      <br />
+      <RichText text={desc} />
+    </p>
+  );
+}
+
+export function AbilityTip({ hero, ctx }: { hero: HeroState; ctx?: TeamContext }) {
   const def = HERO_BY_ID[hero.defId];
   const ability = heroAbility(hero);
   const dao = heroDaoPath(hero);
+  const passive = heroMasteryPassive(hero, ctx);
   const insights = heroInsights(hero);
   return (
     <>
@@ -256,6 +282,7 @@ export function AbilityTip({ hero }: { hero: HeroState }) {
           <b class="jade">{dao.name}:</b> <RichText text={dao.desc} />
         </p>
       )}
+      {passive && <MasteryPassiveLine name={passive.name} desc={passive.desc} />}
       {insights.map((i) => (
         <p key={i.id}>
           <b class="gold">{i.name}:</b> <RichText text={i.desc} />

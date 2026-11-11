@@ -53,6 +53,8 @@ export interface UnitInit {
   companion?: string;
   /** Disciple mastery II: the arena draws this disciple's aura in gold. */
   masteryAura?: boolean;
+  /** Disciple mastery V: it fights with its permanent passive (named in the arena tooltip). */
+  masteryPassive?: boolean;
   sprite: string;
   scale?: number;
   projectile?: string;
@@ -162,6 +164,8 @@ export class Unit {
   firstHitCrit = false;
   /** Disciple mastery II: drawn with a golden aura. */
   masteryAura = false;
+  /** Disciple mastery V: carries its permanent passive. */
+  masteryPassive = false;
 
   constructor(init: UnitInit) {
     this.id = init.id;
@@ -182,6 +186,7 @@ export class Unit {
     this.elite = !!init.elite;
     this.flying = !!init.flying;
     this.masteryAura = !!init.masteryAura;
+    this.masteryPassive = !!init.masteryPassive;
     this.portrait = init.portrait;
     this.isSummon = !!init.isSummon;
     this.targeting = init.targeting ?? (init.classes.includes('shadow') ? 'lowestHp' : 'nearest');

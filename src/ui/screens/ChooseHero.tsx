@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import { act, run, screen, setRun, showToast } from '@/app/store';
-import { draftPick, draftReroll } from '@/core/run';
+import { draftPick, draftReroll, teamContext } from '@/core/run';
 import { ALL_BLESSINGS } from '@/content/difficulties';
 import { HeroCard } from '@/ui/components/HeroCard';
 import { Icon } from '@/ui/components/Icon';
@@ -49,6 +49,7 @@ export function ChooseHero() {
             key={id + d.rerolls}
             defId={id}
             rank={s.blessing === 'scholar' ? 1 : 0}
+            ctx={teamContext(s)}
             size="lg"
             selected={hero === id}
             dimmed={hero !== null && hero !== id}

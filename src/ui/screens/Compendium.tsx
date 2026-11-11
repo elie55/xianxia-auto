@@ -22,8 +22,8 @@ import { SpriteClip, useSpritePack } from '@/ui/components/SpriteClip';
 import { tip } from '@/ui/components/Tooltip';
 import { audio } from '@/audio/AudioManager';
 import { cssUrl } from '@/ui/assetUrl';
-import { MASTERY_THRESHOLDS, masteryLevel, masteryOf, masteryRewards, masteryWins } from '@/meta/mastery';
-import { LORE_II, MASTERY_PATHS } from '@/content/mastery';
+import { MASTERY_PASSIVE_LEVEL, MASTERY_THRESHOLDS, masteryLevel, masteryOf, masteryRewards, masteryWins } from '@/meta/mastery';
+import { LORE_II, MASTERY_PASSIVES } from '@/content/mastery';
 
 type Tab = 'disciples' | 'classes' | 'enemies' | 'treasures' | 'insights';
 type Kind = 'hero' | 'item' | 'relic' | 'enemy';
@@ -819,7 +819,7 @@ function MasterySection({ id }: { id: string }) {
   const wins = masteryWins(meta.value, id);
   const lvl = masteryLevel(wins);
   const next = MASTERY_THRESHOLDS[lvl];
-  const path = MASTERY_PATHS[id];
+  const passive = MASTERY_PASSIVES[id];
   return (
     <Section title="Mastery" aside={lvl ? `Mastery ${MASTERY_ROMAN[lvl]}` : 'Not begun'}>
       <div class="mastery-bar">
@@ -838,9 +838,14 @@ function MasterySection({ id }: { id: string }) {
           </li>
         ))}
       </ol>
-      {path && (
-        <p class={`drawer-path mastery-path ${lvl >= 3 ? '' : 'locked'}`}>
-          <b class="gold">{path.name}</b> <RichText text={path.desc} />
+      {passive && (
+        <p class={`drawer-path mastery-path ${lvl >= MASTERY_PASSIVE_LEVEL ? '' : 'locked'}`}>
+          <b class="mastery-gold">{passive.name}</b> <span class="faint">· Mastery V passive</span>
+          <br />
+          <RichText text={passive.desc} />
+          <span class="mastery-path-note">
+            From mastery V, {h.name} always fights with it, on top of whichever Dao Path is chosen. Pure runs leave it out.
+          </span>
         </p>
       )}
     </Section>

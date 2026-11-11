@@ -1,9 +1,8 @@
 import type { UpgradeDef } from '@/core/types';
 
 /**
- * Disciple mastery content (docs/META_PROGRESSION.md, section 6.6): a second page of lore (mastery I) and the first
- * exclusive fourth Dao Paths (mastery III), offered at Foundation beside a disciple's three. The rules and thresholds
- * live in src/meta/mastery.ts.
+ * Disciple mastery content (docs/META_PROGRESSION.md, section 6.6): a second page of lore (mastery I) and each
+ * disciple's permanent passive (mastery V). The rules and thresholds live in src/meta/mastery.ts.
  */
 
 /** The second page of each disciple's lore, read in the Compendium from mastery I. */
@@ -27,173 +26,154 @@ export const LORE_II: Record<string, string> = {
   ling_shuang: 'The nine swords belonged to nine elders who sealed a calamity beneath the glacier. When the swords followed her out, the elders came along to see who had woken them. They have not decided yet whether to be pleased.',
 };
 
+/** The mastery level from which a disciple carries its passive in every run. */
+export const MASTERY_PASSIVE_LEVEL = 5;
+
 /**
- * The first exclusive fourth Dao Paths: a sidegrade beside the three a disciple already has, never stronger than the
- * best of them. Offered at Foundation once the sect's mastery of that disciple reaches III.
+ * Mastery V passives: once the sect's mastery of a disciple reaches V, the disciple carries its passive in every run
+ * (not in Pure runs), on top of whichever Dao Path it takes. A passive only adds to the kit (stats, effects and extra
+ * technique actions in `ability.extraActions`), never a rewritten technique, a changed Qi cost or a forced move, so it
+ * works with all three paths. Each is worth about a third of a Dao Path (scripts/path-balance.mts measures it).
  */
-export const MASTERY_PATHS: Record<string, UpgradeDef> = {
+export const MASTERY_PASSIVES: Record<string, UpgradeDef> = {
   li_jian: {
     id: 'li_returning_sword',
     name: 'Returning Sword',
-    desc: 'Gain [+15 Attack Speed]. Flying Sword turns back and strikes its target again for [90% Attack].',
-    stats: { attackSpeed: 15 },
+    desc: 'Gain [8 Attack Speed]. Flying Sword turns back and strikes its target again for [50% Attack].',
+    stats: { attackSpeed: 8 },
     ability: {
-      extraActions: [{ do: 'damage', target: 'target', scale: { attack: 0.9 }, kind: 'physical', projectile: 'flying_sword', vfx: 'sig_li_jian' }],
+      extraActions: [{ do: 'damage', target: 'target', scale: { attack: 0.5 }, kind: 'physical', projectile: 'flying_sword', vfx: 'sig_li_jian' }],
     },
   },
   shan_tie: {
     id: 'shan_mountain_embrace',
     name: "Mountain's Embrace",
-    desc: 'Gain [10 Defense]. Unmoving Mountain also gives the allies beside you a [Qi Shield] of [10% of your Max HP].',
-    stats: { defense: 10 },
+    desc: 'Unmoving Mountain also gives the allies beside you a [Qi Shield] of [4% of your Max HP].',
     ability: {
-      extraActions: [{ do: 'shield', target: 'alliesAdjacent', scale: { maxHp: 0.1 }, duration: 6 }],
+      extraActions: [{ do: 'shield', target: 'alliesAdjacent', scale: { maxHp: 0.04 }, duration: 6 }],
     },
     keywords: ['Shield'],
   },
   hong_lian: {
     id: 'hong_phoenix_pyre',
     name: 'Phoenix Pyre',
-    desc: 'Crimson Lotus sets [every enemy] ablaze instead of the 3 nearest, for [12 + 32% Spirit] per second for 4 s.',
+    desc: 'Crimson Lotus also sets [every enemy] smouldering: [Burn] for [6 + 16% Spirit] per second for 4 s.',
     ability: {
-      actions: [
-        { do: 'status', target: 'allEnemies', status: 'burn', scale: { base: 12, spirit: 0.32 }, duration: 4 },
-        { do: 'vfx', key: 'sig_hong_lian', target: 'allEnemies' },
-      ],
+      extraActions: [{ do: 'status', target: 'allEnemies', status: 'burn', scale: { base: 6, spirit: 0.16 }, duration: 4 }],
     },
     keywords: ['Burn'],
   },
   ying_wu: {
     id: 'ying_thousand_shadows',
     name: 'Thousand Shadows',
-    desc: 'Gain [10% Attack]. After Shadow Step, she vanishes again behind the [highest-HP enemy] and strikes it for [170% Attack].',
-    statsPct: { attack: 10 },
+    desc: 'Gain [8% Attack]. A shadow of her follows Shadow Step and strikes the [lowest-HP enemy] again for [85% Attack].',
+    statsPct: { attack: 8 },
     ability: {
-      extraActions: [
-        { do: 'blink', target: 'highestHpEnemy' },
-        { do: 'damage', target: 'highestHpEnemy', scale: { attack: 1.7 }, kind: 'physical', vfx: 'sig_ying_wu' },
-      ],
+      extraActions: [{ do: 'damage', target: 'lowestHpEnemy', scale: { attack: 0.85 }, kind: 'physical', vfx: 'sig_ying_wu' }],
     },
   },
   tie_quan: {
     id: 'tie_unbowed_fist',
     name: 'Unbowed Fist',
-    desc: 'Gain [200 HP]. Hundred Fists strikes [8] times for [50% Attack] each and [Stuns] the target for 0.6 s. Each cast still grants [10 Attack Speed].',
-    stats: { hp: 200 },
+    desc: 'Gain [100 HP]. Hundred Fists also [Stuns] the target for 0.5 s.',
+    stats: { hp: 100 },
     ability: {
-      actions: [
-        { do: 'repeat', times: 8, interval: 0.1, actions: [{ do: 'damage', target: 'target', scale: { attack: 0.5 }, kind: 'physical', vfx: 'sig_tie_quan' }] },
-        { do: 'status', target: 'target', status: 'stun', duration: 0.6 },
-        { do: 'buff', stat: 'attackSpeed', flat: 10 },
-      ],
+      extraActions: [{ do: 'status', target: 'target', status: 'stun', duration: 0.5 }],
     },
   },
   xuan_bing: {
     id: 'xuan_winters_breath',
     name: "Winter's Breath",
-    desc: 'Gain [10 Spirit]. Every [5 s], every enemy gains [6 Frost].',
-    stats: { spirit: 10 },
-    effects: [{ id: 'winters_breath', desc: 'Every 5 s, every enemy gains 6 Frost.', trigger: { on: 'interval', every: 5, after: 2 }, actions: [{ do: 'status', target: 'allEnemies', status: 'frost', stacks: 6, duration: 5 }] }],
+    desc: 'Every [5 s], every enemy gains [2 Frost].',
+    effects: [{ id: 'winters_breath', desc: 'Every 5 s, every enemy gains 2 Frost.', trigger: { on: 'interval', every: 5, after: 2 }, actions: [{ do: 'status', target: 'allEnemies', status: 'frost', stacks: 2, duration: 5 }] }],
     keywords: ['Frost'],
   },
   lei_zhen: {
     id: 'lei_tenth_bolt',
     name: 'The Tenth Bolt',
-    desc: 'Gain [10 Spirit]. Heavenly Thunder calls a [fourth bolt] on the [highest-HP enemy] for [160% Spirit].',
-    stats: { spirit: 10 },
+    desc: 'Heavenly Thunder calls a [fourth bolt] on the [highest-HP enemy] for [100% Spirit].',
     ability: {
-      extraActions: [{ do: 'damage', target: 'highestHpEnemy', scale: { spirit: 1.6 }, vfx: 'sig_lei_zhen' }],
+      extraActions: [{ do: 'damage', target: 'highestHpEnemy', scale: { spirit: 1.0 }, vfx: 'sig_lei_zhen' }],
     },
   },
   long_mu: {
     id: 'long_dragons_promise',
     name: "Dragon's Promise",
-    desc: 'Gain [15 Attack Speed]. Sun-Shooting Arrow pins every enemy it pierces: a [0.6 s Stun].',
-    stats: { attackSpeed: 15 },
+    desc: 'Sun-Shooting Arrow pins its target: a [1 s Stun].',
     ability: {
-      extraActions: [{ do: 'status', target: 'lineThroughTarget', status: 'stun', duration: 0.6 }],
+      extraActions: [{ do: 'status', target: 'target', status: 'stun', duration: 1 }],
     },
   },
   bai_hu: {
     id: 'bai_pouncing_tiger',
     name: 'Pouncing Tiger',
-    desc: 'Tiger Roar becomes a pounce: leap onto the [lowest-HP enemy], strike it for [180% Attack] and [Taunt] the enemies around you for 2 s. Still gain [10% Attack] this combat.',
+    desc: 'Tiger Roar sends a spirit tiger pouncing onto the [lowest-HP enemy] for [90% Attack].',
     ability: {
-      actions: [
-        { do: 'blink', target: 'lowestHpEnemy' },
-        { do: 'damage', target: 'lowestHpEnemy', scale: { attack: 1.8 }, kind: 'physical', vfx: 'sig_bai_hu' },
-        { do: 'status', target: { kind: 'enemiesAdjacent', radius: 2 }, status: 'taunt', duration: 2 },
-        { do: 'buff', stat: 'attack', pct: 10 },
-      ],
+      extraActions: [{ do: 'damage', target: 'lowestHpEnemy', scale: { attack: 0.9 }, kind: 'physical', vfx: 'sig_bai_hu' }],
     },
   },
   qing_feng: {
     id: 'qing_one_thrust',
     name: 'One Thrust',
-    desc: 'Gale Thrust strikes only its target, for [320% Attack]. Gain [10 Crit].',
+    desc: 'Gain [10 Crit]. Gale Thrust drives its point into the target for another [90% Attack].',
     stats: { crit: 10 },
     ability: {
-      actions: [{ do: 'damage', target: 'target', scale: { attack: 3.2 }, kind: 'physical', vfx: 'sig_qing_feng' }],
+      extraActions: [{ do: 'damage', target: 'target', scale: { attack: 0.9 }, kind: 'physical', vfx: 'sig_qing_feng' }],
     },
   },
   yue_ling: {
     id: 'yue_eclipse_omen',
     name: 'Eclipse Omen',
-    desc: 'Gain [15 Spirit]. Moonlit Qi also [Weakens] every enemy: [-15% Attack] for 4 s.',
-    stats: { spirit: 15 },
+    desc: 'Moonlit Qi also [Weakens] every enemy: [-10% Attack] for 4 s.',
     ability: {
-      extraActions: [{ do: 'status', target: 'allEnemies', status: 'weaken', stacks: 15, duration: 4 }],
+      extraActions: [{ do: 'status', target: 'allEnemies', status: 'weaken', stacks: 10, duration: 4 }],
     },
   },
   hei_yan: {
     id: 'hei_abyssal_gaze',
     name: 'Abyssal Gaze',
-    desc: 'Gain [250 HP]. Obsidian Shell also [Taunts] the enemies beside you for 2 s and [Weakens] them: [-20% Attack] for 4 s.',
-    stats: { hp: 250 },
+    desc: 'Gain [125 HP]. Obsidian Shell also [Weakens] the enemies beside you: [-15% Attack] for 4 s.',
+    stats: { hp: 125 },
     ability: {
-      extraActions: [
-        { do: 'status', target: { kind: 'enemiesAdjacent', radius: 1 }, status: 'taunt', duration: 2 },
-        { do: 'status', target: { kind: 'enemiesAdjacent', radius: 1 }, status: 'weaken', stacks: 20, duration: 4 },
-      ],
+      extraActions: [{ do: 'status', target: { kind: 'enemiesAdjacent', radius: 1 }, status: 'weaken', stacks: 15, duration: 4 }],
     },
   },
   zhu_sha: {
     id: 'zhu_never_the_same',
     name: 'Never the Same Pill',
-    desc: 'Cinnabar Smoke also sets every enemy ablaze: [Burn] for [8 + 22% Spirit] per second for 4 s.',
+    desc: 'Cinnabar Smoke also sets every enemy ablaze: [Burn] for [5 + 14% Spirit] per second for 4 s.',
     ability: {
-      extraActions: [{ do: 'status', target: 'allEnemies', status: 'burn', scale: { base: 8, spirit: 0.22 }, duration: 4 }],
+      extraActions: [{ do: 'status', target: 'allEnemies', status: 'burn', scale: { base: 5, spirit: 0.14 }, duration: 4 }],
     },
     keywords: ['Burn'],
   },
   gu_lao: {
     id: 'gu_litany_of_names',
     name: 'Litany of Names',
-    desc: 'Gain [10 Spirit]. Sutra Chant also gives every ally [+10% Attack] and [+10% Spirit] for 6 s.',
-    stats: { spirit: 10 },
+    desc: 'Sutra Chant also gives every ally [+5% Attack] and [+5% Spirit] for 6 s.',
     ability: {
       extraActions: [
-        { do: 'buff', target: 'allAllies', stat: 'attack', pct: 10, duration: 6, unique: 'gu_litany_attack' },
-        { do: 'buff', target: 'allAllies', stat: 'spirit', pct: 10, duration: 6, unique: 'gu_litany_spirit' },
+        { do: 'buff', target: 'allAllies', stat: 'attack', pct: 5, duration: 6, unique: 'gu_litany_attack' },
+        { do: 'buff', target: 'allAllies', stat: 'spirit', pct: 5, duration: 6, unique: 'gu_litany_spirit' },
       ],
     },
   },
   feng_huang: {
     id: 'feng_nirvana_blaze',
     name: 'Nirvana Blaze',
-    desc: 'Gain [150 HP]. The first time she dies each combat, every enemy [Burns] for [55% Spirit] per second for 4 s.',
-    stats: { hp: 150 },
-    effects: [{ id: 'nirvana_blaze', desc: 'Her first death sets every enemy ablaze.', trigger: { on: 'death' }, once: true, actions: [{ do: 'status', target: 'allEnemies', status: 'burn', scale: { spirit: 0.55 }, duration: 4 }] }],
+    desc: 'Gain [100 HP]. The first time she dies each combat, every enemy [Burns] for [35% Spirit] per second for 4 s.',
+    stats: { hp: 100 },
+    effects: [{ id: 'nirvana_blaze', desc: 'Her first death sets every enemy ablaze.', trigger: { on: 'death' }, once: true, actions: [{ do: 'status', target: 'allEnemies', status: 'burn', scale: { spirit: 0.35 }, duration: 4 }] }],
     keywords: ['Burn'],
   },
   ling_shuang: {
     id: 'ling_elders_verdict',
     name: "The Elders' Verdict",
-    desc: 'After the three waves, a last sword falls on [every enemy]: [45% Attack] + [20% Spirit] and [8 Frost].',
+    desc: 'After the last wave, a final sword falls on [every enemy]: [35% Attack] + [15% Spirit] and [6 Frost].',
     ability: {
       extraActions: [
-        { do: 'damage', target: 'allEnemies', scale: { attack: 0.45, spirit: 0.2 }, kind: 'physical', vfx: 'frost_sword_rain' },
-        { do: 'status', target: 'allEnemies', status: 'frost', stacks: 8, duration: 5 },
+        { do: 'damage', target: 'allEnemies', scale: { attack: 0.35, spirit: 0.15 }, kind: 'physical', vfx: 'frost_sword_rain' },
+        { do: 'status', target: 'allEnemies', status: 'frost', stacks: 6, duration: 5 },
       ],
     },
     keywords: ['Frost'],
@@ -201,16 +181,9 @@ export const MASTERY_PATHS: Record<string, UpgradeDef> = {
   mei_yao: {
     id: 'mei_blossom_rain',
     name: 'Plum Blossom Rain',
-    desc: 'Nine-Turn Pill costs [75 Qi] instead of 60, and its blossoms also heal [every other ally] for [60% Spirit].',
+    desc: "Nine-Turn Pill's blossoms also heal [every other ally] for [30% Spirit].",
     ability: {
-      qiCost: 75,
-      extraActions: [{ do: 'heal', target: 'otherAllies', scale: { spirit: 0.6 } }],
+      extraActions: [{ do: 'heal', target: 'otherAllies', scale: { spirit: 0.3 } }],
     },
   },
 };
-
-/** Finds a disciple's exclusive path by its id. */
-export function masteryPathById(heroId: string, pathId: string): UpgradeDef | undefined {
-  const p = MASTERY_PATHS[heroId];
-  return p && p.id === pathId ? p : undefined;
-}

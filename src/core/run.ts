@@ -12,7 +12,7 @@ import { ENEMY_BY_ID } from '@/content/enemies';
 import { EVENT_BY_ID, RANDOM_EVENTS } from '@/content/events';
 import { ALL_BLESSINGS, BLESSINGS, DIFFICULTIES, TRAINING_BLESSINGS } from '@/content/difficulties';
 import { DOCTRINE_BY_ID, type DoctrineDef } from '@/content/doctrines';
-import { MASTERY_PATHS } from '@/content/mastery';
+import { MASTERY_PASSIVE_LEVEL } from '@/content/mastery';
 import { classInsights } from '@/content/classes';
 import { ALLY_MAX_COL, BOARD_ROWS, hexKey, offsetToAxial } from '@/battle/sim/hex';
 import { emitRunEvent } from '@/core/runEvents';
@@ -335,7 +335,16 @@ export function teamContext(s: RunState): TeamContext {
     qualityBlessing: s.blessing === 'quality',
     vitalityBlessing: s.blessing === 'vitality',
     swiftBlessing: s.blessing === 'swift',
+    masteryPassives: masteryPassiveIds(s),
   };
+}
+
+/** Disciples whose mastery V passive is active this run: those the sect has mastered, and none in a Pure run. */
+export function masteryPassiveIds(s: RunState): string[] {
+  if (s.sect?.pure) return [];
+  return Object.entries(s.sect?.mastery ?? {})
+    .filter(([, level]) => level >= MASTERY_PASSIVE_LEVEL)
+    .map(([id]) => id);
 }
 
 export function heroByUid(s: RunState, uid: string): HeroState | undefined {
@@ -776,9 +785,7 @@ export function prepareRankUp(s: RunState): void {
   }
   const def = HERO_BY_ID[h.defId];
   if (h.rank >= 1 && !h.daoPathId) {
-    // mastery III: the disciple's exclusive fourth Dao Path is offered beside the three
-    const exclusive = (s.sect?.mastery?.[h.defId] ?? 0) >= 3 ? MASTERY_PATHS[h.defId] : undefined;
-    s.rankUpChoices = { uid, options: exclusive ? [...def.daoPaths, exclusive] : def.daoPaths };
+    s.rankUpChoices = { uid, options: def.daoPaths };
     return;
   }
   const rng = rngOf(s);
@@ -794,8 +801,7 @@ export function chooseUpgrade(s: RunState, upgradeId: string): void {
   const h = heroByUid(s, c.uid);
   const up = c.options.find((o) => o.id === upgradeId);
   if (h && up) {
-    // a Dao Path: one of the disciple's three, or the exclusive fourth that mastery III offers
-    const isPath = HERO_BY_ID[h.defId].daoPaths.some((p) => p.id === up.id) || MASTERY_PATHS[h.defId]?.id === up.id;
+    const isPath = HERO_BY_ID[h.defId].daoPaths.some((p) => p.id === up.id);
     if (h.rank >= 1 && !h.daoPathId && isPath) h.daoPathId = up.id;
     else h.insightIds.push(up.id);
   }
