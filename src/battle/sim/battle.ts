@@ -771,6 +771,17 @@ export class Battle {
     this.checkEnd();
   }
 
+  /** Where a Reflection or a spirit beast steps out: the free hex nearest the enemy, as close to `anchor` as possible. */
+  private stepOutHex(u: Unit, anchor: Hex): Hex | null {
+    const foes = this.aliveOnBoard(u.side === 'ally' ? 'enemy' : 'ally').filter((e) => e.pos);
+    const toFoe = (h: Hex) => foes.reduce((m, e) => Math.min(m, hexDistance(h, e.pos!)), 99);
+    let free: Hex[] = [];
+    for (let r = 1; r <= 3 && free.length === 0; r++) free = hexesInRange(anchor, r, true).filter((h) => !this.unitAt(h));
+    if (free.length === 0) return null;
+    const best = Math.min(...free.map(toFoe));
+    return this.rng.pick(free.filter((h) => toFoe(h) === best));
+  }
+
   /** The unit whose record a unit's deeds go to: a Reflection's owner, else the unit itself. */
   private creditOf(u: Unit): Unit {
     return u.ownerId !== null ? (this.byId.get(u.ownerId) ?? u) : u;
@@ -1140,6 +1151,20 @@ export class Battle {
         return friends.filter((f) => !isFrontForSide(f.pos!, f.side));
       case 'allUnits':
         return this.aliveOnBoard();
+      case 'companion':
+      case 'companionOrTarget': {
+        const beast = this.units.find((c) => c.alive && c.onBoard && c.pos && c.ownerId === u.id && !c.illusion);
+        if (beast) return [beast];
+        if (kind === 'companion') return [];
+        return curTarget && curTarget.alive && curTarget.onBoard ? [curTarget] : foes.length ? [byDist(foes, anchor)[0]] : [];
+      }
+      case 'enemiesAroundCompanion': {
+        const beast = this.units.find((c) => c.alive && c.onBoard && c.pos && c.ownerId === u.id && !c.illusion);
+        const center = beast?.pos ?? curTarget?.pos ?? (foes.length ? byDist(foes, anchor)[0].pos : null);
+        if (!center) return [];
+        const set = new Set(hexesInRange(center, radius).map(hexKey));
+        return foes.filter((f) => set.has(hexKey(f.pos!)));
+      }
     }
     return [];
   }
@@ -1337,14 +1362,9 @@ export class Battle {
         stats.qi = 0;
         stats.qiRegen = 0;
         stats.omnivamp = 0;
-        const foes = this.aliveOnBoard(u.side === 'ally' ? 'enemy' : 'ally').filter((e) => e.pos);
-        const toFoe = (h: Hex) => foes.reduce((m, e) => Math.min(m, hexDistance(h, e.pos!)), 99);
         for (let i = 0; i < a.count; i++) {
-          let free: Hex[] = [];
-          for (let r = 1; r <= 3 && free.length === 0; r++) free = hexesInRange(anchor, r, true).filter((h) => !this.unitAt(h));
-          if (free.length === 0) break;
-          const best = Math.min(...free.map(toFoe));
-          const pos = this.rng.pick(free.filter((h) => toFoe(h) === best));
+          const pos = this.stepOutHex(u, anchor);
+          if (!pos) break;
           const c = this.addUnit({
             id: this.nextId,
             side: u.side,
@@ -1367,10 +1387,50 @@ export class Battle {
             isSummon: true,
             ownerId: u.id,
             expiresAt: now + a.duration,
+            illusion: true,
           });
           c.facing = u.facing;
           this.emit({ t: now, type: 'vfx', key: 'reflection', id: c.id });
         }
+        break;
+      }
+      case 'companion': {
+        // a spirit beast (Bei Ming's Snow Qilin): one of each kind per owner, fighting until it falls or its owner does
+        if (!u.alive || !u.pos) break;
+        if (this.units.some((c) => c.alive && c.ownerId === u.id && !c.illusion && c.sprite === a.sprite)) break;
+        const pos = this.stepOutHex(u, u.pos);
+        if (!pos) break;
+        const stats = {} as Stats;
+        for (const k of STAT_KEYS) stats[k] = 0;
+        stats.hp = Math.max(1, this.evalScale(a.hp, u, u, ctx));
+        stats.attack = this.evalScale(a.attack, u, u, ctx);
+        stats.defense = a.defense ? this.evalScale(a.defense, u, u, ctx) : u.stat('defense');
+        stats.crit = a.crit ?? 5;
+        stats.range = a.range ?? 1;
+        stats.moveSpeed = u.stat('moveSpeed');
+        const beast = this.addUnit({
+          id: this.nextId,
+          side: u.side,
+          defId: a.sprite,
+          name: a.name,
+          hanzi: a.hanzi,
+          classes: [],
+          rank: u.rank,
+          stats,
+          attackInterval: a.attackInterval ?? 1,
+          attackScale: { attack: 1 },
+          effects: a.effects,
+          pos,
+          onBoard: true,
+          targeting: 'nearest',
+          sprite: a.sprite,
+          scale: a.scale,
+          accent: a.accent ?? u.accent,
+          isSummon: true,
+          ownerId: u.id,
+        });
+        beast.facing = u.facing;
+        this.emit({ t: now, type: 'vfx', key: 'companion', id: beast.id });
         break;
       }
       case 'stack': {

@@ -195,8 +195,44 @@ disciple mastery (sections 6.3, 6.5, 6.6 and 10).
     - Asura's Roar first taunted everything within 2 hexes for 3 s, and he died in 78 of 120 fights.
     - Boiling Blood gained 100 HP and 5% Omnivamp to catch up with the other paths.
 
+**The seventh exclusive disciple is built** (2026-11-11):
+- **Bei Ming** (北冥, "Keeper of the Snow Qilin") answers the call when the Recruitment Hall reaches level IV
+  (possible from Renown 30). Recruiting her costs 450 Funds and 10 Heavenly Jade. With Xiu Luo at level II, every
+  hall level now brings something.
+- Kit: an Array Master and Alchemist from the frozen north who fights beside a spirit beast.
+  - Snow Qilin (passive): at the start of each fight her Snow Qilin steps out beside her, on the free hex nearest the
+    enemy. It has 60% of her Max HP, Attack equal to 90% of her Spirit and her Defense + 10, and its blows apply
+    2 Frost. When it falls it reforms beside her 8 s later.
+  - Heaven-Binding Array (60 Qi): an ice array opens under the Qilin. The enemies within 2 hexes of it take
+    80% Spirit and 6 Frost, and the Qilin heals 25% of its Max HP. Without the Qilin, the array opens around her
+    target.
+  - Dao Paths:
+    - Elder Qilin: +300 HP and +15 Defense, which the Qilin shares; it reforms in 4 s.
+    - Binding Array: the array also stuns for 1 s.
+    - Frost Nova: a falling Qilin bursts for 100% Spirit and 6 Frost on the enemies beside it; +20 Spirit.
+  - Mastery: a second lore page, the title "Master of the Snow Qilin" and the passive Moonlit Bond (the array also
+    gives the Qilin +30 Attack Speed for 5 s).
+- Engine:
+  - the action `companion`: a spirit beast with stats scaled from its owner. It shares the Reflections' owner rules:
+    its deeds count for its owner, support meant for allies skips it, its blows feed the enemy no Qi, and it vanishes
+    when its owner falls. It never fades and is drawn solid. A unit keeps one beast of each kind, so a second spawn
+    while it lives does nothing.
+  - Its end fires the owner's `cloneShattered` effects, which reform it (a `delay`) or make it burst.
+  - `Unit.illusion` tells a Reflection (see-through, fades) from a beast.
+  - new targets `companion`, `companionOrTarget` and `enemiesAroundCompanion`.
+  - the keyword Beast ("Spirit Beast" in text).
+  - "Spirit beast of …" in the arena tooltip.
+  - Passives with an empty description stay out of the tooltips (the Qilin's return).
+- Art: a ChatGPT portrait of her with the Qilin, then a clean pose of each and two AutoSprite packs. Bei Ming has 6
+  clips; the Snow Qilin has 4 (idle, walk, an antler attack, hurt), because a fallen beast shatters instead of
+  playing a death. Also painted icons for her three paths, and her own flipbook (`fx_sig_bei_ming`: an ice formation
+  opens on the ground and crystals burst from it) over an `ice_array` base.
+- Balance (`scripts/carry-balance.mts`, her in the ranged slot, 300 fights): rank I 237 to 260 wins (margin 34 to
+  38), rank II 258 to 264 (39 to 42), rank III 276 to 290 (40 to 45). That is level with Xuan Bing's best path
+  (254 / 291 / 296) and above Ling Shuang and Wen Yan; Yue Ling stays the outlier of this lineup.
+
 Sect events are built too (6.8), with the first four new foes, and so is the Hall of Ancestors (6.9): phase 4's scope
-is done. Phase 5 (Steam) is not started, nor are exclusive disciples #7 and #8 (listed under "Later").
+is done. Phase 5 (Steam) is not started, nor is exclusive disciple #8 (listed under "Later").
 
 ---
 
@@ -682,7 +718,7 @@ This content also moves the game toward its v1.0 targets in GAME_DESIGN.md: 25 d
 - an Alchemist who turns Spirit Stones into healing (built: Jin Ding)
 - a Shadow Walker who leaves mirror clones (built: Qian Mian)
 - a Martial Artist who builds rage with every hit taken (built: Xiu Luo, at Recruitment Hall level II)
-- an Array Master with a spirit-beast companion
+- an Array Master with a spirit-beast companion (built: Bei Ming and her Snow Qilin, at Recruitment Hall level IV)
 - a mythic Tribulation disciple who rides the lightning, for the final contract
 
 **Assets per disciple:**

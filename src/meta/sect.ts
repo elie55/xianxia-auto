@@ -93,7 +93,7 @@ export const BUILDINGS: BuildingDef[] = [
     name: 'Recruitment Hall',
     hanzi: '招',
     icon: 'sect_recruitment_hall',
-    desc: 'Exclusive disciples answer the call of a rising sect. Recruit them here and they can join your drafts and shops. Level II: Xiu Luo answers the call. Level III: one free draft reroll each run. Level V: the draft shows 4 disciples.',
+    desc: 'Exclusive disciples answer the call of a rising sect. Recruit them here and they can join your drafts and shops. Level II: Xiu Luo answers the call. Level III: one free draft reroll each run. Level IV: Bei Ming answers the call. Level V: the draft shows 4 disciples.',
     unlock: 8,
     material: 'cores',
     upgradable: true,
@@ -236,6 +236,7 @@ export const RECRUITS: RecruitDef[] = [
   { hero: 'wen_yan', renown: 25, cost: { funds: 350, jade: 8 }, blurb: 'A Talisman Master and Array Master whose paper seals wait two breaths, then explode on the enemies they mark.' },
   { hero: 'jin_ding', renown: 35, cost: { funds: 450, jade: 10 }, blurb: "An Alchemist and Body Refiner whose golden cauldron turns the sect's Spirit Stones into healing for the whole party." },
   { hero: 'qian_mian', renown: 45, cost: { funds: 550, jade: 12 }, blurb: 'A Shadow Walker and Martial Artist whose mirror Reflections step out to fight beside him, take the blows meant for him and shatter when they fall.' },
+  { hero: 'bei_ming', hall: 4, cost: { funds: 450, jade: 10 }, blurb: 'An Array Master and Alchemist from the frozen north whose Snow Qilin holds the front line while her ice arrays bind the enemies around it.' },
 ];
 export const RECRUIT_BY_HERO = Object.fromEntries(RECRUITS.map((r) => [r.hero, r])) as Record<string, RecruitDef>;
 

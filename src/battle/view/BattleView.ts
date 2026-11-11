@@ -71,6 +71,7 @@ export const FLIPBOOK_SHEETS = [
   'fx_sig_jin_ding',
   'fx_sig_qian_mian',
   'fx_sig_xiu_luo',
+  'fx_sig_bei_ming',
   ...SIGNATURE_HEROES.map((h) => `fx_sig_${h}`),
 ];
 
@@ -123,6 +124,11 @@ const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: numbe
   // Xiu Luo's Six Arms of the Asura: crimson phantom arms burst out around him, then six saber cuts land on his target
   sig_xiu_luo: { sheet: 'fx_sig_xiu_luo', scale: 1.45, fps: 24, alpha: 0.95 },
   asura_cut: { sheet: 'fx_slash_arc', tint: 0xff5a46, scale: 0.95, directional: true, jitter: 18 },
+  // Bei Ming's Heaven-Binding Array: an ice formation opens on the ground under her Snow Qilin; a falling Qilin's
+  // Frost Nova bursts where it stood
+  // (kept soft: at full strength its brightest frames washed out every unit standing on the array)
+  sig_bei_ming: { sheet: 'fx_sig_bei_ming', scale: 1.4, ground: true, fps: 22, alpha: 0.6 },
+  frost_nova: { sheet: 'fx_frost_burst', scale: 1.5, ground: true, tint: 0xd8f2ff },
   tiger_roar: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 1.7, ground: true },
   impact: { sheet: 'fx_impact_hit', scale: 0.9 },
   fist_flurry: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 0.7 },
@@ -152,6 +158,7 @@ const SIGNATURE_BASE: Record<string, string> = {
   sig_jin_ding: 'golden_rain',
   sig_qian_mian: 'mirror_split',
   sig_xiu_luo: 'asura_roar',
+  sig_bei_ming: 'ice_array',
   sig_li_jian: 'sword_slash',
   sig_shan_tie: 'shield_pop',
   sig_hong_lian: 'lotus_bloom',
@@ -194,6 +201,7 @@ const TECHNIQUE_SFX: Record<string, { key: string; rate?: number; volume?: numbe
   jin_ding: { key: 'heal', rate: 0.85, volume: 0.65 },
   qian_mian: { key: 'shatter', rate: 1, volume: 0.6 },
   xiu_luo: { key: 'boss_roar', rate: 1.35, volume: 0.45 },
+  bei_ming: { key: 'frost', rate: 0.8, volume: 0.7 },
   blood_moon_sovereign: { key: 'tribulation', rate: 0.8, volume: 0.5 },
   flood_dragon: { key: 'frost', rate: 0.6, volume: 0.75 },
 };
@@ -1222,7 +1230,7 @@ export class BattleView {
         // a Reflection leaves without a death of its own: it flashes and is gone (Shattered Mirror plays its shards)
         if (e.vanish) {
           v.shatterAnim();
-          this.fx.motes(v.x, v.y, 0xc3b8ff, 5, 90);
+          this.fx.motes(v.x, v.y, v.unit.accent ? parseColor(v.unit.accent) : 0xc3b8ff, v.unit.illusion ? 5 : 12, 90);
           // a Reflection never comes back: drop its view (and its rim filter) once the flash has played, so a long
           // fight full of Reflections does not keep a dozen invisible filtered sprites in the scene
           gsap.delayedCall(0.4, () => {
@@ -1521,6 +1529,23 @@ export class BattleView {
         this.fx.shockwave(p.x, p.y, 0xff6a3d, 110, 0.5);
         this.shake(3);
         audio.sfx('fire', { volume: 0.55, throttleMs: 120 });
+        break;
+      case 'ice_array':
+        // Bei Ming's Heaven-Binding Array: a ring of ice light and drifting frost where the array opens
+        this.fx.ring(p.x, p.y, 0xbfe8ff, 230, 3, 0.6, hexLayout.squash);
+        this.fx.motes(p.x, p.y, 0xd8f2ff, 12, 180);
+        this.screenFlash(0xbfe8ff, 0.05, 0.35);
+        break;
+      case 'companion':
+        // a spirit beast steps out (or reforms): a frost glyph and a puff of snow
+        this.fx.glyph(p.x, p.y, 0x8fd8ff, 70, 0.9);
+        this.fx.motes(p.x, p.y, 0xd8f2ff, 10, 120);
+        audio.sfx('frost', { volume: 0.35, throttleMs: 200 });
+        break;
+      case 'frost_nova':
+        this.fx.shockwave(p.x, p.y, 0xbfe8ff, 150, 0.6);
+        this.shake(4);
+        audio.sfx('frost', { volume: 0.5, throttleMs: 120 });
         break;
       case 'asura_roar':
         // Xiu Luo's Six Arms of the Asura: a crimson roar as the phantom arms burst out

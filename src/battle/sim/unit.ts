@@ -73,6 +73,8 @@ export interface UnitInit {
   ownerId?: number;
   /** Battle time at which a Reflection fades. */
   expiresAt?: number;
+  /** A Reflection (drawn see-through), as opposed to a spirit beast (the `companion` action), which is solid. */
+  illusion?: boolean;
   /** Non-stat tunables set by items/upgrades. */
   extras?: Partial<Record<'surgeBonus' | 'enlightenmentBonus' | 'shatterPct' | 'burnHealPct' | 'companionMult' | 'permafrost', number>>;
 }
@@ -101,6 +103,8 @@ export class Unit {
   readonly ownerId: number | null;
   /** When a Reflection fades (Infinity for every other unit). */
   readonly expiresAt: number;
+  /** A Reflection: an illusion, drawn see-through (a spirit beast also has an owner but is real). */
+  readonly illusion: boolean;
   readonly targeting: 'nearest' | 'lowestHp' | 'farthest' | 'random';
   readonly attackInterval: number;
   readonly attackScale: Scale;
@@ -201,6 +205,7 @@ export class Unit {
     this.isSummon = !!init.isSummon;
     this.ownerId = init.ownerId ?? null;
     this.expiresAt = init.expiresAt ?? Infinity;
+    this.illusion = !!init.illusion;
     this.targeting = init.targeting ?? (init.classes.includes('shadow') ? 'lowestHp' : 'nearest');
     this.attackInterval = init.attackInterval ?? 1.0;
     this.attackScale = init.attackScale ?? { attack: 1 };

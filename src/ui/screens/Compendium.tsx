@@ -785,7 +785,7 @@ function HeroDetail({ id }: { id: string }) {
         <p>
           <RichText text={h.ability.desc} />
         </p>
-        {h.passives?.map((pz) => (
+        {h.passives?.filter((pz) => pz.desc).map((pz) => (
           <p key={pz.id}>
             <b class="gold">{pz.name ?? 'Passive'}:</b> <RichText text={pz.desc} />
           </p>

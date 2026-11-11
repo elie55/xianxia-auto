@@ -28,6 +28,7 @@ export const LORE_II: Record<string, string> = {
   wen_yan: 'The examiners still keep his last paper in a fireproof jar. It has not exploded yet, and nobody wants to be the one who reads it.',
   jin_ding: "Her ledger lists every patient she has saved and what each one paid. The last line is in her own hand: 'Fed the cauldron my wedding ring. Worth it.'",
   qian_mian: 'He keeps a cracked bronze mirror and never looks into it. The sect says it holds his true face. He says it holds the one reflection that refused to come out.',
+  bei_ming: "The qilin sleeps curled around her bedroll, and the snow never settles on either of them. The cook swears it once ate a whole winter's rice store; she swears it did not, and pays for the rice every year.",
   xiu_luo: 'He meditates in the training yard while the juniors hit him with staves. It is the only way he can sit still. The abbot calls it his calmest hour; the juniors call it their worst.',
   zhong_ming: 'The temple was rebuilt around the bell, not around her, so she took the bell. It rings louder on her back than it ever did in the tower, and the bandits who come back to hear it again do not stay long.',
 };
@@ -190,6 +191,13 @@ export const MASTERY_PASSIVES: Record<string, UpgradeDef> = {
     desc: 'Golden Elixir also [Cleanses] the most wounded ally.',
     ability: { extraActions: [{ do: 'cleanse', target: { kind: 'lowestHpAlly', includeSelf: true } }] },
     keywords: ['Heal'],
+  },
+  bei_ming: {
+    id: 'bei_moonlit_bond',
+    name: 'Moonlit Bond',
+    desc: 'Heaven-Binding Array also gives her Snow Qilin [+30 Attack Speed] for [5 s].',
+    ability: { extraActions: [{ do: 'buff', target: 'companion', stat: 'attackSpeed', flat: 30, duration: 5 }] },
+    keywords: ['Beast'],
   },
   xiu_luo: {
     id: 'xiu_undying_grudge',

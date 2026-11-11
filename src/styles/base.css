@@ -384,6 +384,10 @@ button:disabled {
 .kw-Rage {
   color: #ff5a46;
 }
+.tag.kw-Beast,
+.kw-Beast {
+  color: #8fd8ff;
+}
 .tag.kw-Execute,
 .kw-Execute {
   color: #ff4d4d;

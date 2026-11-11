@@ -64,7 +64,9 @@ export type Keyword =
   /** Qian Mian's mirror clones (the `clone` action). */
   | 'Reflection'
   /** Xiu Luo's stacks from blows taken (the `stack` action on the `rage` counter). */
-  | 'Rage';
+  | 'Rage'
+  /** A spirit beast fighting beside its master (the `companion` action; "Spirit Beast" in text). */
+  | 'Beast';
 
 export type StatusKind = 'burn' | 'poison' | 'frost' | 'stun' | 'taunt' | 'bleed' | 'weaken' | 'sunder';
 
@@ -115,7 +117,13 @@ export type TargetKind =
   | 'alliesAdjacent'
   | 'frontAllies'
   | 'backAllies'
-  | 'allUnits';
+  | 'allUnits'
+  /** The unit's living spirit beast (the `companion` action), if it has one. */
+  | 'companion'
+  /** Its spirit beast if it lives, else its target (where a beast-centred effect lands without the beast). */
+  | 'companionOrTarget'
+  /** Enemies within `radius` of the unit's spirit beast (around its target when the beast is down). */
+  | 'enemiesAroundCompanion';
 
 export type TargetSel = TargetKind | { kind: TargetKind; count?: number; radius?: number; includeSelf?: boolean };
 
@@ -231,6 +239,28 @@ export type ActionDef =
    * and `max`; the unit then holds count × `flat` and count × `pct` of each listed stat, as one modifier per stat.
    */
   | { do: 'stack'; key: string; max: number; add?: number; set?: number; flat?: Partial<Stats>; pct?: Partial<Stats>; target?: TargetSel }
+  /**
+   * A spirit beast that fights beside the unit for the whole fight (Bei Ming's Snow Qilin), on the free hex beside it
+   * nearest the enemy. `hp`, `attack` and `defense` are scaled from the unit (e.g. maxHp 0.6, spirit 0.9). Like a
+   * Reflection its deeds count for its owner, support meant for allies skips it and it vanishes when its owner falls;
+   * unlike one, it never fades and is drawn solid. A unit keeps one beast of each `sprite`: a second call while it
+   * lives does nothing. Its end fires the owner's `cloneShattered` effects (to reform it, or burst).
+   */
+  | {
+      do: 'companion';
+      name: string;
+      hanzi?: string;
+      sprite: string;
+      hp: Scale;
+      attack: Scale;
+      defense?: Scale;
+      crit?: number;
+      attackInterval?: number;
+      range?: number;
+      scale?: number;
+      accent?: string;
+      effects?: EffectDef[];
+    }
   | { do: 'vfx'; key: string; target?: TargetSel }
   | { do: 'custom'; id: string; params?: Record<string, number | string> };
 

@@ -40,9 +40,11 @@ export function UnitTip({ unit }: { unit: Unit }) {
         {u.name} {u.hanzi && <span class="brush gold">{u.hanzi}</span>}
       </h4>
       <div class="sub">
-        {u.ownerId !== null
+        {u.illusion
           ? `Reflection · fades in ${Math.max(0, Math.ceil(u.expiresAt - (getBattleView().battle?.time ?? 0)))} s`
-          : u.side === 'ally'
+          : u.ownerId !== null
+            ? `Spirit beast of ${getBattleView().battle?.unit(u.ownerId)?.name ?? 'a disciple'}`
+            : u.side === 'ally'
             ? `${RANK_NAMES[u.rank].name} disciple`
             : u.boss
               ? 'Realm Guardian'

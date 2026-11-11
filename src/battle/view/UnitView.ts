@@ -136,7 +136,7 @@ export class UnitView extends Container {
       look.matrix = lookMatrix(unit.look) as typeof look.matrix;
       this.look = look;
     }
-    if (unit.ownerId !== null) this.rim = new GlowFilter({ distance: 10, outerStrength: 1.6, innerStrength: 0, color: 0xd8d0ff, quality: 0.2, alpha: 0.8 });
+    if (unit.illusion) this.rim = new GlowFilter({ distance: 10, outerStrength: 1.6, innerStrength: 0, color: 0xd8d0ff, quality: 0.2, alpha: 0.8 });
     this.body.filters = this.filterChain();
     this.brightness.enabled = false;
     this.body.alpha = this.ghost;
@@ -197,7 +197,7 @@ export class UnitView extends Container {
 
   /** A Reflection (the `clone` action) is drawn see-through, its owner's sprite paled by its `look`. */
   private get ghost(): number {
-    return this.unit.ownerId !== null ? 0.7 : 1;
+    return this.unit.illusion ? 0.7 : 1;
   }
 
   /** A Reflection ends: a bright flash outward and it is gone (no death clip). */

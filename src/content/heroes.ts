@@ -20,6 +20,25 @@ export function RAGE(add: number): ActionDef {
 }
 
 /**
+ * Bei Ming's Snow Qilin (the `companion` action): 60% of her Max HP, Attack equal to 90% of her Spirit, her Defense
+ * + 10, and its blows apply 2 Frost.
+ */
+export const SNOW_QILIN: ActionDef = {
+  do: 'companion',
+  name: 'Snow Qilin',
+  hanzi: '雪麟',
+  sprite: 'snow_qilin',
+  hp: { maxHp: 0.6 },
+  attack: { spirit: 0.9 },
+  defense: { defense: 1, base: 10 },
+  attackInterval: 1,
+  accent: '#bfe8ff',
+  effects: [{ id: 'qilin_frost', desc: 'Its blows apply 2 Frost.', trigger: { on: 'autoAttack' }, actions: [{ do: 'status', target: 'triggerTarget', status: 'frost', stacks: 2 }] }],
+};
+/** Bei Ming's Snow Qilin reforms `seconds` after it falls (if she still stands and has none). */
+const QILIN_REFORMS = (seconds: number): ActionDef => ({ do: 'delay', seconds, target: 'self', actions: [SNOW_QILIN] });
+
+/**
  * The 16 launch disciples, then the exclusive disciples the sect recruits. Stats are Rank C (Qi Condensation) values.
  * `qi` in baseStats is STARTING Qi; the ability's qiCost is the pool size.
  */
@@ -1480,6 +1499,86 @@ export const HEROES: HeroDef[] = [
     portrait: 'xiu_luo',
     sprite: 'xiu_luo',
     accent: '#e8433a',
+    exclusive: true,
+  },
+  {
+    // the seventh exclusive disciple (Recruitment Hall level IV): her Snow Qilin holds the front while her arrays bind
+    id: 'bei_ming',
+    name: 'Bei Ming',
+    hanzi: '北冥',
+    title: 'Keeper of the Snow Qilin',
+    classes: ['array', 'alchemist'],
+    baseStats: { hp: 880, attack: 22, spirit: 48, crit: 5, defense: 26, range: 3 },
+    attackInterval: 1.1,
+    ability: {
+      id: 'heaven_binding_array',
+      name: 'Heaven-Binding Array',
+      desc: 'She seals an ice array beneath her Snow Qilin: the enemies within 2 hexes of it take [80% Spirit] and [6 Frost], and the Qilin heals [25%] of its Max HP. Without the Qilin, the array opens around her target.',
+      qiCost: 60,
+      castTime: 0.6,
+      vfx: 'frost_array',
+      actions: [
+        { do: 'vfx', key: 'sig_bei_ming', target: 'companionOrTarget' },
+        { do: 'damage', target: { kind: 'enemiesAroundCompanion', radius: 2 }, scale: { spirit: 0.8 } },
+        { do: 'status', target: { kind: 'enemiesAroundCompanion', radius: 2 }, status: 'frost', stacks: 6 },
+        { do: 'heal', target: 'companion', scale: { targetMaxHp: 0.25 }, vfx: 'heal_bloom' },
+      ],
+      keywords: ['Beast', 'Frost'],
+    },
+    passives: [
+      {
+        id: 'snow_qilin',
+        name: 'Snow Qilin',
+        desc: 'Her [Spirit Beast] fights beside her: the Snow Qilin has [60%] of her Max HP, Attack equal to [90% of her Spirit] and her Defense [+10], and its blows apply [2 Frost]. When it falls, it reforms beside her [8 s] later.',
+        trigger: { on: 'combatStart' },
+        actions: [SNOW_QILIN],
+        keywords: ['Beast', 'Frost'],
+      },
+      // the Qilin's return, described above
+      { id: 'snow_qilin_reforms', desc: '', trigger: { on: 'cloneShattered' }, actions: [QILIN_REFORMS(8)] },
+    ],
+    daoPaths: [
+      {
+        id: 'bei_elder_qilin',
+        name: 'Elder Qilin',
+        desc: 'Gain [300 HP] and [15 Defense] (her Qilin shares in them). Her Snow Qilin reforms [4 s] after it falls instead of 8.',
+        stats: { hp: 300, defense: 15 },
+        effects: [{ id: 'elder_qilin', desc: 'The Snow Qilin reforms in 4 s.', trigger: { on: 'cloneShattered' }, actions: [QILIN_REFORMS(4)] }],
+        keywords: ['Beast'],
+      },
+      {
+        id: 'bei_binding_array',
+        name: 'Binding Array',
+        desc: 'Heaven-Binding Array also [Stuns] the enemies it strikes for [1 s].',
+        ability: { extraActions: [{ do: 'status', target: { kind: 'enemiesAroundCompanion', radius: 2 }, status: 'stun', duration: 1 }] },
+        keywords: ['Frost'],
+      },
+      {
+        id: 'bei_frost_nova',
+        name: 'Frost Nova',
+        desc: 'When her Snow Qilin falls, it bursts in a frost nova: [100% Spirit] and [6 Frost] on the enemies beside it. Gain [20 Spirit].',
+        stats: { spirit: 20 },
+        effects: [
+          {
+            id: 'frost_nova',
+            desc: 'A falling Snow Qilin bursts in a frost nova.',
+            trigger: { on: 'cloneShattered' },
+            actions: [
+              { do: 'vfx', key: 'frost_nova', target: 'triggerTarget' },
+              { do: 'damage', target: { kind: 'enemiesAroundTarget', radius: 1 }, scale: { spirit: 1 } },
+              { do: 'status', target: { kind: 'enemiesAroundTarget', radius: 1 }, status: 'frost', stacks: 6 },
+            ],
+          },
+        ],
+        keywords: ['Frost'],
+      },
+    ],
+    tags: ['Beast', 'Frost'],
+    lore: 'She found the qilin as a calf, frozen into a glacier, and spent three winters drawing the array that thawed it. It has never left her side, and it has never let anyone else touch her hair.',
+    portrait: 'bei_ming',
+    sprite: 'bei_ming',
+    accent: '#8fd8ff',
+    projectile: 'ice_shard',
     exclusive: true,
   },
 ];

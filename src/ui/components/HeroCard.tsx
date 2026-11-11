@@ -298,7 +298,7 @@ export function AbilityTip({ hero, ctx }: { hero: HeroState; ctx?: TeamContext }
       <p>
         <RichText text={ability.desc} />
       </p>
-      {def.passives?.map((pz) => (
+      {def.passives?.filter((pz) => pz.desc).map((pz) => (
         <p key={pz.id}>
           <b class="gold">{pz.name ?? 'Passive'}:</b> <RichText text={pz.desc} />
         </p>
@@ -394,6 +394,7 @@ export const KEYWORD_DESC: Record<string, string> = {
   Seal: 'A talisman sealed on an enemy explodes a few seconds later. If the enemy dies first, it burns out.',
   Rage: 'Every blow he takes builds Rage, up to a cap. Each Rage makes him a little stronger, faster and hungrier for life (Omnivamp). It never cools during a fight.',
   Reflection: 'A mirror copy of the disciple with part of his Attack and Max HP. It fights the nearest enemy and draws blows meant for him, then shatters when destroyed, when its time runs out or when he falls. What it does counts for him.',
+  Beast: "A spirit beast fights beside its master for the whole fight, with stats drawn from the master's. What it does counts for its master. Heals and buffs meant for allies pass it by. If it falls it reforms after a while, and it vanishes if its master falls.",
 };
 
 export const STAT_DESC: Record<string, string> = {
