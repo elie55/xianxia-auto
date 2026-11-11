@@ -123,7 +123,7 @@ export function finishRunMeta(s: RunState): void {
       const score = endlessScore(s);
       l.bestFloor = Math.max(l.bestFloor, s.floor);
       m.bestEndless = Math.max(m.bestEndless, score);
-      m.leaderboard.push({ name: `Run ${m.runsPlayed}`, score, tier: s.tier, date: Date.now(), floor: s.floor });
+      m.leaderboard.push({ name: `Run ${m.runsPlayed}`, score, tier: s.tier, date: Date.now(), floor: s.floor, ...(s.sect?.pure ? { pure: true } : {}) });
       m.leaderboard.sort((a, b) => b.score - a.score);
       m.leaderboard = m.leaderboard.slice(0, 20);
     }

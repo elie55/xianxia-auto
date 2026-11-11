@@ -280,6 +280,8 @@ export class Battle {
       u.burnHealPct += u.counter('burnHealPct');
       u.companionMult += u.counter('companionMult');
       if (u.counter('permafrost') > 0) u.permafrost = true;
+      u.healPct += u.counter('healPct');
+      if (u.counter('firstHitCrit') > 0) u.firstHitCrit = true;
     }
 
     // Dao Companions
@@ -568,7 +570,8 @@ export class Battle {
     this.schedule(now + hitDelay, () => {
       if (!u.alive || !target.alive || !target.onBoard) return;
       const raw = this.evalScale(u.attackScale, u, target, {});
-      const dealt = this.dealDamage(u, target, raw, 'physical', { canCrit: true, attack: true });
+      const dealt = this.dealDamage(u, target, raw, 'physical', { canCrit: true, attack: true, forceCrit: u.firstHitCrit });
+      u.firstHitCrit = false;
       if (dealt > 0 || true) {
         this.gainQi(u, 5);
         this.gainQi(target, 3);
@@ -721,6 +724,8 @@ export class Battle {
 
   heal(src: Unit, tgt: Unit, amount: number, o: { cleanse?: boolean; silentTrigger?: boolean } = {}): number {
     if (!tgt.alive || amount <= 0) return 0;
+    // Hundred Herbs Valley: stronger healing (not lifesteal or burn-heals, which are silent)
+    if (!o.silentTrigger && src.healPct) amount *= 1 + src.healPct / 100;
     amount = Math.round(amount);
     const before = tgt.hp;
     tgt.hp = Math.min(tgt.maxHp, tgt.hp + amount);

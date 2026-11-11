@@ -1,6 +1,8 @@
 import { meta, updateMeta } from '@/app/store';
+import { veinAddBlocked, veinPoints, veinRemoveBlocked } from '@/content/vein';
 import {
   BUILDING_BY_ID,
+  DOCTRINE_LIST,
   RECIPES,
   RECRUIT_BY_HERO,
   STUDIES,
@@ -28,7 +30,7 @@ function save(fn: (s: SectState) => SectState | void): void {
 export type SectResult = { ok: true } | { ok: false; reason: string };
 const no = (reason: string): SectResult => ({ ok: false, reason });
 
-/** Raises the Scripture Pavilion, the Artifact Forge or the Recruitment Hall one level, within the rank's cap. */
+/** Raises the Scripture Pavilion, the Artifact Forge, the Doctrine Hall or the Recruitment Hall one level, within the rank's cap. */
 export function upgradeBuilding(id: UpgradableId): SectResult {
   const m = meta.peek();
   const s = sectOf(m);
@@ -119,5 +121,69 @@ export function recruit(hero: string): SectResult {
 export function setCarry(recipeId: string): void {
   save((x) => {
     x.carry = recipeId;
+  });
+}
+
+/** Learns a doctrine the Doctrine Hall teaches at its level: from now on a run can follow it. */
+export function learnDoctrine(id: string): SectResult {
+  const m = meta.peek();
+  const s = sectOf(m);
+  const d = DOCTRINE_LIST.find((x) => x.id === id);
+  if (!d || !isOpen('doctrine', m.renown?.xp ?? 0)) return no('Not available');
+  if (s.doctrines.includes(id)) return no('Already learned');
+  if (d.hall > s.buildings.doctrine) return no(`Needs Doctrine Hall level ${d.hall}`);
+  if (!canAfford(s.purse, d.price)) return no('Not enough Funds or Heavenly Jade');
+  save((x) => {
+    x.purse = spend(x.purse, d.price);
+    x.doctrines = [...x.doctrines, id];
+    if (!x.doctrine) x.doctrine = id;
+  });
+  return { ok: true };
+}
+
+/** The doctrine to follow in the next run ('' for none). */
+export function setDoctrine(id: string): void {
+  save((x) => {
+    x.doctrine = id;
+  });
+}
+
+/** The New Run screen's Pure run switch. */
+export function setPure(on: boolean): void {
+  save((x) => {
+    x.pure = on;
+  });
+}
+
+/** Places a point in a Spirit Vein node (free: points come from the Vein's level). */
+export function veinAdd(id: string): SectResult {
+  const m = meta.peek();
+  const s = sectOf(m);
+  if (!isOpen('vein', m.renown?.xp ?? 0)) return no('Not open yet');
+  const why = veinAddBlocked(s.vein, id, veinPoints(s.buildings.vein));
+  if (why) return no(why);
+  save((x) => {
+    x.vein = { ...x.vein, [id]: (x.vein[id] ?? 0) + 1 };
+  });
+  return { ok: true };
+}
+
+/** Takes a point back from a Spirit Vein node. */
+export function veinRemove(id: string): SectResult {
+  const s = sectOf(meta.peek());
+  const why = veinRemoveBlocked(s.vein, id);
+  if (why) return no(why);
+  save((x) => {
+    const next = { ...x.vein, [id]: (x.vein[id] ?? 0) - 1 };
+    if (!next[id]) delete next[id];
+    x.vein = next;
+  });
+  return { ok: true };
+}
+
+/** Refunds every Spirit Vein point. */
+export function veinReset(): void {
+  save((x) => {
+    x.vein = {};
   });
 }

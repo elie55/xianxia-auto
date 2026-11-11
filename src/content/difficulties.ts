@@ -19,3 +19,16 @@ export const BLESSINGS: BlessingDef[] = [
   { id: 'scholar', name: 'Sect Scholar', desc: 'Your first disciple starts at [Foundation] rank.', icon: 'blessing_scholar', apply: 'scholar' },
   { id: 'warrior', name: 'Battle Hardened', desc: 'All disciples gain [+5% Attack] and [+5% Spirit] permanently.', icon: 'blessing_warrior', apply: 'warrior' },
 ];
+
+/** Blessings the Training Grounds teach (docs/META_PROGRESSION.md 6.2): they join the draft's pool from that level. */
+export const TRAINING_BLESSINGS: BlessingDef[] = [
+  { id: 'spoils', name: 'Spoils of War', desc: 'Every elite and guardian defeated pays [+10 Spirit Stones].', icon: 'node_elite', apply: 'spoils', training: 1 },
+  { id: 'armory', name: 'Sect Armory', desc: 'Start with [2 random common Treasures].', icon: 'choice_treasure', apply: 'armory', training: 1 },
+  { id: 'vitality', name: 'Vital Breath', desc: 'All disciples gain [+8% Max HP] permanently.', icon: 'stat_hp', apply: 'vitality', training: 2 },
+  { id: 'swift', name: 'Swift Wind Steps', desc: 'All disciples gain [+8 Attack Speed] permanently.', icon: 'stat_attackSpeed', apply: 'swift', training: 3 },
+  { id: 'insight', name: 'Enlightened Start', desc: 'Start with a random [common Dao Insight].', icon: 'choice_insight', apply: 'insight', training: 4 },
+  { id: 'ascendant', name: 'Rising Talent', desc: 'The first disciple you buy joins at [Foundation] rank.', icon: 'choice_breakthrough', apply: 'ascendant', training: 4 },
+];
+
+/** Every blessing, for looking one up by id. */
+export const ALL_BLESSINGS: BlessingDef[] = [...BLESSINGS, ...TRAINING_BLESSINGS];

@@ -1,4 +1,5 @@
 import type { RunState } from '@/core/run';
+import { DOCTRINE_BY_ID } from '@/content/doctrines';
 
 /**
  * Sect Renown: the account level (docs/META_PROGRESSION.md, section 5). Every run pays XP, win or lose; levels raise
@@ -127,9 +128,16 @@ export function computeRunRenown(s: RunState, achievementXp = 0): RunRenown {
   const multiplier = contractMultiplier(s.tier);
   const contractBonus = Math.round(base * multiplier) - base;
   if (contractBonus > 0) lines.push({ key: 'contract', label: `Contract bonus ×${multiplier.toFixed(2)}`, xp: contractBonus, icon: 'ui_rank' });
+  // a Pure run (+20%) and the Wandering Cultivator's doctrine (+20%) on what the fights and realms paid
+  const earned = base + contractBonus;
+  const pureBonus = s.sect?.pure ? Math.round(earned * 0.2) : 0;
+  if (pureBonus > 0) lines.push({ key: 'pure', label: 'Pure run +20%', xp: pureBonus, icon: 'ui_star' });
+  const doctrine = s.sect?.doctrine ? DOCTRINE_BY_ID[s.sect.doctrine] : undefined;
+  const doctrineBonus = doctrine?.run?.payoutPct ? Math.round((earned * doctrine.run.payoutPct) / 100) : 0;
+  if (doctrineBonus > 0) lines.push({ key: 'doctrine', label: `${doctrine!.name} +${doctrine!.run!.payoutPct}%`, xp: doctrineBonus, icon: 'ui_rank' });
   const discoveries = Math.max(0, s.discovered ?? 0);
   add('discoveries', 'New Compendium entries', discoveries, RENOWN_XP.discovery, 'ui_compendium');
   if (achievementXp > 0) lines.push({ key: 'achievements', label: 'Achievements', count: s.achievementsEarned?.length, xp: achievementXp, icon: 'ui_star' });
-  const total = base + contractBonus + discoveries * RENOWN_XP.discovery + achievementXp;
+  const total = base + contractBonus + pureBonus + doctrineBonus + discoveries * RENOWN_XP.discovery + achievementXp;
   return { lines, base, multiplier, contractBonus, discoveries, achievements: achievementXp, total };
 }

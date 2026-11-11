@@ -150,9 +150,9 @@ describe('Buildings, the board and the save', () => {
   });
   it('reads older saves with defaults and sends seals, studies and the heirloom into a run', () => {
     const m = metaWith({ renown: { xp: cumulativeXp(6) } });
-    expect(sectOf(m).buildings).toEqual({ pavilion: 1, forge: 1, recruit: 1 });
+    expect(sectOf(m).buildings).toEqual({ pavilion: 1, forge: 1, recruit: 1, doctrine: 1, vein: 1, training: 1 });
     m.sect = { seals: ['monk_beads'], research: ['five_phases'], heirlooms: [{ id: 'founder_sword', level: 2 }], purse: { funds: 0, herbs: 0, cores: 0, jade: 0 } };
-    expect(runSectFor(m, 'founder_sword')).toEqual({ seals: ['monk_beads'], research: ['five_phases'], heirloom: { id: 'founder_sword', level: 2 }, disciples: [], draftSize: 3, freeRerolls: 0 });
+    expect(runSectFor(m, 'founder_sword')).toEqual({ seals: ['monk_beads'], research: ['five_phases'], heirloom: { id: 'founder_sword', level: 2 }, disciples: [], draftSize: 3, freeRerolls: 0, blessings: [], blessingCount: 3 });
     // a closed Forge sends no heirloom
     expect(runSectFor(metaWith({ renown: { xp: cumulativeXp(3) }, sect: m.sect }), 'founder_sword').heirloom).toBeUndefined();
   });
@@ -184,10 +184,13 @@ describe('The main menu sect banner', () => {
   });
   it('otherwise shows the next building to open, then the bounties', () => {
     expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(3) } }))).toMatchObject({ open: true, ready: false, headline: 'Renown 5 opens the Artifact Forge.' });
-    expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(6) } })).headline).toBe('Renown 8 opens the Recruitment Hall.');
+    expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(6) } })).headline).toBe('Renown 7 opens the Doctrine Hall.');
+    expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(7) } })).headline).toBe('Renown 8 opens the Recruitment Hall.');
     expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(8) } })).headline).toBe("At Renown 10, Ling Shuang answers the sect's call.");
     expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(10) } })).headline).toBe('Ling Shuang waits at the gate of the Recruitment Hall.');
-    const all = metaWith({ renown: { xp: cumulativeXp(10) }, sect: { disciples: ['ling_shuang'], bounties: { active: ['win_six', 'two_elites', 'realm_one'], done: [] } } });
+    expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(10) }, sect: { disciples: ['ling_shuang'] } })).headline).toBe('Renown 11 opens the Spirit Vein.');
+    expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(11) }, sect: { disciples: ['ling_shuang'], vein: { stones: 2 } } })).headline).toBe('Renown 13 opens the Training Grounds.');
+    const all = metaWith({ renown: { xp: cumulativeXp(13) }, sect: { disciples: ['ling_shuang'], bounties: { active: ['win_six', 'two_elites', 'realm_one'], done: [] }, vein: { stones: 2 } } });
     expect(sectInvite(all)).toMatchObject({ ready: false, headline: '3 bounties wait on the Bounty Board.' });
   });
 });

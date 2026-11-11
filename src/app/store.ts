@@ -40,7 +40,8 @@ export interface MetaSave {
   bestEndless: number;
   bestTierCleared: number;
   /** score counts Ladder nodes, (floor − 1) × 12 + node; floor is stored from save version 2 on. */
-  leaderboard: { name: string; score: number; tier: number; date: number; floor?: number }[];
+  /** Heavenly Ladder records; `pure` marks a Pure run (no doctrine, heirloom or Spirit Vein). */
+  leaderboard: { name: string; score: number; tier: number; date: number; floor?: number; pure?: boolean }[];
   settings: {
     music: number;
     sfx: number;
@@ -85,7 +86,7 @@ export interface MetaSave {
   /** The Sect (src/meta/sect.ts, read through sectOf): Funds and materials, building levels, studies, seals, heirlooms, bounties. */
   sect?: {
     purse?: { funds: number; herbs: number; cores: number; jade: number };
-    buildings?: { pavilion: number; forge: number; recruit?: number };
+    buildings?: { pavilion: number; forge: number; recruit?: number; doctrine?: number; vein?: number; training?: number };
     research?: string[];
     seals?: string[];
     heirlooms?: { id: string; level: number }[];
@@ -93,6 +94,12 @@ export interface MetaSave {
     carry?: string;
     /** Exclusive disciples recruited in the Recruitment Hall. */
     disciples?: string[];
+    /** Doctrines learned in the Doctrine Hall, the one picked last, and the Pure run switch as last set. */
+    doctrines?: string[];
+    doctrine?: string;
+    pure?: boolean;
+    /** Spirit Vein node ranks. */
+    vein?: Record<string, number>;
   };
 }
 

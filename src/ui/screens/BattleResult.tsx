@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import gsap from 'gsap';
 import { act, run, screen, meta } from '@/app/store';
-import { currentRewindCost, proceedFromResult, rewind, rewindAvailable, type RunState } from '@/core/run';
+import { currentRewindCost, proceedFromResult, rewind, rewindAvailable, runDoctrine, type RunState } from '@/core/run';
 import { concludeRun } from '@/meta/runtime';
 import type { BattleResult as BattleRecord } from '@/battle/sim/battle';
 import { HERO_BY_ID } from '@/content/heroes';
@@ -258,6 +258,9 @@ export function BattleResult() {
                         <Line label="Battle won" value={b.base} />
                         <Line label={`Surviving disciples ×${b.survivorCount}`} value={b.survivors} />
                         {b.relicBonus > 0 && <Line label="Dao Insight bonus" value={b.relicBonus} />}
+                        {!!b.doctrine && <Line label={`Doctrine · ${runDoctrine(s)?.name ?? ''}`} value={b.doctrine} />}
+                        {!!b.vein && <Line label="Spirit Vein · Battle Spoils" value={b.vein} />}
+                        {!!b.blessing && <Line label="Blessing · Spoils of War" value={b.blessing} />}
                         {b.bounty > 0 && <Line label="Bounty" value={b.bounty} />}
                         {b.battleBonus > 0 && <Line label="Earned in combat" value={b.battleBonus} />}
                         {b.challenge > 0 && <Line label="Challenge reward" value={b.challenge} />}

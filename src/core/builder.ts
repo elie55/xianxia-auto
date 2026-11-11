@@ -29,6 +29,9 @@ export interface TeamContext {
   itemSlotsPerRank: boolean;
   warriorBlessing: boolean;
   qualityBlessing: boolean;
+  /** Training Grounds blessings: +8% Max HP (Vital Breath), +8 Attack Speed (Swift Wind Steps). */
+  vitalityBlessing?: boolean;
+  swiftBlessing?: boolean;
 }
 
 export const BASE_ITEM_SLOTS = 3;
@@ -117,6 +120,8 @@ export function heroStats(h: HeroState, ctx: TeamContext, pos: Hex | null): Stat
     pct.attack += 5;
     pct.spirit += 5;
   }
+  if (ctx.vitalityBlessing) pct.hp += 8;
+  if (ctx.swiftBlessing) flat.attackSpeed += 8;
 
   const out = emptyStats();
   for (const k of STAT_KEYS) out[k] = (base[k] + flat[k]) * (1 + pct[k] / 100);

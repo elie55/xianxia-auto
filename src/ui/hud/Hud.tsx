@@ -9,7 +9,7 @@ import { RELIC_BY_ID } from '@/content/relics';
 import { ITEM_BY_ID } from '@/content/items';
 import { heroAbility, heroItemSlots, heroStats, type HeroState, type TeamContext } from '@/core/builder';
 import { concludeRun } from '@/meta/runtime';
-import { equipItem, equipItemAt, heroByUid, moveHero, relicDefs, sellHero, sellItem, teamContext, unequipItem, itemQuestState, type RunState, setPosition } from '@/core/run';
+import { equipItem, equipItemAt, heroByUid, moveHero, relicDefs, runDoctrine, sellHero, sellItem, teamContext, unequipItem, itemQuestState, type RunState, setPosition } from '@/core/run';
 import { Icon, STAT_COLOR, STAT_ICON, STAT_LABEL } from '@/ui/components/Icon';
 import { RichText } from '@/ui/components/RichText';
 import { tip } from '@/ui/components/Tooltip';
@@ -218,6 +218,7 @@ const drawerPref = signal<boolean | null>(null);
 
 function LeftRail({ s }: { s: RunState }) {
   const relics = relicDefs(s);
+  const doctrine = runDoctrine(s);
   const dragging = drag.value;
   const canDropItem = dragging?.payload.kind === 'item' && !!dragging.payload.fromHero;
   // the drawer opens by itself where Treasures are handled; the player's toggle holds until the next screen
@@ -229,6 +230,33 @@ function LeftRail({ s }: { s: RunState }) {
   return (
     <div class={`leftrail v2 ${open ? 'open' : 'closed'}`} data-tut="leftrail">
       <div class="rail-insights" {...tip(<><h4>Dao Insights {relics.length}</h4><p>Relics that buff the whole sect or unlock quests. Hover one for details.</p></>, 'below')}>
+        {(doctrine || s.sect?.pure) && (
+          <span
+            class={`rail-insight-tag rail-doctrine ${doctrine ? '' : 'pure'}`}
+            {...tip(
+              doctrine ? (
+                <>
+                  <h4>Doctrine: {doctrine.name}</h4>
+                  <p>
+                    <b style={{ color: '#7fdcae' }}>+</b> <RichText text={doctrine.upside} />
+                  </p>
+                  <p>
+                    <b style={{ color: '#e8907e' }}>−</b> <RichText text={doctrine.cost} />
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h4>Pure run</h4>
+                  <p>No doctrine, heirloom or sect bonus. The run pays +20% Sect Renown.</p>
+                </>
+              ),
+              'below',
+            )}
+          >
+            {doctrine ? <Icon name={doctrine.icon} size={24} /> : null}
+            <span class="brush">{doctrine ? doctrine.hanzi : '纯'}</span>
+          </span>
+        )}
         <span class="rail-insight-tag">
           <span class="brush">悟</span>
           <b>{relics.length}</b>

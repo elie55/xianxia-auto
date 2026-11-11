@@ -5315,6 +5315,23 @@ input[type='range']:hover::-webkit-slider-thumb {
   font-size: calc(15px * var(--ts, 1));
   color: var(--paper);
 }
+/* the run's doctrine (or a Pure run) beside the Dao Insights */
+.rail-insight-tag.rail-doctrine {
+  gap: 2px;
+  padding: 0 10px 0 4px;
+  box-shadow: inset 0 0 0 1px rgba(232, 144, 126, 0.6), 0 4px 10px rgba(0, 0, 0, 0.45);
+}
+.rail-insight-tag.rail-doctrine .brush {
+  font-size: 20px;
+  color: #ffd2b8;
+}
+.rail-insight-tag.rail-doctrine.pure {
+  padding: 0 10px;
+  box-shadow: inset 0 0 0 1px rgba(111, 227, 196, 0.65), 0 4px 10px rgba(0, 0, 0, 0.45);
+}
+.rail-insight-tag.rail-doctrine.pure .brush {
+  color: var(--jade-bright);
+}
 .leftrail.v2 .relic-grid {
   min-height: 0;
   gap: 0;

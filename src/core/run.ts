@@ -10,7 +10,8 @@ import { RELIC_BY_ID, RESEARCH_RELICS, SHOP_RELICS, TEAM_SIZE_RELICS } from '@/c
 import { heirloomItemId } from '@/content/heirlooms';
 import { ENEMY_BY_ID } from '@/content/enemies';
 import { EVENT_BY_ID, RANDOM_EVENTS } from '@/content/events';
-import { BLESSINGS, DIFFICULTIES } from '@/content/difficulties';
+import { ALL_BLESSINGS, BLESSINGS, DIFFICULTIES, TRAINING_BLESSINGS } from '@/content/difficulties';
+import { DOCTRINE_BY_ID, type DoctrineDef } from '@/content/doctrines';
 import { classInsights } from '@/content/classes';
 import { ALLY_MAX_COL, BOARD_ROWS, hexKey, offsetToAxial } from '@/battle/sim/hex';
 import { emitRunEvent } from '@/core/runEvents';
@@ -78,6 +79,12 @@ export interface StonesBreakdown {
   bounty: number;
   quests: { name: string; amount: number }[];
   challenge: number;
+  /** What the run's doctrine adds or takes (Merchant's Way: -1). */
+  doctrine?: number;
+  /** What the Spirit Vein adds (Battle Spoils: +1). */
+  vein?: number;
+  /** What the run's blessing adds (Spoils of War: +10 on elites and guardians). */
+  blessing?: number;
   total: number;
 }
 
@@ -173,6 +180,10 @@ export interface RunState {
   rewindCost: number;
   /** Set by a Time Reversal: leaving the shop returns to the lost fight instead of moving on to the next node. */
   retryNode?: boolean;
+  /** The run's free Time Reversal (Spirit Vein: Second Chance) has been used. */
+  freeRewindUsed?: boolean;
+  /** Rising Talent (a Training Grounds blessing) has raised its one disciple. */
+  ascendantUsed?: boolean;
   heroCounter: number;
   victory: boolean;
   endlessScore: number;
@@ -211,6 +222,26 @@ export interface RunSect {
   draftSize?: number;
   /** Free draft rerolls (1 from Recruitment Hall level III). */
   freeRerolls?: number;
+  /** The doctrine followed this run (src/content/doctrines.ts), picked on the New Run screen. */
+  doctrine?: string;
+  /** A Pure run: no doctrine, heirloom or Spirit Vein; it pays +20% Sect Renown. */
+  pure?: boolean;
+  /** Spirit Vein node ranks (src/content/vein.ts). */
+  vein?: Record<string, number>;
+  /** Blessings the Training Grounds have added to the draft's pool. */
+  blessings?: string[];
+  /** Blessings the opening draft shows (3; 4 from Training Grounds level V). */
+  blessingCount?: number;
+}
+
+/** A Spirit Vein node's rank in this run (0 when not taken, or in a Pure run). */
+export function veinRank(s: RunState, id: string): number {
+  return s.sect?.vein?.[id] ?? 0;
+}
+
+/** The doctrine this run follows, if any. */
+export function runDoctrine(s: RunState): DoctrineDef | undefined {
+  return s.sect?.doctrine ? DOCTRINE_BY_ID[s.sect.doctrine] : undefined;
 }
 
 /** The Sect Renown a finished run paid (src/meta/runtime.ts finishRunMeta). */
@@ -260,6 +291,8 @@ export function difficultyMods(s: RunState) {
     if (m.tribulationAt) mods.tribulationAt = Math.min(mods.tribulationAt, m.tribulationAt);
     if (m.bossExtraAbility) mods.bossExtraAbility = true;
   }
+  // the Shadow Pavilion's price
+  mods.enemyHpPct += runDoctrine(s)?.run?.enemyHpPct ?? 0;
   return mods;
 }
 
@@ -287,11 +320,14 @@ export function teamContext(s: RunState): TeamContext {
   let itemSlotBonus = 0;
   for (const r of relicDefs(s)) if (r.run?.itemSlots) itemSlotBonus += r.run.itemSlots;
   return {
-    relics: relicDefs(s),
+    // the doctrine's team stats and battle effects ride along as Dao Insights only the team reads
+    relics: [...relicDefs(s), ...(runDoctrine(s)?.relics ?? [])],
     itemSlotBonus,
     itemSlotsPerRank: mods.itemSlotsPerRank,
     warriorBlessing: s.blessing === 'warrior',
     qualityBlessing: s.blessing === 'quality',
+    vitalityBlessing: s.blessing === 'vitality',
+    swiftBlessing: s.blessing === 'swift',
   };
 }
 
@@ -377,6 +413,16 @@ export function newRun(tier: number, seed: number, sect?: RunSect): RunState {
   };
   // the heirloom the sect sends along starts in the inventory
   if (sect?.heirloom) s.inventory.push(heirloomItemId(sect.heirloom.id, sect.heirloom.level));
+  // the doctrine's run-level terms: fewer starting Spirit Stones (Hundred Herbs Valley), a smaller reserve (Frost Lattice)
+  const doctrine = runDoctrine(s)?.run;
+  if (doctrine?.startStones) s.stones = Math.max(0, s.stones + doctrine.startStones);
+  // the Spirit Vein: more starting Spirit Stones (Spirit Spring), a wider reserve (Open Courtyard)
+  s.stones += 5 * veinRank(s, 'stones');
+  const reserveDelta = (doctrine?.reserve ?? 0) + veinRank(s, 'courtyard');
+  if (reserveDelta) {
+    s.reserveSize = Math.max(0, Math.min(3, s.reserveSize + reserveDelta));
+    s.reserve = Array.from({ length: s.reserveSize }, () => null);
+  }
   rollDraft(s, rng);
   commit(s, rng);
   return s;
@@ -390,7 +436,10 @@ export function heroPool(s: RunState): typeof HEROES {
 
 function rollDraft(s: RunState, rng: Rng): void {
   const heroes = rng.pickN(heroPool(s), s.sect?.draftSize ?? 3).map((h) => h.id);
-  const blessings = rng.pickN(BLESSINGS, 3).map((b) => b.id);
+  // the Training Grounds widen the pool and, at level V, show a fourth; Spirit Vein, Many Blessings: one more
+  const taught = new Set(s.sect?.blessings ?? []);
+  const pool = [...BLESSINGS, ...TRAINING_BLESSINGS.filter((b) => taught.has(b.id))];
+  const blessings = rng.pickN(pool, Math.min(pool.length, (s.sect?.blessingCount ?? 3) + veinRank(s, 'blessings'))).map((b) => b.id);
   s.draft = { heroes, blessings, rerolls: s.draft?.rerolls ?? 0, free: s.draft ? s.draft.free : (s.sect?.freeRerolls ?? 0) };
 }
 
@@ -411,9 +460,30 @@ export function draftReroll(s: RunState): boolean {
 
 export function draftPick(s: RunState, heroDefId: string, blessingId: string): void {
   if (!s.draft) return;
-  const blessing = BLESSINGS.find((b) => b.id === blessingId);
+  const blessing = ALL_BLESSINGS.find((b) => b.id === blessingId);
   s.blessing = blessing?.apply ?? null;
   if (s.blessing === 'wealth') s.stones += 20;
+  // Training Grounds: Sect Armory (2 common Treasures), Enlightened Start (a common Dao Insight)
+  if (s.blessing === 'armory' || s.blessing === 'insight') {
+    const rng = rngOf(s);
+    if (s.blessing === 'armory') {
+      const commons = itemPool(s).filter((i) => i.rarity === 'common');
+      for (let i = 0; i < 2 && commons.length; i++) addItemToInventory(s, rng.pick(commons).id);
+    } else {
+      const commons = relicPool(s).filter((r) => r.rarity === 'common' && !r.teamSize && !s.relics.some((x) => x.id === r.id));
+      if (commons.length) addRelic(s, rng.pick(commons).id);
+    }
+    commit(s, rng);
+  }
+  // Spirit Vein, Elder's Gift: the first disciple brings a random common Treasure
+  if (veinRank(s, 'parcel') && s.roster.length === 0) {
+    const commons = itemPool(s).filter((i) => i.rarity === 'common');
+    if (commons.length) {
+      const rng = rngOf(s);
+      addItemToInventory(s, rng.pick(commons).id);
+      commit(s, rng);
+    }
+  }
   if (s.blessing === 'quality') {
     s.partySize = 4;
     s.party = s.party.slice(0, 4);
@@ -434,6 +504,9 @@ export function draftPick(s: RunState, heroDefId: string, blessingId: string): v
 // ───────────────────────── roster management ─────────────────────────
 
 export function addHero(s: RunState, defId: string, rank: Rank): HeroState {
+  // Sword Peak: Sword Cultivators join at Foundation (callers queue the rank-up choice for rank 1 and above)
+  const join = runDoctrine(s)?.run?.joinRank;
+  if (join && rank < join.rank && HERO_BY_ID[defId]?.classes.includes(join.class)) rank = join.rank;
   const uid = `h${++s.heroCounter}`;
   const h: HeroState = { uid, defId, rank, insightIds: [], items: [], permanent: [] };
   s.roster.push(h);
@@ -785,6 +858,10 @@ export function rollShop(s: RunState, keepFrozen = false): void {
     if (r.run?.shopRelics) relicCount += r.run.shopRelics;
   }
   if (s.blessing === 'bazaar') relicCount += 1;
+  const doctrine = runDoctrine(s)?.run;
+  itemCount = Math.max(0, itemCount + (doctrine?.shopItems ?? 0));
+  relicCount = Math.max(0, relicCount + (doctrine?.shopRelics ?? 0));
+  const itemPriceDelta = doctrine?.itemPrice ?? 0;
   const prev = keepFrozen && s.shop ? s.shop : null;
 
   const heroes: (ShopHero | null)[] = [];
@@ -800,7 +877,7 @@ export function rollShop(s: RunState, keepFrozen = false): void {
     offered.add(def.id);
     const rank = rng.weighted([0, 1, 2, 3] as Rank[], rankWeights(s));
     const sale = rng.chance(12);
-    heroes.push({ key: `sh${s.stats.fights}-${i}-${rng.int(0, 9999)}`, defId: def.id, rank, price: price(s, HERO_PRICE_BY_RANK[rank], sale), sale });
+    heroes.push({ key: `sh${s.stats.fights}-${i}-${rng.int(0, 9999)}`, defId: def.id, rank, price: Math.max(1, price(s, HERO_PRICE_BY_RANK[rank], sale) - veinRank(s, 'recruiter')), sale });
   }
   const items: (ShopItem | null)[] = [];
   const rw = rarityWeights(s);
@@ -814,7 +891,7 @@ export function rollShop(s: RunState, keepFrozen = false): void {
     const ofRarity = offered.filter((it) => it.rarity === rarity);
     const it = rng.pick(ofRarity.length ? ofRarity : offered);
     const sale = rng.chance(15);
-    items.push({ key: `si${s.stats.fights}-${i}-${rng.int(0, 9999)}`, itemId: it.id, price: price(s, it.price ?? ITEM_PRICE_BY_RARITY[it.rarity], sale), sale });
+    items.push({ key: `si${s.stats.fights}-${i}-${rng.int(0, 9999)}`, itemId: it.id, price: Math.max(1, price(s, it.price ?? ITEM_PRICE_BY_RARITY[it.rarity], sale) + itemPriceDelta - (it.rarity === 'common' ? 0 : veinRank(s, 'haggler'))), sale });
   }
   const relicOffers: (ShopRelic | null)[] = [];
   const owned = new Set(s.relics.map((r) => r.id));
@@ -850,8 +927,10 @@ export function rollShop(s: RunState, keepFrozen = false): void {
 export function rerollCost(s: RunState): number {
   let discount = 0;
   for (const r of relicDefs(s)) if (r.run?.rerollDiscount) discount += r.run.rerollDiscount;
+  // Spirit Vein, Patient Eye: each shop's first reroll is free
+  if (veinRank(s, 'reroll') && s.rerollsThisShop === 0) return 0;
   const base = (s.realm === 1 ? 1 : 2) + s.rerollsThisShop;
-  return Math.max(1, base - discount);
+  return Math.max(1, base - discount) + (runDoctrine(s)?.run?.rerollCost ?? 0);
 }
 
 export function shopReroll(s: RunState): boolean {
@@ -888,7 +967,13 @@ export function buyHero(s: RunState, key: string): { ok: boolean; reason?: strin
   }
   if (freeRosterSlots(s) === 0) return { ok: false, reason: 'No free slot in party or reserve' };
   s.stones -= offer.price;
-  const h = addHero(s, offer.defId, offer.rank);
+  // Rising Talent: the first disciple bought joins at Foundation
+  let joinRank = offer.rank;
+  if (s.blessing === 'ascendant' && !s.ascendantUsed) {
+    s.ascendantUsed = true;
+    joinRank = Math.max(1, joinRank) as Rank;
+  }
+  const h = addHero(s, offer.defId, joinRank);
   if (h.rank >= 1) queueRankUp(s, h.uid);
   s.shop.heroes[idx] = null;
   log(s, `${HERO_BY_ID[offer.defId].name} joins the sect.`);
@@ -1057,8 +1142,14 @@ export function resolveEventChoice(s: RunState, choiceId: string, heroUid?: stri
   if (!ev || !choice) return null;
   const { ctx, rng } = eventContext(s);
   if (choice.available && !choice.available(ctx)) return null;
-  const outcome = choice.resolve(ctx, heroUid);
+  let outcome = choice.resolve(ctx, heroUid);
   commit(s, rng);
+  // Spirit Vein, Campfire Tales: the Sect Rest's stories pay 10 more Spirit Stones
+  if (ev.id === 'sect_rest' && choiceId === 'gamble' && veinRank(s, 'tales')) {
+    s.stones += 10;
+    s.stats.stonesEarned += 10;
+    outcome = { ...outcome, stonesDelta: (outcome.stonesDelta ?? 0) + 10 };
+  }
   s.currentEvent.outcome = outcome;
   s.currentEvent.chosen = choiceId;
   if (outcome.pickItem?.length) {
@@ -1243,6 +1334,13 @@ export function finishBattle(s: RunState, result: BattleResult): void {
     total: 0,
   };
   for (const r of relicDefs(s)) if (r.run?.stonesPerFight) breakdown.relicBonus += r.run.stonesPerFight;
+  // Merchant's Way: one Spirit Stone less per fight won (never below nothing)
+  const doctrineStones = runDoctrine(s)?.run?.stonesPerFight ?? 0;
+  if (doctrineStones) breakdown.doctrine = Math.max(doctrineStones, -(breakdown.base + breakdown.survivors));
+  // Spirit Vein, Battle Spoils: one more Spirit Stone per fight won
+  if (veinRank(s, 'spoils')) breakdown.vein = veinRank(s, 'spoils');
+  // Spoils of War (a Training Grounds blessing): elites and guardians pay 10 more
+  if (s.blessing === 'spoils' && (enc?.kind === 'elite' || enc?.kind === 'boss')) breakdown.blessing = 10;
   if (enc) for (const e of enc.enemies) breakdown.bounty += ENEMY_BY_ID[e.defId]?.bounty ?? 0;
   // fight reward (trial)
   if (s.fightReward?.actions) {
@@ -1275,9 +1373,10 @@ export function finishBattle(s: RunState, result: BattleResult): void {
       }
     }
   }
-  breakdown.total = breakdown.base + breakdown.survivors + breakdown.relicBonus + breakdown.battleBonus + breakdown.bounty + breakdown.challenge + breakdown.quests.reduce((a, q) => a + q.amount, 0);
+  const doctrinePay = (breakdown.doctrine ?? 0) + (breakdown.vein ?? 0) + (breakdown.blessing ?? 0);
+  breakdown.total = breakdown.base + breakdown.survivors + breakdown.relicBonus + breakdown.battleBonus + breakdown.bounty + breakdown.challenge + doctrinePay + breakdown.quests.reduce((a, q) => a + q.amount, 0);
   // quests already added their stones in applyRunActions; add the rest
-  s.stones += breakdown.base + breakdown.survivors + breakdown.relicBonus + breakdown.battleBonus + breakdown.bounty + breakdown.challenge;
+  s.stones += breakdown.base + breakdown.survivors + breakdown.relicBonus + breakdown.battleBonus + breakdown.bounty + breakdown.challenge + doctrinePay;
   s.stats.stonesEarned += breakdown.total;
   s.lastBreakdown = breakdown;
   record.stones = breakdown.total;
@@ -1451,14 +1550,21 @@ export function openShop(s: RunState): void {
 export function rewindAvailable(s: RunState): boolean {
   return s.stones >= currentRewindCost(s);
 }
+/** Spirit Vein, Second Chance: the run's first Time Reversal costs 15 fewer Spirit Stones. */
+function freeRewind(s: RunState): boolean {
+  return veinRank(s, 'second_chance') > 0 && !s.freeRewindUsed;
+}
+
 export function currentRewindCost(s: RunState): number {
-  return Math.max(5, s.rewindCost - (s.blessing === 'stability' ? 25 : 0));
+  // Spirit Vein: Echo of Time, 5 fewer Spirit Stones; Second Chance, 15 fewer for the run's first reversal
+  return Math.max(5, s.rewindCost - (s.blessing === 'stability' ? 25 : 0) - 5 * veinRank(s, 'reversal') - (freeRewind(s) ? 15 : 0));
 }
 
 export function rewind(s: RunState): boolean {
   const cost = currentRewindCost(s);
   if (s.stones < cost) return false;
   s.stones -= cost;
+  if (freeRewind(s)) s.freeRewindUsed = true;
   s.rewindCost += 20;
   s.stats.rewinds++;
   s.lastResult = null;

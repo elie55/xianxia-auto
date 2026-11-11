@@ -154,6 +154,10 @@ export class Unit {
   burnHealPct = 0;
   /** Dao Companion scaling multiplier. */
   companionMult = 1;
+  /** Healing this unit gives is +X% stronger (Hundred Herbs Valley doctrine). */
+  healPct = 0;
+  /** Its first auto attack of the fight is a Crit (Shadow Pavilion doctrine); cleared once it lands. */
+  firstHitCrit = false;
 
   constructor(init: UnitInit) {
     this.id = init.id;

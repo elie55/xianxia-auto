@@ -9,8 +9,10 @@ import { Icon } from '@/ui/components/Icon';
 import { tip } from '@/ui/components/Tooltip';
 import { HEIRLOOM_RECIPES, heirloomItemId } from '@/content/heirlooms';
 import { isOpen, runSectFor, sectOf } from '@/meta/sect';
-import { setCarry } from '@/meta/sectActions';
+import { setCarry, setDoctrine, setPure } from '@/meta/sectActions';
+import { DOCTRINE_BY_ID } from '@/content/doctrines';
 import { ItemTip } from '@/ui/components/HeroCard';
+import { RichText } from '@/ui/components/RichText';
 import { audio } from '@/audio/AudioManager';
 import { cssUrl } from '@/ui/assetUrl';
 
@@ -35,11 +37,20 @@ export function NewRun() {
   const forgeOpen = isOpen('forge', m.renown?.xp ?? 0);
   const owned = forgeOpen ? sect.heirlooms : [];
   const [carry, setCarryState] = useState(owned.some((h) => h.id === sect.carry) ? sect.carry : '');
+  // the doctrine to follow (src/content/doctrines.ts): one the Doctrine Hall has taught
+  const xp = m.renown?.xp ?? 0;
+  const learned = isOpen('doctrine', xp) ? sect.doctrines.map((id) => DOCTRINE_BY_ID[id]).filter(Boolean) : [];
+  const [doctrine, setDoctrineState] = useState(learned.some((d) => d.id === sect.doctrine) ? sect.doctrine : '');
+  // a Pure run leaves the doctrine and the heirloom at home and pays +20% Sect Renown
+  const sectOpen = isOpen('hall', xp);
+  const [pure, setPureState] = useState(sectOpen && sect.pure);
   const start = () => {
     const seed = seedText.trim() ? hashSeed(seedText.trim()) : randomSeed();
     resetItemQuests();
     if (carry !== sect.carry) setCarry(carry);
-    setRun(newRun(tier, seed, runSectFor(meta.value, carry)));
+    if (doctrine !== sect.doctrine) setDoctrine(doctrine);
+    if (pure !== sect.pure) setPure(pure);
+    setRun(newRun(tier, seed, runSectFor(meta.value, carry, { doctrine, pure })));
     screen.value = 'run';
     audio.sfx('ui_confirm');
   };
@@ -153,11 +164,54 @@ export function NewRun() {
             <div class="seal-sub">
               {active.length === 0 ? 'No modifiers' : `${active.length} modifier${active.length > 1 ? 's' : ''}`} <span class="faint">·</span> Ladder bonus <b class="gold">+{tier * 2}</b>
             </div>
+            {learned.length > 0 && (
+              <div class={`heirloom-pick doctrine-pick ${pure ? 'off' : ''}`}>
+                <span class="heirloom-pick-label">Doctrine</span>
+                <button
+                  class={`heirloom-chip ${doctrine === '' ? 'on' : ''}`}
+                  disabled={pure}
+                  onClick={() => {
+                    audio.sfx('ui_click', { volume: 0.5 });
+                    setDoctrineState('');
+                  }}
+                  {...tip('Follow no doctrine.', 'below')}
+                >
+                  None
+                </button>
+                {learned.map((d) => (
+                  <button
+                    key={d.id}
+                    class={`heirloom-chip doctrine-chip ${doctrine === d.id ? 'on' : ''}`}
+                    disabled={pure}
+                    onClick={() => {
+                      audio.sfx('ui_click', { volume: 0.5 });
+                      setDoctrineState(d.id);
+                    }}
+                    {...tip(
+                      <>
+                        <h4>{d.name}</h4>
+                        <p>
+                          <b style={{ color: '#7fdcae' }}>+</b> <RichText text={d.upside} />
+                        </p>
+                        <p>
+                          <b style={{ color: '#e8907e' }}>−</b> <RichText text={d.cost} />
+                        </p>
+                      </>,
+                      'below',
+                    )}
+                  >
+                    <Icon name={d.icon} size={28} />
+                    <span class="brush doctrine-chip-hanzi">{d.hanzi}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             {owned.length > 0 && (
-              <div class="heirloom-pick">
+              <div class={`heirloom-pick ${pure ? 'off' : ''}`}>
                 <span class="heirloom-pick-label">Heirloom</span>
                 <button
                   class={`heirloom-chip ${carry === '' ? 'on' : ''}`}
+                  disabled={pure}
                   onClick={() => {
                     audio.sfx('ui_click', { volume: 0.5 });
                     setCarryState('');
@@ -173,6 +227,7 @@ export function NewRun() {
                     <button
                       key={h.id}
                       class={`heirloom-chip ${carry === h.id ? 'on' : ''}`}
+                      disabled={pure}
                       onClick={() => {
                         audio.sfx('ui_click', { volume: 0.5 });
                         setCarryState(h.id);
@@ -199,10 +254,30 @@ export function NewRun() {
                 }}
               >
                 <i class="chev" /> Advanced
+                {!advanced && pure && <span class="seed-set pure-set">Pure run</span>}
                 {!advanced && seedText.trim() && <span class="seed-set">Seed {seedText.trim()}</span>}
               </button>
               {advanced && (
                 <div class="seed-panel">
+                  {sectOpen && (
+                    <label class={`pure-toggle ${pure ? 'on' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={pure}
+                        onChange={(e) => {
+                          audio.sfx('ui_click', { volume: 0.5 });
+                          setPureState((e.target as HTMLInputElement).checked);
+                        }}
+                      />
+                      <span class="pure-box" aria-hidden="true">
+                        {pure && <Icon name="ui_check" size={14} />}
+                      </span>
+                      <span class="pure-text">
+                        <b>Pure run</b>
+                        <span>No doctrine, heirloom or other sect bonus. The run pays +20% Sect Renown, and a Ladder record is marked Pure.</span>
+                      </span>
+                    </label>
+                  )}
                   <label class="seed-field">
                     <span class="seed-label">Seed</span>
                     <input class="seed-input v2" placeholder="Random" value={seedText} spellcheck={false} maxLength={24} onInput={(e) => setSeedText((e.target as HTMLInputElement).value)} />
@@ -274,7 +349,14 @@ export function NewRun() {
                   <span class="brush board-tier" style={{ color: TIER_COLOR[e.tier] ?? 'var(--gold)' }} {...tip(DIFFICULTIES[e.tier]?.name ?? '', 'left')}>
                     {DIFFICULTIES[e.tier]?.hanzi}
                   </span>
-                  <span class="board-name">{e.name}</span>
+                  <span class="board-name">
+                    {e.name}
+                    {e.pure && (
+                      <span class="board-pure" {...tip('A Pure run: no doctrine, heirloom or sect bonus.', 'left')}>
+                        Pure
+                      </span>
+                    )}
+                  </span>
                   <span class="gold">Floor {e.floor ?? ladderFloorOf(e.score)}</span>
                 </div>
               ))

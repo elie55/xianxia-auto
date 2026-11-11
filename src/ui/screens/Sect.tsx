@@ -11,6 +11,9 @@ import {
   BUILDINGS,
   BUILDING_BY_ID,
   CURRENCIES,
+  DOCTRINE_LIST,
+  blessingCountFor,
+  trainedBlessings,
   MAX_BUILDING_LEVEL,
   RECIPES,
   RECRUITS,
@@ -30,7 +33,9 @@ import {
   type SectState,
   type UpgradableId,
 } from '@/meta/sect';
-import { craft, recruit, research, setCarry, toggleSeal, upgradeBuilding, type SectResult } from '@/meta/sectActions';
+import { craft, learnDoctrine, recruit, research, setCarry, setDoctrine, toggleSeal, upgradeBuilding, veinAdd, veinRemove, veinReset, type SectResult } from '@/meta/sectActions';
+import { VEIN_NODES, VEIN_RINGS, veinAddBlocked, veinPoints, veinRemoveBlocked, veinSpent, type VeinNode } from '@/content/vein';
+import { TRAINING_BLESSINGS } from '@/content/difficulties';
 import { HERO_BY_ID } from '@/content/heroes';
 import { SectPlate } from '@/ui/components/MetaBits';
 import { HeroCard, ItemTip } from '@/ui/components/HeroCard';
@@ -50,6 +55,12 @@ const SPOT: Record<BuildingId, { x: number; y: number }> = {
   bounty: { x: 640, y: 760 },
   // at the foot of the stairs, where new disciples arrive
   recruit: { x: 1390, y: 820 },
+  // the temple on the left-hand mountain, below the Pavilion
+  doctrine: { x: 700, y: 500 },
+  // the falls, where the mountain's spirit vein surfaces
+  vein: { x: 930, y: 880 },
+  // the terrace beside the Main Hall, under the maples
+  training: { x: 1730, y: 640 },
 };
 
 /**
@@ -136,6 +147,9 @@ export function SectScreen() {
             {open === 'forge' && <ForgePanel />}
             {open === 'bounty' && <BountyPanel />}
             {open === 'recruit' && <RecruitPanel />}
+            {open === 'doctrine' && <DoctrinePanel />}
+            {open === 'vein' && <VeinPanel />}
+            {open === 'training' && <TrainingPanel />}
           </div>
         </aside>
       )}
@@ -145,10 +159,12 @@ export function SectScreen() {
 
 function hasNews(id: BuildingId, m: ReturnType<typeof meta.peek>, s: SectState): boolean {
   const xp = m.renown?.xp ?? 0;
-  if (id === 'pavilion' || id === 'forge' || id === 'recruit') {
+  if (id === 'vein' && veinPoints(s.buildings.vein) > veinSpent(s.vein)) return true;
+  if (id === 'pavilion' || id === 'forge' || id === 'recruit' || id === 'doctrine' || id === 'vein' || id === 'training') {
     const lvl = s.buildings[id];
     if (lvl < levelCap(xp) && canAfford(s.purse, levelCost(lvl + 1, BUILDING_BY_ID[id].material!))) return true;
   }
+  if (id === 'doctrine') return DOCTRINE_LIST.some((d) => !s.doctrines.includes(d.id) && d.hall <= s.buildings.doctrine && canAfford(s.purse, d.price));
   if (id === 'pavilion') return STUDIES.some((st) => !s.research.includes(st.id) && st.level <= s.buildings.pavilion && canAfford(s.purse, st.cost));
   if (id === 'forge') return RECIPES.some((r) => !s.heirlooms.some((h) => h.id === r.id) && r.forge <= s.buildings.forge && canAfford(s.purse, r.cost));
   if (id === 'recruit') return RECRUITS.some((r) => recruitState(m, r.hero) === 'waiting' && canAfford(s.purse, r.cost));
@@ -551,6 +567,206 @@ function RecruitPanel() {
             <Icon name="choice_disciple" size={22} />
             <span>Disciples in the opening draft (four at level V)</span>
             <b>{draftSizeFor(lvl)}</b>
+          </div>
+        </div>
+      </Sec>
+    </>
+  );
+}
+
+// ───────────────────────── Doctrine Hall ─────────────────────────
+
+function DoctrinePanel() {
+  const m = meta.value;
+  const s = sectOf(m);
+  return (
+    <>
+      <LevelRow id="doctrine" />
+      <Sec title="Doctrines" aside={`${s.doctrines.length} of ${DOCTRINE_LIST.length} learned`}>
+        <p class="sect-note">A run can follow one learned doctrine, picked on the New Run screen. Each gives something and takes something. A Pure run follows none.</p>
+        <div class="sect-cards">
+          {DOCTRINE_LIST.map((d) => {
+            const learned = s.doctrines.includes(d.id);
+            const locked = d.hall > s.buildings.doctrine;
+            const followed = s.doctrine === d.id;
+            return (
+              <div key={d.id} class={`sect-card doctrine ${learned ? 'done' : ''} ${locked ? 'locked' : ''}`}>
+                <div class="sect-card-row">
+                  <span class="doctrine-medal">
+                    <Icon name={d.icon} size={50} />
+                    <span class="brush doctrine-hanzi">{d.hanzi}</span>
+                  </span>
+                  <div class="sect-card-text">
+                    <div class="sect-card-head">
+                      <span class="display sect-card-name">{d.name}</span>
+                      {learned ? <span class="sect-badge">Learned</span> : locked ? <span class="sect-badge faint">Hall {ROMAN[d.hall]}</span> : null}
+                    </div>
+                    <p class="doctrine-line up">
+                      <span class="doctrine-mark">+</span>
+                      <span>
+                        <RichText text={d.upside} />
+                      </span>
+                    </p>
+                    <p class="doctrine-line down">
+                      <span class="doctrine-mark">−</span>
+                      <span>
+                        <RichText text={d.cost} />
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                <div class="sect-card-foot">
+                  {learned ? (
+                    <button
+                      class={`btn small ${followed ? 'primary' : 'ghost'}`}
+                      onClick={() => {
+                        audio.sfx('ui_click', { volume: 0.6 });
+                        setDoctrine(followed ? '' : d.id);
+                      }}
+                    >
+                      {followed ? 'Followed in the next run' : 'Follow in the next run'}
+                    </button>
+                  ) : (
+                    <>
+                      <Cost cost={d.price} purse={s.purse} />
+                      <button class="btn small primary" disabled={locked || !canAfford(s.purse, d.price)} onClick={() => act(learnDoctrine(d.id))}>
+                        Learn
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Sec>
+    </>
+  );
+}
+
+// ───────────────────────── Spirit Vein ─────────────────────────
+
+function VeinPanel() {
+  const m = meta.value;
+  const s = sectOf(m);
+  const points = veinPoints(s.buildings.vein);
+  const spent = veinSpent(s.vein);
+  return (
+    <>
+      <LevelRow id="vein" />
+      <div class="vein-points">
+        <span class="brush vein-points-glyph">脉</span>
+        <span>
+          <b>{points - spent}</b> of {points} points free
+        </span>
+        <button
+          class="btn small ghost"
+          disabled={spent === 0}
+          onClick={() => {
+            audio.sfx('ui_back', { volume: 0.6 });
+            veinReset();
+          }}
+          {...tip('Takes every point back, for free.', 'below')}
+        >
+          Refund all
+        </button>
+      </div>
+      <p class="sect-note">Every point is a small blessing the sect sends with each run. Move them freely between runs. A Pure run goes without.</p>
+      {VEIN_RINGS.map((ring) => {
+        const nodes = VEIN_NODES.filter((n) => n.ring === ring.ring);
+        const open = veinSpent(s.vein, ring.ring) >= ring.needs;
+        // the Root is a grid; the Trunk and the Crown come in pairs where only one side can be taken
+        const groups = ring.ring === 1 ? nodes.map((n) => [n]) : [...new Set(nodes.map((n) => n.pair))].map((p) => nodes.filter((n) => n.pair === p));
+        return (
+          <Sec key={ring.ring} title={`${ring.name}`} aside={open ? (ring.ring === 1 ? 'The help' : 'Take one of each pair') : `Opens after ${ring.needs} points below`}>
+            <div class={`vein-ring ring-${ring.ring} ${open ? '' : 'closed'}`}>
+              {groups.map((g, i) => (
+                <div key={i} class={`vein-group ${g.length > 1 ? 'pair' : ''}`}>
+                  {g.flatMap((n, j) => [
+                    ...(j > 0 ? [<span key={`or-${n.id}`} class="vein-or">or</span>] : []),
+                    <VeinCard key={n.id} node={n} rank={s.vein[n.id] ?? 0} add={veinAddBlocked(s.vein, n.id, points)} remove={veinRemoveBlocked(s.vein, n.id)} />,
+                  ])}
+                </div>
+              ))}
+            </div>
+          </Sec>
+        );
+      })}
+    </>
+  );
+}
+
+function VeinCard({ node, rank, add, remove }: { node: VeinNode; rank: number; add: string | null; remove: string | null }) {
+  return (
+    <div class={`vein-node ${rank > 0 ? 'on' : ''}`}>
+      <span class="vein-medal">
+        <Icon name={node.icon} size={34} />
+      </span>
+      <div class="vein-text">
+        <div class="display vein-name">{node.name}</div>
+        <p class="vein-desc">
+          <RichText text={node.desc} />
+        </p>
+        <span class="vein-pips" aria-label={`${rank} of ${node.max}`}>
+          {Array.from({ length: node.max }, (_, i) => (
+            <i key={i} class={i < rank ? 'lit' : ''} />
+          ))}
+          {node.cost > 1 && <span class="vein-cost">{node.cost} points</span>}
+        </span>
+      </div>
+      <div class="vein-buttons">
+        <button class="vein-btn" aria-label={`Add a point to ${node.name}`} disabled={!!add} onClick={() => act(veinAdd(node.id), 'ui_click')} {...tip(add ?? 'Place a point', 'left')}>
+          +
+        </button>
+        <button class="vein-btn" aria-label={`Take a point from ${node.name}`} disabled={!!remove} onClick={() => act(veinRemove(node.id), 'ui_back')} {...tip(remove ?? 'Take the point back', 'left')}>
+          −
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ───────────────────────── Training Grounds ─────────────────────────
+
+function TrainingPanel() {
+  const m = meta.value;
+  const s = sectOf(m);
+  const lvl = s.buildings.training;
+  return (
+    <>
+      <LevelRow id="training" />
+      <Sec title="Blessings" aside={`${trainedBlessings(lvl).length} of ${TRAINING_BLESSINGS.length} taught`}>
+        <p class="sect-note">Every blessing the grounds teach joins the opening draft's pool, beside the six every sect knows. A Pure run keeps them: they add choices, not power.</p>
+        <div class="sect-cards">
+          {TRAINING_BLESSINGS.map((b) => {
+            const taught = (b.training ?? 99) <= lvl;
+            return (
+              <div key={b.id} class={`sect-card training ${taught ? 'done' : 'locked'}`}>
+                <div class="sect-card-row">
+                  <span class="doctrine-medal training-medal">
+                    <Icon name={b.icon} size={46} />
+                  </span>
+                  <div class="sect-card-text">
+                    <div class="sect-card-head">
+                      <span class="display sect-card-name">{b.name}</span>
+                      {taught ? <span class="sect-badge">In the draft</span> : <span class="sect-badge faint">Grounds {ROMAN[b.training ?? 5]}</span>}
+                    </div>
+                    <p class="sect-card-blurb">
+                      <RichText text={b.desc} />
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Sec>
+      <Sec title="What the grounds' levels do">
+        <div class="drawer-stats">
+          <div class="drawer-stat">
+            <Icon name="choice_disciple" size={22} />
+            <span>Blessings in the opening draft (four at level V)</span>
+            <b>{blessingCountFor(lvl)}</b>
           </div>
         </div>
       </Sec>

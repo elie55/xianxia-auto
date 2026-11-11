@@ -3,6 +3,8 @@
  * reports how far they get, win rates per node, and fight durations.
  *
  *   npm run sim -- --runs 40 --tier 0
+ *   npm run sim -- --runs 40 --tier 0 --doctrine herbs   (follow a doctrine, src/content/doctrines.ts)
+ *   npm run sim -- --runs 40 --tier 0 --vein stones:3,reroll:1   (Spirit Vein ranks, src/content/vein.ts)
  */
 import { Battle } from '../src/battle/sim/battle';
 import {
@@ -42,6 +44,8 @@ const arg = (name: string, def: number) => {
 };
 const RUNS = arg('runs', 30);
 const TIER = arg('tier', 0);
+const DOCTRINE = args.includes('--doctrine') ? args[args.indexOf('--doctrine') + 1] : undefined;
+const VEIN = args.includes('--vein') ? Object.fromEntries(args[args.indexOf('--vein') + 1].split(',').map((p) => [p.split(':')[0], Number(p.split(':')[1] ?? 1)])) : undefined;
 
 interface Outcome {
   seed: number;
@@ -60,7 +64,7 @@ interface Outcome {
 
 function play(seed: number): Outcome {
   resetItemQuests();
-  const s = newRun(TIER, seed);
+  const s = newRun(TIER, seed, DOCTRINE || VEIN ? { seals: [], research: [], doctrine: DOCTRINE, vein: VEIN, freeRerolls: VEIN?.gate ?? 0 } : undefined);
   const bot = new Rng(seed * 7 + 3);
   draftPick(s, s.draft!.heroes[bot.int(0, 2)], s.draft!.blessings[bot.int(0, 2)]);
   const durations: number[] = [];

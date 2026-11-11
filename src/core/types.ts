@@ -475,7 +475,9 @@ export interface BlessingDef {
   name: string;
   desc: string;
   icon: string;
-  apply: 'quality' | 'stability' | 'bazaar' | 'wealth' | 'scholar' | 'warrior';
+  apply: 'quality' | 'stability' | 'bazaar' | 'wealth' | 'scholar' | 'warrior' | 'spoils' | 'armory' | 'vitality' | 'swift' | 'insight' | 'ascendant';
+  /** Taught by the Training Grounds at this level (src/meta/sect.ts); the six launch blessings have none. */
+  training?: number;
 }
 
 export const RANK_NAMES: Record<Rank, { name: string; short: string; hanzi: string }> = {

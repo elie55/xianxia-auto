@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { act, run, screen, setRun, showToast } from '@/app/store';
 import { draftPick, draftReroll } from '@/core/run';
-import { BLESSINGS } from '@/content/difficulties';
+import { ALL_BLESSINGS } from '@/content/difficulties';
 import { HeroCard } from '@/ui/components/HeroCard';
 import { Icon } from '@/ui/components/Icon';
 import { RichText } from '@/ui/components/RichText';
@@ -61,9 +61,9 @@ export function ChooseHero() {
       </div>
       <div class="draft-blessings" data-tut="draft-blessings">
         <div class="draft-sub display">Starting Blessing</div>
-        <div class="blessing-row stagger">
+        <div class={`blessing-row stagger count-${d.blessings.length}`}>
           {d.blessings.map((bid) => {
-            const b = BLESSINGS.find((x) => x.id === bid)!;
+            const b = ALL_BLESSINGS.find((x) => x.id === bid)!;
             return (
               <button
                 key={bid}

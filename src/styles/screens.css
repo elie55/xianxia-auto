@@ -679,6 +679,16 @@
   display: flex;
   gap: 18px;
 }
+/* the Training Grounds (level V) and the Spirit Vein (Many Blessings) can show 4 or 5 blessings */
+.blessing-row.count-4 .blessing-card {
+  width: 330px;
+}
+.blessing-row.count-5 .blessing-card,
+.blessing-row.count-6 .blessing-card {
+  width: 290px;
+  gap: 10px;
+  padding: 12px 14px;
+}
 .blessing-card {
   display: flex;
   align-items: center;

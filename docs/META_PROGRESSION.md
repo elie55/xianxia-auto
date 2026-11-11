@@ -235,6 +235,30 @@ Doctrines give the most replay value for the least art. Each one has an upside a
 | Wandering Cultivator | no bonus | +20% Renown XP and Funds for the run |
 | Merchant's Way | shops show 1 extra Treasure | 1 fewer Spirit Stone per fight |
 
+**Built (2026-11-11), `src/content/doctrines.ts`.**
+- **Learning:** the Doctrine Hall opens at Renown 7 (Spirit Herbs raise it). Levels I to V teach 2, 2, 2, 2 and 1 doctrines:
+  Wandering Cultivator and Hundred Herbs Valley; Iron Mountain and Merchant's Way; Thousand Fists and Talisman Court;
+  Shadow Pavilion and Frost Lattice; Sword Peak. Learning one costs Funds and Heavenly Jade (60 + 2 up to 300 + 12).
+- **Picking:** the New Run screen picks one learned doctrine. The run's HUD shows its seal beside the Dao Insights, and
+  a fight's pay shows what it adds or takes.
+- **How it works:** class stats and battle effects ride on "virtual" Dao Insights that only the team reads. Run-level
+  terms (start stones, reserve, prices, rerolls, foe HP, joining rank, pay) are read by `src/core/run.ts` and the payout.
+- **Balance:** `npm run sim -- --runs 120 --tier 0 --doctrine <id>`, victories / runs reaching Realm II.
+
+  | Doctrine | Result | Doctrine | Result |
+  | --- | --- | --- | --- |
+  | none | 31 / 94 | Thousand Fists | 30 / 94 |
+  | Wandering Cultivator | 31 / 94 | Talisman Court (15 Qi) | 33 / 96 |
+  | Hundred Herbs Valley (+15%) | 36 / 99 | Shadow Pavilion | 30 / 93 |
+  | Iron Mountain | 32 / 97 | Frost Lattice (3 Frost) | 41 / 104 |
+  | Merchant's Way | 29 / 98 | Sword Peak | 30 / 97 |
+
+  Three upsides were lowered from the table above after the first sims: Hundred Herbs Valley heals +15% (was +20%,
+  38 wins), Talisman Court gives 15 Qi (was 20, 39 wins), Frost Lattice applies 3 Frost (was 5, 47 wins). Frost
+  Lattice stays high in the sim because of its cost, not its Frost: with no Frost at all it still wins 40. The sim's
+  bot over-buys disciples for the reserve, so a smaller reserve makes it spend better. For a player the reserve slot
+  is a real cost, so the doctrine keeps it.
+
 ### 6.4 Heirloom Treasures
 
 - **Recipes and crafting:** recipes come from the Renown track, achievements and the Bounty Board. Crafting costs
@@ -282,6 +306,34 @@ A web of about 12 nodes in three rings, with 10 points at L5. The whole web is w
 - the Sect Rest heals the whole party
 
 **Pure runs** switch the Spirit Vein, doctrines and heirlooms off (11).
+
+**Built (2026-11-11), `src/content/vein.ts`.**
+- **Opening and points:** the Spirit Vein opens at Renown 11 (Spirit Herbs raise it) and gives 2 points per level.
+  Points move freely: any node can be taken back unless an outer ring rests on it, and "Refund all" is free.
+- **Root (the help):** Spirit Spring (+5 starting Spirit Stones, 3 ranks), Patient Eye (each shop's first reroll is
+  free), Echo of Time (Time Reversal costs 5 fewer), Elder's Gift (the first disciple brings a common Treasure).
+- **Trunk (after 3 points in the Root, one of each pair):** Wide Gate (+1 free draft reroll) or Many Blessings (+1
+  blessing in the draft); Campfire Tales (the Sect Rest's stories pay 10 more) or Haggler (rare and epic Treasures cost
+  1 fewer); Recruiter's Eye (disciples cost 1 fewer) or Battle Spoils (+1 Spirit Stone per fight won).
+- **Crown (after 6 points, 2 points):** Second Chance (the run's first Time Reversal is free) or Open Courtyard (+1
+  reserve slot).
+- **The full web costs 11 points against 10,** so even a finished Vein is a set of choices.
+- **Change from the examples above:** "the Sect Rest heals the whole party" became Campfire Tales, because disciples
+  already heal after every fight.
+- **Balance:** `npm run sim -- --runs 120 --tier 0 --vein <node:rank,...>` on Mortal, victories / runs reaching
+  Realm II, against 31 / 94 with no Vein.
+  - Single nodes: Spirit Spring ×3 35 / 103, Second Chance 35 / 112, Patient Eye 31 / 94, Battle Spoils 31 / 97.
+  - Haggler first took 1 Stone off every Treasure and won 41. Commons cost 5, so that was a 20% discount on what is
+    bought most. It now leaves commons alone.
+  - Echo of Time first had 2 ranks, and Second Chance was free once per realm. Both were cut back, although that
+    barely moved the sim.
+  - Second Chance now makes the first reversal 15 cheaper instead of free: alone it gives 37 / 104 (35 / 112 when it
+    was free).
+  - A whole economy web (Spirit Spring ×3, Patient Eye, Echo of Time, Haggler, Battle Spoils, Second Chance) won 48,
+    55 and 50 / 111 across these changes. Each change shifts the bot's shopping, so one 120-run sim of a whole web moves
+    by about ±6. The web sits around +17 victories, more than the strongest heirloom at level III (+7 of 60 runs).
+  - The bot leans on Time Reversal and spends every Spirit Stone, so economic help counts double for it. Play-testing
+    should decide whether the Root needs another trim.
 
 ### 6.6 Disciple mastery
 
@@ -461,6 +513,17 @@ New hooks are needed for:
   - unlocked pool content stays, because it adds options, not power
   - a Pure run pays +20% Renown, so purists are not penalised
   - the Ladder records the flag, and Steam gets two Ladder leaderboards: Pure and Sect
+  - built 2026-11-11: a "Pure run" switch in the New Run screen's Advanced panel (it greys out the Doctrine and
+    Heirloom rows), a "Pure run +20%" line on the Sect Rewards, a Pure seal in the run's HUD and a "Pure" mark on the
+    Ladder's best ascents. The Training Grounds' blessings, studies, seals and recruited disciples stay in Pure runs.
+- **Training Grounds (built 2026-11-11):**
+  - Open at Renown 13; Beast Cores raise them.
+  - Level I teaches Spoils of War (+10 Spirit Stones per elite and guardian) and Sect Armory (2 common Treasures to
+    start); level II Vital Breath (+8% Max HP); level III Swift Wind Steps (+8 Attack Speed); level IV Enlightened
+    Start (a common Dao Insight) and Rising Talent (the first disciple bought joins at Foundation).
+  - Level V shows 4 blessings in the draft instead of 3.
+  - The six blessings join the six launch blessings in the draft's pool (`TRAINING_BLESSINGS`,
+    `src/content/difficulties.ts`) and reuse painted icons from the choices, stats and nodes.
 - **Pool dilution:** every new Treasure or Insight makes a specific build harder to find. Seals in the Scripture
   Pavilion are the answer, and a reason to visit it.
 - **Onboarding:** the first Renown levels open one building at a time (5.3).
@@ -538,6 +601,8 @@ bounties: { id: string; progress: number }[];
      - Spirit Vein and the Pure run toggle
      - Training Grounds and 6 blessings
      - disciple mastery and the first exclusive Dao Paths
+   - Status (2026-11-11): the Doctrine Hall, the Spirit Vein with the Pure run switch, and the Training Grounds are
+     built (sections 6.3, 6.5 and 10). Disciple mastery is next.
 4. **Exclusive disciples and foes.**
    - Scope:
      - the first 3 exclusive disciples (art, AutoSprite packs, Dao Paths, VFX)
