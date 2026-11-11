@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { MetaSave } from '@/app/store';
 import { Battle } from '@/battle/sim/battle';
-import { heroAbility, heroDaoPath } from '@/core/builder';
+import { buildEnemyUnit, buildHeroUnit, heroAbility, heroDaoPath } from '@/core/builder';
+import { generateEncounter } from '@/core/encounters';
+import { Rng } from '@/core/rng';
+import { offsetToAxial } from '@/battle/sim/hex';
+import { ENEMY_BY_ID } from '@/content/enemies';
 import { addHero, battleConfig, chooseUpgrade, draftPick, enterNode, finishBattle, newRun, prepareRankUp, queueRankUp, startBattle, type RunState } from '@/core/run';
 import { HEROES, HERO_BY_ID } from '@/content/heroes';
 import { LORE_II, MASTERY_PATHS } from '@/content/mastery';
@@ -40,14 +44,41 @@ describe('Disciple mastery', () => {
     ]);
   });
 
-  it('gives every disciple a second lore page and a title, and the first four an exclusive path', () => {
+  it('gives every disciple a second lore page, a title and an exclusive fourth path of its own', () => {
+    const ids = new Set<string>();
     for (const h of HEROES) {
       expect(LORE_II[h.id], h.id).toBeTruthy();
       expect(MASTER_TITLES[h.id], h.id).toBeTruthy();
       expect(TITLES.some((t) => t.id === masterTitleId(h.id)), h.id).toBe(true);
+      const path = MASTERY_PATHS[h.id];
+      expect(path, h.id).toBeTruthy();
+      expect(path.desc, h.id).toBeTruthy();
+      // a fourth path, not one of the three
+      expect(h.daoPaths.some((p) => p.id === path.id), h.id).toBe(false);
+      ids.add(path.id);
+      // it changes something: stats, effects or the technique
+      expect(!!(path.stats || path.statsPct || path.effects?.length || path.ability), h.id).toBe(true);
     }
-    expect(Object.keys(MASTERY_PATHS).sort()).toEqual(['hong_lian', 'li_jian', 'mei_yao', 'shan_tie']);
-    for (const [hero, path] of Object.entries(MASTERY_PATHS)) expect(HERO_BY_ID[hero].daoPaths.some((p) => p.id === path.id), hero).toBe(false);
+    expect(ids.size).toBe(HEROES.length);
+    expect(Object.keys(MASTERY_PATHS).every((id) => HERO_BY_ID[id])).toBe(true);
+  });
+
+  it('every exclusive path plays in a real fight, and its disciple casts with it', () => {
+    const ctx = { relics: [], itemSlotBonus: 0, itemSlotsPerRank: false, warriorBlessing: false, qualityBlessing: false };
+    for (const h of HEROES) {
+      const me = { uid: h.id, defId: h.id, rank: 1 as const, insightIds: [], items: [], permanent: [], daoPathId: MASTERY_PATHS[h.id].id };
+      const tank = h.id === 'shan_tie' ? 'bai_hu' : 'shan_tie';
+      const allies = [
+        buildHeroUnit({ uid: tank, defId: tank, rank: 1, insightIds: [], items: [], permanent: [], daoPathId: HERO_BY_ID[tank].daoPaths[0].id }, ctx, 1, offsetToAxial(3, 1), true),
+        buildHeroUnit(me, ctx, 2, offsetToAxial((h.baseStats.range ?? 1) <= 2 ? 3 : 1, 3), true),
+      ];
+      const enc = generateEncounter(1, 7, 'elite', 0, new Rng(9));
+      const enemies = enc.enemies.map((e, i) => buildEnemyUnit(ENEMY_BY_ID[e.defId], enc.level, 100 + i, e.pos));
+      const b = new Battle({ seed: 9, allies, enemies });
+      b.run();
+      const casts = b.drainEvents().filter((e) => e.type === 'cast' && e.id === 2);
+      expect(casts.length, h.id).toBeGreaterThan(0);
+    }
   });
 
   it('unlocks the disciple title at mastery IV and says how', () => {

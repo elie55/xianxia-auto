@@ -63,12 +63,148 @@ export const MASTERY_PATHS: Record<string, UpgradeDef> = {
     },
     keywords: ['Burn'],
   },
+  ying_wu: {
+    id: 'ying_thousand_shadows',
+    name: 'Thousand Shadows',
+    desc: 'Gain [10% Attack]. After Shadow Step, she vanishes again behind the [highest-HP enemy] and strikes it for [170% Attack].',
+    statsPct: { attack: 10 },
+    ability: {
+      extraActions: [
+        { do: 'blink', target: 'highestHpEnemy' },
+        { do: 'damage', target: 'highestHpEnemy', scale: { attack: 1.7 }, kind: 'physical', vfx: 'sig_ying_wu' },
+      ],
+    },
+  },
+  tie_quan: {
+    id: 'tie_unbowed_fist',
+    name: 'Unbowed Fist',
+    desc: 'Gain [200 HP]. Hundred Fists strikes [8] times for [50% Attack] each and [Stuns] the target for 0.6 s. Each cast still grants [10 Attack Speed].',
+    stats: { hp: 200 },
+    ability: {
+      actions: [
+        { do: 'repeat', times: 8, interval: 0.1, actions: [{ do: 'damage', target: 'target', scale: { attack: 0.5 }, kind: 'physical', vfx: 'sig_tie_quan' }] },
+        { do: 'status', target: 'target', status: 'stun', duration: 0.6 },
+        { do: 'buff', stat: 'attackSpeed', flat: 10 },
+      ],
+    },
+  },
+  xuan_bing: {
+    id: 'xuan_winters_breath',
+    name: "Winter's Breath",
+    desc: 'Gain [10 Spirit]. Every [5 s], every enemy gains [6 Frost].',
+    stats: { spirit: 10 },
+    effects: [{ id: 'winters_breath', desc: 'Every 5 s, every enemy gains 6 Frost.', trigger: { on: 'interval', every: 5, after: 2 }, actions: [{ do: 'status', target: 'allEnemies', status: 'frost', stacks: 6, duration: 5 }] }],
+    keywords: ['Frost'],
+  },
+  lei_zhen: {
+    id: 'lei_tenth_bolt',
+    name: 'The Tenth Bolt',
+    desc: 'Gain [10 Spirit]. Heavenly Thunder calls a [fourth bolt] on the [highest-HP enemy] for [160% Spirit].',
+    stats: { spirit: 10 },
+    ability: {
+      extraActions: [{ do: 'damage', target: 'highestHpEnemy', scale: { spirit: 1.6 }, vfx: 'sig_lei_zhen' }],
+    },
+  },
+  long_mu: {
+    id: 'long_dragons_promise',
+    name: "Dragon's Promise",
+    desc: 'Gain [15 Attack Speed]. Sun-Shooting Arrow pins every enemy it pierces: a [0.6 s Stun].',
+    stats: { attackSpeed: 15 },
+    ability: {
+      extraActions: [{ do: 'status', target: 'lineThroughTarget', status: 'stun', duration: 0.6 }],
+    },
+  },
+  bai_hu: {
+    id: 'bai_pouncing_tiger',
+    name: 'Pouncing Tiger',
+    desc: 'Tiger Roar becomes a pounce: leap onto the [lowest-HP enemy], strike it for [180% Attack] and [Taunt] the enemies around you for 2 s. Still gain [10% Attack] this combat.',
+    ability: {
+      actions: [
+        { do: 'blink', target: 'lowestHpEnemy' },
+        { do: 'damage', target: 'lowestHpEnemy', scale: { attack: 1.8 }, kind: 'physical', vfx: 'sig_bai_hu' },
+        { do: 'status', target: { kind: 'enemiesAdjacent', radius: 2 }, status: 'taunt', duration: 2 },
+        { do: 'buff', stat: 'attack', pct: 10 },
+      ],
+    },
+  },
+  qing_feng: {
+    id: 'qing_one_thrust',
+    name: 'One Thrust',
+    desc: 'Gale Thrust strikes only its target, for [320% Attack]. Gain [10 Crit].',
+    stats: { crit: 10 },
+    ability: {
+      actions: [{ do: 'damage', target: 'target', scale: { attack: 3.2 }, kind: 'physical', vfx: 'sig_qing_feng' }],
+    },
+  },
+  yue_ling: {
+    id: 'yue_eclipse_omen',
+    name: 'Eclipse Omen',
+    desc: 'Gain [15 Spirit]. Moonlit Qi also [Weakens] every enemy: [-15% Attack] for 4 s.',
+    stats: { spirit: 15 },
+    ability: {
+      extraActions: [{ do: 'status', target: 'allEnemies', status: 'weaken', stacks: 15, duration: 4 }],
+    },
+  },
+  hei_yan: {
+    id: 'hei_abyssal_gaze',
+    name: 'Abyssal Gaze',
+    desc: 'Gain [250 HP]. Obsidian Shell also [Taunts] the enemies beside you for 2 s and [Weakens] them: [-20% Attack] for 4 s.',
+    stats: { hp: 250 },
+    ability: {
+      extraActions: [
+        { do: 'status', target: { kind: 'enemiesAdjacent', radius: 1 }, status: 'taunt', duration: 2 },
+        { do: 'status', target: { kind: 'enemiesAdjacent', radius: 1 }, status: 'weaken', stacks: 20, duration: 4 },
+      ],
+    },
+  },
+  zhu_sha: {
+    id: 'zhu_never_the_same',
+    name: 'Never the Same Pill',
+    desc: 'Cinnabar Smoke also sets every enemy ablaze: [Burn] for [8 + 22% Spirit] per second for 4 s.',
+    ability: {
+      extraActions: [{ do: 'status', target: 'allEnemies', status: 'burn', scale: { base: 8, spirit: 0.22 }, duration: 4 }],
+    },
+    keywords: ['Burn'],
+  },
+  gu_lao: {
+    id: 'gu_litany_of_names',
+    name: 'Litany of Names',
+    desc: 'Gain [10 Spirit]. Sutra Chant also gives every ally [+10% Attack] and [+10% Spirit] for 6 s.',
+    stats: { spirit: 10 },
+    ability: {
+      extraActions: [
+        { do: 'buff', target: 'allAllies', stat: 'attack', pct: 10, duration: 6, unique: 'gu_litany_attack' },
+        { do: 'buff', target: 'allAllies', stat: 'spirit', pct: 10, duration: 6, unique: 'gu_litany_spirit' },
+      ],
+    },
+  },
+  feng_huang: {
+    id: 'feng_nirvana_blaze',
+    name: 'Nirvana Blaze',
+    desc: 'Gain [150 HP]. The first time she dies each combat, every enemy [Burns] for [55% Spirit] per second for 4 s.',
+    stats: { hp: 150 },
+    effects: [{ id: 'nirvana_blaze', desc: 'Her first death sets every enemy ablaze.', trigger: { on: 'death' }, once: true, actions: [{ do: 'status', target: 'allEnemies', status: 'burn', scale: { spirit: 0.55 }, duration: 4 }] }],
+    keywords: ['Burn'],
+  },
+  ling_shuang: {
+    id: 'ling_elders_verdict',
+    name: "The Elders' Verdict",
+    desc: 'After the three waves, a last sword falls on [every enemy]: [45% Attack] + [20% Spirit] and [8 Frost].',
+    ability: {
+      extraActions: [
+        { do: 'damage', target: 'allEnemies', scale: { attack: 0.45, spirit: 0.2 }, kind: 'physical', vfx: 'frost_sword_rain' },
+        { do: 'status', target: 'allEnemies', status: 'frost', stacks: 8, duration: 5 },
+      ],
+    },
+    keywords: ['Frost'],
+  },
   mei_yao: {
     id: 'mei_blossom_rain',
     name: 'Plum Blossom Rain',
-    desc: 'Nine-Turn Pill heals [every ally] for [80 + 110% Spirit] and [Cleanses] them, instead of one ally.',
+    desc: 'Nine-Turn Pill costs [75 Qi] instead of 60, and its blossoms also heal [every other ally] for [60% Spirit].',
     ability: {
-      actions: [{ do: 'heal', target: 'allAllies', scale: { base: 80, spirit: 1.1 }, cleanse: true, vfx: 'sig_mei_yao' }],
+      qiCost: 75,
+      extraActions: [{ do: 'heal', target: 'otherAllies', scale: { spirit: 0.6 } }],
     },
   },
 };

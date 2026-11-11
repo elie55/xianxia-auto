@@ -17,6 +17,7 @@ import {
   type RunState,
 } from '@/core/run';
 import { HEROES } from '@/content/heroes';
+import { MASTERY_PATHS } from '@/content/mastery';
 import { RELICS } from '@/content/relics';
 import { Battle } from '@/battle/sim/battle';
 import { getBattleView } from '@/battle/view/BattleView';
@@ -44,6 +45,9 @@ import { runSectFor } from '@/meta/sect';
  *   &realm=1|2|3       → that realm's arena and foes (with any board scene; with boss, its guardian)
  *   &tier=0..7         → the demo run's contract (its battlefields and foes)
  *   &sect              → the demo run carries the sect: studies, seals, recruits, Training Grounds blessings, mastery
+ *   &team=<heroIds>    → the party for any scene (the first one breaks through in rankup and insight)
+ *   &mastery           → every disciple of the party at mastery III: rankup offers its exclusive Dao Path, and the
+ *                        others fight on theirs
  *   ?demo=end          → run end (victory)
  */
 export function applyDebugQuery(): boolean {
@@ -70,13 +74,18 @@ export function applyDebugQuery(): boolean {
   }
   const eventId = value.startsWith('event:') ? value.slice(6) : null;
   const SCENES = new Set(['boss', 'battle', 'single', 'result', 'defeat', 'shop', 'rankup', 'insight', 'reward', 'challenge', 'cleared', 'end']);
-  const ids = value && !SCENES.has(value) && !eventId ? value.split(',').filter((id) => HEROES.some((h) => h.id === id)) : ['li_jian', 'shan_tie', 'hong_lian', 'mei_yao', 'ying_wu'];
+  const heroIds = (list: string) => list.split(',').filter((id) => HEROES.some((h) => h.id === id));
+  const team = heroIds(params.get('team') ?? '');
+  const ids = team.length ? team : value && !SCENES.has(value) && !eventId ? heroIds(value) : ['li_jian', 'shan_tie', 'hong_lian', 'mei_yao', 'ying_wu'];
   draftPick(s, ids[0] ?? 'li_jian', 'wealth');
   s.currentEvent = null;
   s.pendingRankUps = [];
   s.rankUpChoices = null;
   for (const id of ids.slice(1)) addHero(s, id, 1);
-  for (const h of s.roster) if (h.rank >= 1 && !h.daoPathId) h.daoPathId = HEROES.find((d) => d.id === h.defId)!.daoPaths[0].id;
+  // &mastery: every disciple of the party at mastery III, so its exclusive path is offered (and taken by the others)
+  const mastered = params.has('mastery');
+  if (mastered) s.sect = { ...(s.sect ?? { seals: [], research: [] }), mastery: Object.fromEntries(s.roster.map((h) => [h.defId, 3])) };
+  for (const h of s.roster) if (h.rank >= 1 && !h.daoPathId) h.daoPathId = mastered ? MASTERY_PATHS[h.defId].id : HEROES.find((d) => d.id === h.defId)!.daoPaths[0].id;
   s.stones = 120;
   addItemToInventory(s, 'azure_sword_talisman');
   addItemToInventory(s, 'jade_vitality_pendant');

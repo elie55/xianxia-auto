@@ -353,22 +353,49 @@ exclusive content without new animations.
   ends, the count is added to `MetaSave.mastery`, and the Sect Rewards list every level reached.
 - **I:** a second page of lore for all 17 disciples, shown under the first in the Compendium.
 - **II:** a golden aura ring in the arena, which comes back after a Surge.
-- **III:** the first exclusive fourth Dao Paths, offered at Foundation beside the three and marked "Mastery path ·
-  exclusive". Li Jian's Returning Sword (+15 Attack Speed, the Flying Sword strikes again for 90% Attack), Shan Tie's
-  Mountain's Embrace (+10 Defense, Unmoving Mountain shields the allies beside him for 10% of his Max HP), Hong Lian's
-  Phoenix Pyre (Crimson Lotus burns every foe for 12 + 32% Spirit) and Mei Yao's Plum Blossom Rain (Nine-Turn Pill
-  heals every ally for 80 + 110% Spirit and cleanses them).
+- **III:** an exclusive fourth Dao Path for every one of the 17 disciples, offered at Foundation beside the three
+  and marked "Mastery path · exclusive". Each builds on the disciple's technique and lore:
+
+  | Disciple | Path | What it does |
+  | --- | --- | --- |
+  | Li Jian | Returning Sword | +15 Attack Speed; the Flying Sword strikes again for 90% Attack |
+  | Shan Tie | Mountain's Embrace | +10 Defense; Unmoving Mountain shields the allies beside him for 10% of his Max HP |
+  | Hong Lian | Phoenix Pyre | Crimson Lotus burns every foe for 12 + 32% Spirit |
+  | Mei Yao | Plum Blossom Rain | Nine-Turn Pill costs 75 Qi and also heals every other ally for 60% Spirit |
+  | Ying Wu | Thousand Shadows | +10% Attack; after Shadow Step she blinks to the highest-HP foe and strikes it for 170% |
+  | Tie Quan | Unbowed Fist | +200 HP; Hundred Fists hits 8 times for 50% and stuns 0.6 s |
+  | Xuan Bing | Winter's Breath | +10 Spirit; every 5 s every foe gains 6 Frost |
+  | Lei Zhen | The Tenth Bolt | +10 Spirit; a fourth bolt on the highest-HP foe for 160% Spirit |
+  | Long Mu | Dragon's Promise | +15 Attack Speed; the Sun-Shooting Arrow stuns what it pierces for 0.6 s |
+  | Bai Hu | Pouncing Tiger | Tiger Roar leaps onto the weakest foe for 180% Attack and taunts around him |
+  | Qing Feng | One Thrust | +10 Crit; Gale Thrust strikes only its target, for 320% Attack |
+  | Yue Ling | Eclipse Omen | +15 Spirit; Moonlit Qi weakens every foe (-15% Attack, 4 s) |
+  | Hei Yan | Abyssal Gaze | +250 HP; Obsidian Shell taunts and weakens (-20% Attack) the foes beside him |
+  | Zhu Sha | Never the Same Pill | Cinnabar Smoke also burns every foe for 8 + 22% Spirit |
+  | Gu Lao | Litany of Names | +10 Spirit; Sutra Chant gives every ally +10% Attack and Spirit for 6 s |
+  | Feng Huang | Nirvana Blaze | +150 HP; her first death sets every foe ablaze (55% Spirit a second) |
+  | Ling Shuang | The Elders' Verdict | after the three waves, a last sword on every foe (45% Attack + 20% Spirit, 8 Frost) |
 - **IV:** the title "Master of …", named after the disciple's technique, in the profile's title picker.
 - **V:** a gilded card frame on that disciple's cards. The Hall of Ancestors and its statues are not built yet.
 - **Pure runs** keep mastery: its paths and looks are options, not power.
-- **Balance of the four paths:** a team of four rank-I disciples fought the same 40 Realm I elite fights with each of
-  the disciple's four paths. All four won every fight, and each new path lands inside the range of the disciple's
-  other three: Returning Sword 2,727 damage (others 2,503 to 2,866), Mountain's Embrace 3,486 shielding (Guardian
-  3,435), Phoenix Pyre 2,268 damage (others 2,376 to 2,567, but spread over every foe), Plum Blossom Rain 528 healing
-  (Poison Pill 517, the others 822 to 909). Phoenix Pyre and Plum Blossom Rain were raised once after a first check
-  left them well below.
+- **Balance of the paths:** `npx tsx scripts/path-balance.mts [ids]`.
+  - **Method:** a team of four Foundation disciples (a tank, a damage dealer, a healer and the disciple) fights the
+    same 40 Realm I elite fights and 40 Realm I guardian fights with each of the disciple's four paths. Guardian wins
+    separate the paths; elite damage and healing compare them.
+  - **Result:** every exclusive path lands inside the range of the disciple's other three or one fight below it
+    (Thousand Shadows 11 guardian wins against 12 to 15, Plum Blossom Rain 38 against 39 to 40), and none beats the
+    best. Examples: Returning Sword 31 (others 26 to 39), Pouncing Tiger 32 (24 to 32), One Thrust 23 (14 to 26),
+    Unbowed Fist 16 (6 to 33), Nirvana Blaze 8 (7 to 22).
+  - **Adjusted after the first checks:** Phoenix Pyre and Plum Blossom Rain were raised. Plum Blossom Rain was first
+    an all-ally heal, which won 27 guardian fights against 39 to 40: spreading the pill let the tank fall. It now keeps
+    the single heal, costs 15 more Qi and splashes 60% Spirit on the others (38 wins). Unbowed Fist gained 200 HP and
+    harder hits (6 to 16 wins). The Tenth Bolt gained 10 Spirit, Abyssal Gaze 100 more HP, and Thousand Shadows' second
+    strike rose from 150% to 170%.
 - **Debug:** `?demo=rankup&sect` shows a breakthrough with the sect's mastery (`&sect` gives any demo run the sect's
-  studies, seals, recruits, blessings and mastery).
+  studies, seals, recruits, blessings and mastery). `&team=<ids>` picks the demo party and `&mastery` puts it at
+  mastery III: `?demo=rankup&team=ying_wu&mastery` offers Ying Wu's exclusive path, and
+  `?demo=boss&team=li_jian,feng_huang,ling_shuang&mastery` fights the guardian with the others on theirs (the first
+  disciple is the drafted one and has no path yet).
 
 ### 6.7 Bounty Board
 
@@ -624,8 +651,8 @@ bounties: { id: string; progress: number }[];
      - Training Grounds and 6 blessings
      - disciple mastery and the first exclusive Dao Paths
    - Status (2026-11-11): built. The Doctrine Hall, the Spirit Vein with the Pure run switch, the Training Grounds
-     (sections 6.3, 6.5 and 10) and disciple mastery with the first four exclusive Dao Paths (6.6). Left for later:
-     exclusive paths for the other 13 disciples, painted icons for the new blessings and paths, and play-testing the
+     (sections 6.3, 6.5 and 10) and disciple mastery with exclusive Dao Paths (6.6). Every disciple now
+     has an exclusive mastery path. Left for later: painted icons for the new blessings and paths, and play-testing the
      Spirit Vein's economy.
 4. **Exclusive disciples and foes.**
    - Scope:
