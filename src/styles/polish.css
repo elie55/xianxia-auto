@@ -419,6 +419,12 @@
 .tooltip .tip-classes .faint {
   font-weight: 400;
 }
+/* under a two-class disciple's classes: the second one grows at half rate */
+.tooltip .tip-classes-note {
+  margin: -2px 0 5px;
+  font-size: calc(14px * var(--ts, 1));
+  font-style: italic;
+}
 /* a mastery V passive: the gold of the mastery aura */
 .mastery-gold {
   color: #f3cf78;
@@ -6288,6 +6294,13 @@ html:has(.drag-ghost) .drag-ghost {
 }
 .class-growth-row b {
   font-size: calc(16px * var(--ts, 1));
+}
+/* under the growth rows: how a second class grows */
+.class-growth-note {
+  margin: -14px 0 24px;
+  font-size: calc(14px * var(--ts, 1));
+  font-style: italic;
+  line-height: 1.45;
 }
 .class-members {
   display: flex;

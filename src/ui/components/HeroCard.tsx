@@ -56,8 +56,17 @@ export function RankGlyph({ rank, size = 44 }: { rank: Rank; size?: number }) {
   );
 }
 
-export function ClassBadge({ id, size = 34 }: { id: keyof typeof CLASSES; size?: number }) {
+/**
+ * A class medallion with its tooltip. On a disciple with two classes, `slot` says which one this is: the main class
+ * grows in full at each breakthrough, a second class at half (heroStats in src/core/builder.ts).
+ */
+export function ClassBadge({ id, size = 34, slot }: { id: keyof typeof CLASSES; size?: number; slot?: 'main' | 'second' }) {
   const c = CLASSES[id];
+  const w = slot === 'second' ? 0.5 : 1;
+  const growth = Object.entries(c.growthPct)
+    .map(([k, v]) => `+${v * w}% ${STAT_LABEL[k]}`)
+    .concat(Object.entries(c.growthFlat).map(([k, v]) => `+${v * w} ${STAT_LABEL[k]}`))
+    .join(', ');
   return (
     <div
       class="class-badge has-tip"
@@ -65,10 +74,18 @@ export function ClassBadge({ id, size = 34 }: { id: keyof typeof CLASSES; size?:
       {...tip(
         <>
           <h4 style={{ color: c.color }}>{c.name} {c.hanzi}</h4>
-          <div class="sub">{c.role}</div>
+          <div class="sub">
+            {c.role}
+            {slot === 'main' ? ' · main class' : slot === 'second' ? ' · second class' : ''}
+          </div>
           <p>{c.desc}</p>
           <p class="muted">Mechanics: {c.mechanics}</p>
-          <p class="muted">Growth per rank: {Object.entries(c.growthPct).map(([k, v]) => `+${v}% ${STAT_LABEL[k]}`).concat(Object.entries(c.growthFlat).map(([k, v]) => `+${v} ${STAT_LABEL[k]}`)).join(', ')}</p>
+          <p class="muted">
+            Growth per rank: {growth}
+            {slot === 'second' ? ' (half, as a second class)' : ''}
+          </p>
+          {slot === 'main' && <p class="muted">As the main class it grows in full at each breakthrough, and basic attacks use its formula.</p>}
+          {slot === 'second' && <p class="muted">A second class grows at half rate at each breakthrough. Its Insights still join the disciple's choices, and bonuses for this class count it.</p>}
         </>,
       )}
     >
@@ -151,8 +168,8 @@ export function HeroCard(p: HeroCardProps) {
         )}
         {p.owned && <div class="owned-tag">RANK UP</div>}
         <div class="side-badges left">
-          {classes.map((c) => (
-            <ClassBadge key={c} id={c} />
+          {classes.map((c, i) => (
+            <ClassBadge key={c} id={c} slot={classes.length > 1 ? (i === 0 ? 'main' : 'second') : undefined} />
           ))}
         </div>
         <div class="card-rank">
@@ -234,17 +251,26 @@ export function fmtStat(k: string, v: number): string {
   return `${Math.round(v)}`;
 }
 
-/** A disciple's classes in their colours (tooltips). */
+/** A disciple's classes in their colours (tooltips), with a note when a second class grows at half rate. */
 export function ClassLine({ hero }: { hero: HeroState }) {
+  const classes = heroClasses(hero);
+  const extra = classes.slice(1).map((c) => CLASSES[c].name);
   return (
-    <div class="tip-classes">
-      {heroClasses(hero).map((c) => (
-        <span key={c} style={{ color: CLASSES[c].color }}>
-          <span class="brush">{CLASSES[c].hanzi}</span> {CLASSES[c].name}
-          <span class="faint"> · {CLASSES[c].role}</span>
-        </span>
-      ))}
-    </div>
+    <>
+      <div class="tip-classes">
+        {classes.map((c) => (
+          <span key={c} style={{ color: CLASSES[c].color }}>
+            <span class="brush">{CLASSES[c].hanzi}</span> {CLASSES[c].name}
+            <span class="faint"> · {CLASSES[c].role}</span>
+          </span>
+        ))}
+      </div>
+      {extra.length > 0 && (
+        <div class="tip-classes-note faint">
+          {extra.join(' and ')} {extra.length > 1 ? 'are second classes: they grow' : 'is a second class: it grows'} at half rate at each breakthrough.
+        </div>
+      )}
+    </>
   );
 }
 

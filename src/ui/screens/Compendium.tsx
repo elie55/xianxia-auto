@@ -598,6 +598,9 @@ function ClassPage({ id, seen, onPick, onHero }: { id: ClassId; seen: Set<string
                 <b>{scaleText(c.attackScale)}</b>
               </div>
             </div>
+            <p class="class-growth-note muted">
+              A disciple with two classes grows in full from the first one listed and at half rate from the second, and uses the first one's auto-attack.
+            </p>
             <h3 class="class-sec-title display">Disciples</h3>
             <div class="class-members">
               {members.map((h) =>
