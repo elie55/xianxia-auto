@@ -388,6 +388,10 @@ button:disabled {
 .kw-Beast {
   color: #8fd8ff;
 }
+.tag.kw-Jiangshi,
+.kw-Jiangshi {
+  color: #a6d86b;
+}
 .tag.kw-Execute,
 .kw-Execute {
   color: #ff4d4d;

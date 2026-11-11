@@ -52,6 +52,8 @@ const SFX: Record<string, string[]> = {
   bell: ['bell.ogg'],
   // a mirror shattering (Qian Mian's Reflections), synthesised with ffmpeg: a noise crack and scattered glassy pings
   shatter: ['shatter.ogg'],
+  // a corpse-driver's small bronze handbell shaken three times (Huang Quan), synthesised with ffmpeg from bell partials
+  handbell: ['handbell.ogg'],
 };
 
 class AudioManager {

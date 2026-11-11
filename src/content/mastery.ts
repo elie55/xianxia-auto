@@ -1,5 +1,5 @@
 import type { UpgradeDef } from '@/core/types';
-import { RAGE } from '@/content/heroes';
+import { JIANGSHI, RAGE } from '@/content/heroes';
 
 /**
  * Disciple mastery content (docs/META_PROGRESSION.md, section 6.6): a second page of lore (mastery I) and each
@@ -29,6 +29,7 @@ export const LORE_II: Record<string, string> = {
   jin_ding: "Her ledger lists every patient she has saved and what each one paid. The last line is in her own hand: 'Fed the cauldron my wedding ring. Worth it.'",
   qian_mian: 'He keeps a cracked bronze mirror and never looks into it. The sect says it holds his true face. He says it holds the one reflection that refused to come out.',
   bei_ming: "The qilin sleeps curled around her bedroll, and the snow never settles on either of them. The cook swears it once ate a whole winter's rice store; she swears it did not, and pays for the rice every year.",
+  huang_quan: 'He keeps a coffin in the dormitory and sleeps in it with the lid open. The juniors leave oranges on it as offerings. He eats them, and nobody has yet dared to ask whether he needs to.',
   xiu_luo: 'He meditates in the training yard while the juniors hit him with staves. It is the only way he can sit still. The abbot calls it his calmest hour; the juniors call it their worst.',
   zhong_ming: 'The temple was rebuilt around the bell, not around her, so she took the bell. It rings louder on her back than it ever did in the tower, and the bandits who come back to hear it again do not stay long.',
 };
@@ -198,6 +199,13 @@ export const MASTERY_PASSIVES: Record<string, UpgradeDef> = {
     desc: 'Heaven-Binding Array also gives her Snow Qilin [+30 Attack Speed] for [5 s].',
     ability: { extraActions: [{ do: 'buff', target: 'companion', stat: 'attackSpeed', flat: 30, duration: 5 }] },
     keywords: ['Beast'],
+  },
+  huang_quan: {
+    id: 'huang_ancestral_coffin',
+    name: 'Ancestral Coffin',
+    desc: 'He starts every fight with a [Jiangshi] already risen beside him.',
+    effects: [{ id: 'ancestral_coffin', desc: 'Start with a Jiangshi.', trigger: { on: 'combatStart' }, actions: [JIANGSHI('self')] }],
+    keywords: ['Jiangshi'],
   },
   xiu_luo: {
     id: 'xiu_undying_grudge',

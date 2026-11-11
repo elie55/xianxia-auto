@@ -66,7 +66,9 @@ export type Keyword =
   /** Xiu Luo's stacks from blows taken (the `stack` action on the `rage` counter). */
   | 'Rage'
   /** A spirit beast fighting beside its master (the `companion` action; "Spirit Beast" in text). */
-  | 'Beast';
+  | 'Beast'
+  /** Huang Quan's hopping corpses (the `companion` action with a `max` above 1). */
+  | 'Jiangshi';
 
 export type StatusKind = 'burn' | 'poison' | 'frost' | 'stun' | 'taunt' | 'bleed' | 'weaken' | 'sunder';
 
@@ -123,7 +125,9 @@ export type TargetKind =
   /** Its spirit beast if it lives, else its target (where a beast-centred effect lands without the beast). */
   | 'companionOrTarget'
   /** Enemies within `radius` of the unit's spirit beast (around its target when the beast is down). */
-  | 'enemiesAroundCompanion';
+  | 'enemiesAroundCompanion'
+  /** Every living unit the `companion` action raised for this unit (Huang Quan's Jiangshi). */
+  | 'companions';
 
 export type TargetSel = TargetKind | { kind: TargetKind; count?: number; radius?: number; includeSelf?: boolean };
 
@@ -148,6 +152,11 @@ export type TriggerDef =
   | { on: 'stonesEarned' }
   /** One of this unit's Reflections (the `clone` action) is destroyed or fades; `triggerTarget` is the Reflection. */
   | { on: 'cloneShattered' }
+  /**
+   * A unit of the other side falls (a real death: a Reflection or a summon that vanishes does not count);
+   * `triggerTarget` is the fallen unit, whose hex is free by then (Huang Quan raises a Jiangshi there).
+   */
+  | { on: 'enemyDied' }
   | { on: 'passive' };
 
 export type ConditionDef =
@@ -243,8 +252,9 @@ export type ActionDef =
    * A spirit beast that fights beside the unit for the whole fight (Bei Ming's Snow Qilin), on the free hex beside it
    * nearest the enemy. `hp`, `attack` and `defense` are scaled from the unit (e.g. maxHp 0.6, spirit 0.9). Like a
    * Reflection its deeds count for its owner, support meant for allies skips it and it vanishes when its owner falls;
-   * unlike one, it never fades and is drawn solid. A unit keeps one beast of each `sprite`: a second call while it
-   * lives does nothing. Its end fires the owner's `cloneShattered` effects (to reform it, or burst).
+   * unlike one, it never fades and is drawn solid. A unit commands at most `max` of each `sprite` at once (1 by
+   * default, so a second call while the beast lives does nothing). Its end fires the owner's `cloneShattered` effects
+   * (to reform it, or burst).
    */
   | {
       do: 'companion';
@@ -260,6 +270,21 @@ export type ActionDef =
       scale?: number;
       accent?: string;
       effects?: EffectDef[];
+      /** How many rise at once (each needs a free hex and room under `max`). Default 1. */
+      count?: number;
+      /** How many of this `sprite` the unit may command at once. Default 1. */
+      max?: number;
+      /** A counter on the unit whose value raises `max` (a Dao Path that commands more of them). */
+      maxCounter?: string;
+      /**
+       * Where they rise: beside the unit (`self`, the default), beside its target (`target`), or on the hex of the
+       * unit that set the trigger off (`triggerTarget`: a fallen enemy's corpse), else beside it.
+       */
+      at?: 'self' | 'target' | 'triggerTarget';
+      /** The effect played as each one rises (default `companion`, the Snow Qilin's frost puff). */
+      vfx?: string;
+      /** The arena tooltip's line, `{owner}` standing for the owner's name (default "Spirit beast of {owner}"). */
+      tip?: string;
     }
   | { do: 'vfx'; key: string; target?: TargetSel }
   | { do: 'custom'; id: string; params?: Record<string, number | string> };

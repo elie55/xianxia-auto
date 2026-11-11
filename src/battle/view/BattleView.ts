@@ -72,6 +72,7 @@ export const FLIPBOOK_SHEETS = [
   'fx_sig_qian_mian',
   'fx_sig_xiu_luo',
   'fx_sig_bei_ming',
+  'fx_sig_huang_quan',
   ...SIGNATURE_HEROES.map((h) => `fx_sig_${h}`),
 ];
 
@@ -129,6 +130,11 @@ const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: numbe
   // (kept soft: at full strength its brightest frames washed out every unit standing on the array)
   sig_bei_ming: { sheet: 'fx_sig_bei_ming', scale: 1.4, ground: true, fps: 22, alpha: 0.6 },
   frost_nova: { sheet: 'fx_frost_burst', scale: 1.5, ground: true, tint: 0xd8f2ff },
+  // Huang Quan's Night Parade of Corpses: the ground splits under his target in ghost fire as the dead claw their way
+  // up; a falling Jiangshi's Corpse Burst leaves a cloud of corpse gas
+  // (kept soft like Bei Ming's: at 1.45 and 0.9 alpha its peak frames on a guardian washed out every unit around it)
+  sig_huang_quan: { sheet: 'fx_sig_huang_quan', scale: 1.1, ground: true, fps: 22, alpha: 0.6 },
+  corpse_burst: { sheet: 'fx_poison_cloud', tint: 0xa6d86b, scale: 1.4, ground: true, alpha: 0.9 },
   tiger_roar: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 1.7, ground: true },
   impact: { sheet: 'fx_impact_hit', scale: 0.9 },
   fist_flurry: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 0.7 },
@@ -159,6 +165,7 @@ const SIGNATURE_BASE: Record<string, string> = {
   sig_qian_mian: 'mirror_split',
   sig_xiu_luo: 'asura_roar',
   sig_bei_ming: 'ice_array',
+  sig_huang_quan: 'night_parade',
   sig_li_jian: 'sword_slash',
   sig_shan_tie: 'shield_pop',
   sig_hong_lian: 'lotus_bloom',
@@ -202,6 +209,7 @@ const TECHNIQUE_SFX: Record<string, { key: string; rate?: number; volume?: numbe
   qian_mian: { key: 'shatter', rate: 1, volume: 0.6 },
   xiu_luo: { key: 'boss_roar', rate: 1.35, volume: 0.45 },
   bei_ming: { key: 'frost', rate: 0.8, volume: 0.7 },
+  huang_quan: { key: 'handbell', rate: 1, volume: 0.75 },
   blood_moon_sovereign: { key: 'tribulation', rate: 0.8, volume: 0.5 },
   flood_dragon: { key: 'frost', rate: 0.6, volume: 0.75 },
 };
@@ -1227,7 +1235,21 @@ export class BattleView {
       case 'death': {
         const v = this.viewOf(e.id);
         if (!v) break;
-        // a Reflection leaves without a death of its own: it flashes and is gone (Shattered Mirror plays its shards)
+        // a Reflection leaves without a death of its own: it flashes and is gone (Shattered Mirror plays its shards).
+        // A Jiangshi, which has a death clip, crumbles instead, then its view goes the same way
+        if (e.vanish && !v.unit.illusion && v.hasClip('death')) {
+          v.dieAnim();
+          this.fx.motes(v.x, v.y, v.unit.accent ? parseColor(v.unit.accent) : 0xa6d86b, 8, 90);
+          this.fx.dust(v.x, v.y);
+          // dieAnim: a 25-frame clip falls in about 1.4 s, then fades out by about 2.6 s
+          gsap.delayedCall(2.8, () => {
+            if (this.views.get(e.id) !== v || v.destroyed) return;
+            if (this.lifted === v) this.lifted = null;
+            this.views.delete(e.id);
+            v.destroy({ children: true });
+          });
+          break;
+        }
         if (e.vanish) {
           v.shatterAnim();
           this.fx.motes(v.x, v.y, v.unit.accent ? parseColor(v.unit.accent) : 0xc3b8ff, v.unit.illusion ? 5 : 12, 90);
@@ -1546,6 +1568,29 @@ export class BattleView {
         this.fx.shockwave(p.x, p.y, 0xbfe8ff, 150, 0.6);
         this.shake(4);
         audio.sfx('frost', { volume: 0.5, throttleMs: 120 });
+        break;
+      case 'night_parade':
+        // Huang Quan's Night Parade of Corpses: the bell's toll rolls out in ghost fire where the ground splits
+        this.fx.ring(p.x, p.y, 0x7fe6c0, 170, 3, 0.6, hexLayout.squash);
+        this.fx.smoke(p.x, p.y, 0x1f3a2e, 8, 70);
+        this.fx.motes(p.x, p.y, 0x7ff0b0, 14, 170);
+        this.screenFlash(0x3fbf8a, 0.07, 0.4);
+        this.shake(4);
+        break;
+      case 'corpse_rise':
+        // a Jiangshi claws its way out of the ground: earth bursts, ghost fire flares and it rises stiffly from below
+        this.fx.burst(p.x, p.y, 0x6b5a3a, { count: 12, speed: 120, size: 16, life: 0.6, gravity: 220 });
+        this.fx.dust(p.x, p.y);
+        this.fx.flash(p.x, p.y + chest * 0.4, 0x7ff0b0, 110, 0.35);
+        this.fx.motes(p.x, p.y, 0xa6d86b, 8, 130);
+        src?.riseAnim();
+        audio.sfx('poison', { volume: 0.3, rate: 0.7, throttleMs: 150 });
+        break;
+      case 'corpse_burst':
+        // Corpse Burst: a falling Jiangshi bursts in corpse gas on the enemies beside it
+        this.fx.shockwave(p.x, p.y, 0xa6d86b, 130, 0.5);
+        this.shake(3);
+        audio.sfx('poison', { volume: 0.5, rate: 0.85, throttleMs: 120 });
         break;
       case 'asura_roar':
         // Xiu Luo's Six Arms of the Asura: a crimson roar as the phantom arms burst out

@@ -1208,15 +1208,19 @@
 }
 .sect-card-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 4px 10px;
 }
+/* a long badge (an achievement's name) moves under the name instead of squeezing it onto two lines */
 .sect-card-name {
   font-size: calc(16px * var(--ts, 1));
   letter-spacing: 0.06em;
   color: var(--paper);
+  white-space: nowrap;
 }
 .sect-badge {
+  white-space: nowrap;
   margin-left: auto;
   padding: 2px 10px;
   border-radius: 10px;

@@ -39,6 +39,7 @@ const KEYWORDS = new Set([
   'Reflections',
   'Rage',
   'Spirit Beast',
+  'Jiangshi',
 ]);
 
 const KEYWORD_CLASS: Record<string, string> = {

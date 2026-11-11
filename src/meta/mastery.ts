@@ -60,6 +60,7 @@ export const MASTER_TITLES: Record<string, string> = {
   qian_mian: 'Master of a Thousand Faces',
   xiu_luo: 'Master of the Six-Armed Wrath',
   bei_ming: 'Master of the Snow Qilin',
+  huang_quan: 'Master of the Night Parade',
 };
 /** The cosmetic id of a disciple's mastery title. */
 export const masterTitleId = (hero: string) => `master_${hero}`;

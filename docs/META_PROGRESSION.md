@@ -231,8 +231,55 @@ disciple mastery (sections 6.3, 6.5, 6.6 and 10).
   38), rank II 258 to 264 (39 to 42), rank III 276 to 290 (40 to 45). That is level with Xuan Bing's best path
   (254 / 291 / 296) and above Ling Shuang and Wen Yan; Yue Ling stays the outlier of this lineup.
 
+**The eighth and last exclusive disciple is built** (2026-11-11):
+- **Huang Quan** (黄泉, "Corpse Immortal") is the necromancer the user asked for in place of the planned lightning
+  rider. He answers the call when the sect earns the achievement Tribulation Survivor (both realms cleared on the
+  Heavenly Tribulation contract), whatever its Renown or hall level. Recruiting him costs 600 Funds and 15 Heavenly
+  Jade. His lore ties the two together: lightning killed him in his Ninth Tribulation, the corpse got up, and he answers
+  only a sect that has survived the storm that killed him. The achievement's description says he answers.
+- Kit: a Talisman Master and Shadow Walker who commands jiangshi (hopping corpses).
+  - Corpse Driving (passive): when an enemy falls, a Jiangshi claws its way out of the corpse to fight for him, up to
+    3 at once. A Jiangshi has 30% of his Max HP, Attack equal to 50% of his Spirit and his Defense. They crumble when
+    he falls.
+  - Night Parade of Corpses (60 Qi): he rings his corpse bell over his target. The enemies within 1 hex take
+    60% Spirit and 3 Poison, 2 Jiangshi claw their way up beside it, and every Jiangshi he already commands heals
+    30% of its Max HP.
+  - Dao Paths:
+    - Army of the Dead: up to 5 Jiangshi, and the technique raises 3.
+    - Bronze Corpses: each Jiangshi gains 20% more of his Max HP and +25 Defense; +250 HP for him.
+    - Corpse Burst: a falling Jiangshi bursts for 80% Spirit and 4 Poison on the enemies beside it; +15 Spirit.
+  - Mastery: a second lore page, the title "Master of the Night Parade" and the passive Ancestral Coffin (he starts
+    every fight with a Jiangshi beside him).
+- Engine:
+  - The `companion` action now takes `count` (how many rise at once), `max` (how many of that kind a unit commands at
+    once; 1 for the Snow Qilin), `maxCounter` (a counter that raises `max`), `at` (beside the unit, beside its target,
+    or on the corpse that set the trigger off), `vfx` (the effect as each one rises) and `tip` (the arena tooltip's line).
+  - A new trigger, `enemyDied`: a real death on the other side, fired once the fight is known to go on.
+  - A new target, `companions`: every unit the `companion` action raised for this unit.
+  - The keyword Jiangshi (glyph, colour, tooltip text), and "Jiangshi of Huang Quan" in the arena tooltip.
+  - In the view, a Jiangshi rises out of the ground (dirt, ghost fire, a stiff rise from below). When destroyed it plays
+    its death clip and crumbles, where a Reflection or the Snow Qilin shatters.
+  - `RecruitDef.achievement` gates a disciple by an achievement. The hall card's badge names it and its note says
+    how to earn it.
+- Art:
+  - A ChatGPT portrait of him ringing his bell with a jiangshi behind him, then a clean pose of each.
+  - Two AutoSprite packs: Huang Quan has 6 clips. His jiangshi has 5 (a stiff idle, a two-footed hop, a claw lunge,
+    hurt, and a death where it topples and crumbles). His jiangshi wear green robes with their arms out, so they read
+    apart from the Wailing Bone Marsh's enemy jiangshi.
+  - Painted icons for his three paths, and his own flipbook (`fx_sig_huang_quan`: the ground splits in jade-green ghost
+    fire and skeletal hands claw up from it) over a `night_parade` base.
+  - The technique's sound is a corpse-driver's small handbell rung three times (`handbell.ogg`), synthesised with
+    ffmpeg.
+- Balance (`scripts/carry-balance.mts`, him in the ranged slot, 300 fights):
+  - The first version gave each Jiangshi blow 2 Poison and won 589 to 599 of 600 fights. Poison loses only 1 stack a
+    second, so three Jiangshi stacked it without limit, worst of all on a boss.
+  - Without it: rank I 232 to 239 wins (margin 35.6 to 36.6), rank II 234 to 254 (38.1 to 40.3), rank III 248 to 269
+    (40.9 to 44.6). That is level with Bei Ming (margins 34 to 38, 39 to 42, 40 to 45).
+  - Army of the Dead lost the +15 Spirit it had at first, which put it 2 points of margin above every other path at
+    rank III.
+
 Sect events are built too (6.8), with the first four new foes, and so is the Hall of Ancestors (6.9): phase 4's scope
-is done. Phase 5 (Steam) is not started, nor is exclusive disciple #8 (listed under "Later").
+is done, and with Huang Quan so are all eight exclusive disciples. Phase 5 (Steam) is not started.
 
 ---
 
@@ -719,7 +766,8 @@ This content also moves the game toward its v1.0 targets in GAME_DESIGN.md: 25 d
 - a Shadow Walker who leaves mirror clones (built: Qian Mian)
 - a Martial Artist who builds rage with every hit taken (built: Xiu Luo, at Recruitment Hall level II)
 - an Array Master with a spirit-beast companion (built: Bei Ming and her Snow Qilin, at Recruitment Hall level IV)
-- a mythic Tribulation disciple who rides the lightning, for the final contract
+- a mythic Tribulation disciple for the final contract (built as a necromancer at the user's request: Huang Quan, the
+  Corpse Immortal, whose fallen enemies rise as his jiangshi; the achievement Tribulation Survivor calls him)
 
 **Assets per disciple:**
 - a ChatGPT portrait
@@ -939,8 +987,8 @@ bounties: { id: string; progress: number }[];
      - Steamworks bridge, achievements mirror
      - save files for Auto-Cloud
      - Ladder leaderboards and rich presence
-6. **Later.** Daily Tribulation (seeded, with a leaderboard), the remaining exclusive disciples, the art tiers of the
-   sect map, and prestige cosmetics.
+6. **Later.** Daily Tribulation (seeded, with a leaderboard), the art tiers of the sect map, and prestige cosmetics
+   (all eight exclusive disciples are built).
 
 ## 14. Risks
 

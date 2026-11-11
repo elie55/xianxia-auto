@@ -109,4 +109,5 @@ export const KEYWORD_ICON: Record<string, string> = {
   Reflection: 'kw_reflection',
   Rage: 'kw_rage',
   Beast: 'kw_beast',
+  Jiangshi: 'kw_jiangshi',
 };

@@ -75,6 +75,8 @@ export interface UnitInit {
   expiresAt?: number;
   /** A Reflection (drawn see-through), as opposed to a spirit beast (the `companion` action), which is solid. */
   illusion?: boolean;
+  /** The arena tooltip's line for a unit the `companion` action raised, `{owner}` standing for its owner's name. */
+  ownerTip?: string;
   /** Non-stat tunables set by items/upgrades. */
   extras?: Partial<Record<'surgeBonus' | 'enlightenmentBonus' | 'shatterPct' | 'burnHealPct' | 'companionMult' | 'permafrost', number>>;
 }
@@ -105,6 +107,8 @@ export class Unit {
   readonly expiresAt: number;
   /** A Reflection: an illusion, drawn see-through (a spirit beast also has an owner but is real). */
   readonly illusion: boolean;
+  /** For a spirit beast or a Jiangshi: the arena tooltip's line ("Spirit beast of {owner}"). */
+  readonly ownerTip?: string;
   readonly targeting: 'nearest' | 'lowestHp' | 'farthest' | 'random';
   readonly attackInterval: number;
   readonly attackScale: Scale;
@@ -206,6 +210,7 @@ export class Unit {
     this.ownerId = init.ownerId ?? null;
     this.expiresAt = init.expiresAt ?? Infinity;
     this.illusion = !!init.illusion;
+    this.ownerTip = init.ownerTip;
     this.targeting = init.targeting ?? (init.classes.includes('shadow') ? 'lowestHp' : 'nearest');
     this.attackInterval = init.attackInterval ?? 1.0;
     this.attackScale = init.attackScale ?? { attack: 1 };

@@ -334,6 +334,20 @@ export class UnitView extends Container {
     return !!this.pack?.anims.walk?.length;
   }
 
+  /** True when the sprite pack has this clip (e.g. a Jiangshi's death clip, played when it crumbles). */
+  hasClip(name: string): boolean {
+    return !!this.pack?.anims[name]?.length;
+  }
+
+  /** A Jiangshi claws its way out of the ground: it rises from below the floor, stiff and slow. */
+  riseAnim(): void {
+    if (this.dead) return;
+    // replaces the spawn pop-in (spawnAnim) that every new unit gets
+    gsap.fromTo(this.body, { y: 46 }, { y: 0, duration: 0.6, ease: 'power2.out', overwrite: 'auto' });
+    gsap.fromTo(this.body.scale, { y: 0.35 }, { y: 1, duration: 0.6, ease: 'back.out(1.4)', overwrite: 'auto' });
+    gsap.fromTo(this, { alpha: 0 }, { alpha: 1, duration: 0.35, overwrite: 'auto' });
+  }
+
   /** Switches between the idle and walk cycles while the simulation moves the unit. */
   setMoving(moving: boolean): void {
     if (this.dead) return;

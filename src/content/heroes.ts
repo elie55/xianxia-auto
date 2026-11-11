@@ -38,6 +38,35 @@ export const SNOW_QILIN: ActionDef = {
 /** Bei Ming's Snow Qilin reforms `seconds` after it falls (if she still stands and has none). */
 const QILIN_REFORMS = (seconds: number): ActionDef => ({ do: 'delay', seconds, target: 'self', actions: [SNOW_QILIN] });
 
+/** How many Jiangshi Huang Quan commands at once (Army of the Dead raises it through the `corpse_cap` counter). */
+export const JIANGSHI_MAX = 3;
+/**
+ * Huang Quan's Jiangshi (the `companion` action): `count` of them rise where `at` says, as long as he commands fewer
+ * than JIANGSHI_MAX. Each has 30% of his Max HP, Attack equal to 50% of his Spirit and his Defense (Bronze Corpses adds
+ * the `bronze_hp` and `bronze_def` counters). Their blows carry no Poison: Poison loses only 1 stack a second, so
+ * three Jiangshi adding 2 on every blow piled it up without end (he won 590 of 600 balance fights).
+ */
+export const JIANGSHI = (at: 'self' | 'target' | 'triggerTarget', count = 1): ActionDef => ({
+  do: 'companion',
+  name: 'Jiangshi',
+  hanzi: '僵尸',
+  // his own green-robed corpses with their arms out (the Wailing Bone Marsh's enemy jiangshi wears navy)
+  sprite: 'huang_jiangshi',
+  hp: { maxHp: 0.3, counter: { key: 'bronze_hp', mult: 1 } },
+  attack: { spirit: 0.5 },
+  defense: { defense: 1, counter: { key: 'bronze_def', mult: 1 } },
+  attackInterval: 1.2,
+  // drawn a little smaller than a disciple, as the minions they are
+  scale: 0.9,
+  accent: '#a6d86b',
+  count,
+  max: JIANGSHI_MAX,
+  maxCounter: 'corpse_cap',
+  at,
+  vfx: 'corpse_rise',
+  tip: 'Jiangshi of {owner}',
+});
+
 /**
  * The 16 launch disciples, then the exclusive disciples the sect recruits. Stats are Rank C (Qi Condensation) values.
  * `qi` in baseStats is STARTING Qi; the ability's qiCost is the pool size.
@@ -1579,6 +1608,96 @@ export const HEROES: HeroDef[] = [
     sprite: 'bei_ming',
     accent: '#8fd8ff',
     projectile: 'ice_shard',
+    exclusive: true,
+  },
+  {
+    // the eighth exclusive disciple (the achievement Tribulation Survivor): the fallen rise and fight for him
+    id: 'huang_quan',
+    name: 'Huang Quan',
+    hanzi: '黄泉',
+    title: 'Corpse Immortal',
+    classes: ['talisman', 'shadow'],
+    baseStats: { hp: 860, attack: 20, spirit: 50, crit: 5, defense: 22, range: 3 },
+    attackInterval: 1.15,
+    ability: {
+      id: 'night_parade',
+      name: 'Night Parade of Corpses',
+      desc: 'He rings his corpse bell over his target: the ground splits, the enemies within 1 hex take [60% Spirit] and [3 Poison], and [2 Jiangshi] claw their way up beside it. Every Jiangshi he already commands heals [30%] of its Max HP.',
+      qiCost: 60,
+      castTime: 0.7,
+      vfx: 'night_parade',
+      actions: [
+        { do: 'vfx', key: 'sig_huang_quan', target: 'target' },
+        { do: 'damage', target: { kind: 'enemiesAroundTarget', radius: 1 }, scale: { spirit: 0.6 } },
+        { do: 'status', target: { kind: 'enemiesAroundTarget', radius: 1 }, status: 'poison', stacks: 3 },
+        { do: 'heal', target: 'companions', scale: { targetMaxHp: 0.3 }, vfx: 'heal_bloom' },
+        JIANGSHI('target', 2),
+      ],
+      keywords: ['Jiangshi', 'Poison'],
+    },
+    passives: [
+      {
+        id: 'corpse_driving',
+        name: 'Corpse Driving',
+        desc: 'When an enemy falls, a [Jiangshi] claws its way out of the corpse to fight for him, up to [3] at once. A Jiangshi has [30%] of his Max HP, Attack equal to [50% of his Spirit] and his Defense. They crumble when he falls.',
+        trigger: { on: 'enemyDied' },
+        actions: [JIANGSHI('triggerTarget')],
+        keywords: ['Jiangshi'],
+      },
+    ],
+    daoPaths: [
+      {
+        id: 'huang_army_of_the_dead',
+        name: 'Army of the Dead',
+        desc: 'He commands up to [5 Jiangshi], and Night Parade of Corpses raises [3].',
+        effects: [{ id: 'army_of_the_dead', desc: 'He commands up to 5 Jiangshi.', trigger: { on: 'combatStart' }, actions: [{ do: 'counter', key: 'corpse_cap', add: 2 }] }],
+        ability: { extraActions: [JIANGSHI('target', 1)] },
+        keywords: ['Jiangshi'],
+      },
+      {
+        id: 'huang_bronze_corpses',
+        name: 'Bronze Corpses',
+        desc: 'His Jiangshi rise in bronze armour, each with [20% more of his Max HP] and [+25 Defense]. Gain [250 HP].',
+        stats: { hp: 250 },
+        effects: [
+          {
+            id: 'bronze_corpses',
+            desc: 'His Jiangshi rise in bronze armour.',
+            trigger: { on: 'combatStart' },
+            actions: [
+              { do: 'counter', key: 'bronze_hp', scale: { maxHp: 0.2 } },
+              { do: 'counter', key: 'bronze_def', add: 25 },
+            ],
+          },
+        ],
+        keywords: ['Jiangshi'],
+      },
+      {
+        id: 'huang_corpse_burst',
+        name: 'Corpse Burst',
+        desc: 'When a Jiangshi falls, it bursts in corpse gas: [80% Spirit] and [4 Poison] on the enemies beside it. Gain [15 Spirit].',
+        stats: { spirit: 15 },
+        effects: [
+          {
+            id: 'corpse_burst',
+            desc: 'A falling Jiangshi bursts in corpse gas.',
+            trigger: { on: 'cloneShattered' },
+            actions: [
+              { do: 'vfx', key: 'corpse_burst', target: 'triggerTarget' },
+              { do: 'damage', target: { kind: 'enemiesAroundTarget', radius: 1 }, scale: { spirit: 0.8 } },
+              { do: 'status', target: { kind: 'enemiesAroundTarget', radius: 1 }, status: 'poison', stacks: 4 },
+            ],
+          },
+        ],
+        keywords: ['Jiangshi', 'Poison'],
+      },
+    ],
+    tags: ['Jiangshi', 'Poison'],
+    lore: 'Lightning found him in his Ninth Tribulation and left only a corpse. The corpse got up. He walks the night roads ringing a bronze bell, and the dead of every battlefield fall in behind him. He answers only a sect that has survived the storm that killed him.',
+    portrait: 'huang_quan',
+    sprite: 'huang_quan',
+    accent: '#7fe6c0',
+    projectile: 'ghost_flame',
     exclusive: true,
   },
 ];

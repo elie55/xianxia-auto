@@ -43,7 +43,7 @@ export function UnitTip({ unit }: { unit: Unit }) {
         {u.illusion
           ? `Reflection · fades in ${Math.max(0, Math.ceil(u.expiresAt - (getBattleView().battle?.time ?? 0)))} s`
           : u.ownerId !== null
-            ? `Spirit beast of ${getBattleView().battle?.unit(u.ownerId)?.name ?? 'a disciple'}`
+            ? (u.ownerTip ?? 'Spirit beast of {owner}').replace('{owner}', getBattleView().battle?.unit(u.ownerId)?.name ?? 'a disciple')
             : u.side === 'ally'
             ? `${RANK_NAMES[u.rank].name} disciple`
             : u.boss
