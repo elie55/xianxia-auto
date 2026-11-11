@@ -8,6 +8,7 @@ import { STATUS_COLORS } from '@/battle/view/Vfx';
 import { MASTERY_PASSIVES } from '@/content/mastery';
 import { MasteryPassiveLine } from './HeroCard';
 import { getBattleView } from '@/battle/view/BattleView';
+import { RAGE_MAX } from '@/content/heroes';
 
 const SHOWN = ['attack', 'attackSpeed', 'spirit', 'crit', 'defense', 'range'] as const;
 
@@ -30,6 +31,8 @@ export function UnitTip({ unit }: { unit: Unit }) {
   if (u.shield > 0) statuses.push({ label: `Shield ${Math.round(u.shield)}`, color: '#bfe4ff' });
   // Zhong Ming's stored damage, released by her Golden Bell
   if (u.counter('resonance') > 0) statuses.push({ label: `Resonance ${Math.round(u.counter('resonance'))}`, color: '#f0b45a' });
+  // Xiu Luo's Rage stacks
+  if (u.counter('rage') > 0) statuses.push({ label: `Rage ${Math.round(u.counter('rage'))}/${RAGE_MAX}`, color: '#ff5a46' });
   const passive = u.masteryPassive ? MASTERY_PASSIVES[u.defId] : undefined;
   return (
     <>

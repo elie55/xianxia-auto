@@ -24,6 +24,7 @@ import {
   isOpen,
   levelCap,
   levelCost,
+  recruitGate,
   recruitState,
   sealSlots,
   sectOf,
@@ -541,7 +542,7 @@ function RecruitPanel() {
     <>
       <LevelRow id="recruit" />
       <Sec title="Exclusive disciples" aside={`${s.disciples.length} of ${RECRUITS.length} recruited`}>
-        <p class="sect-note">An exclusive disciple answers the call when the sect reaches their Renown. Recruit them once, and from then on they can appear in every run's draft and shop.</p>
+        <p class="sect-note">An exclusive disciple answers the call when the sect reaches their Renown, or when this hall reaches the level they wait for. Recruit them once, and from then on they can appear in every run's draft and shop.</p>
         <div class="sect-cards">
           {RECRUITS.map((r) => {
             const st = recruitState(m, r.hero);
@@ -555,7 +556,7 @@ function RecruitPanel() {
                   <div class="sect-card-text">
                     <div class="sect-card-head">
                       <span class="display sect-card-name">{def.name}</span>
-                      {st === 'recruited' ? <span class="sect-badge">Recruited</span> : st === 'locked' ? <span class="sect-badge faint">Renown {r.renown}</span> : <span class="sect-badge glow">At the gate</span>}
+                      {st === 'recruited' ? <span class="sect-badge">Recruited</span> : st === 'locked' ? <span class="sect-badge faint">{recruitGate(r)}</span> : <span class="sect-badge glow">At the gate</span>}
                     </div>
                     <p class="sect-card-blurb">{r.blurb}</p>
                     <p class="sect-card-effect">{def.lore}</p>
@@ -565,7 +566,7 @@ function RecruitPanel() {
                   {st === 'recruited' ? (
                     <span class="sect-note">Joins your drafts and shops.</span>
                   ) : st === 'locked' ? (
-                    <span class="sect-note">Answers the sect's call at Renown {r.renown}.</span>
+                    <span class="sect-note">{r.hall ? `Answers the call when this hall reaches level ${ROMAN[r.hall]}.` : `Answers the sect's call at Renown ${r.renown}.`}</span>
                   ) : (
                     <>
                       <Cost cost={r.cost} purse={s.purse} />
@@ -582,6 +583,15 @@ function RecruitPanel() {
       </Sec>
       <Sec title="What the hall's levels do">
         <div class="drawer-stats">
+          {RECRUITS.filter((r) => r.hall).map((r) => (
+            <div key={r.hero} class="drawer-stat">
+              <Icon name="choice_disciple" size={22} />
+              <span>
+                {HERO_BY_ID[r.hero].name} answers the call (level {ROMAN[r.hall!]})
+              </span>
+              <b>{lvl >= r.hall! ? '✓' : '—'}</b>
+            </div>
+          ))}
           <div class="drawer-stat">
             <Icon name="ui_reroll" size={22} />
             <span>Free draft rerolls each run (one from level III)</span>

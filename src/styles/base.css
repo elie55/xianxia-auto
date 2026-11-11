@@ -380,6 +380,10 @@ button:disabled {
 .kw-Reflection {
   color: #c3b8ff;
 }
+.tag.kw-Rage,
+.kw-Rage {
+  color: #ff5a46;
+}
 .tag.kw-Execute,
 .kw-Execute {
   color: #ff4d4d;

@@ -1373,6 +1373,19 @@ export class Battle {
         }
         break;
       }
+      case 'stack': {
+        // a counter whose every stack grants stats (Xiu Luo's Rage), held as one refreshed modifier per stat
+        for (const t of this.resolveTargets(a.target ?? 'self', u, ctx)) {
+          const before = t.counter(a.key);
+          const next = Math.max(0, Math.min(a.max, a.set !== undefined ? a.set : before + (a.add ?? 0)));
+          if (next === before) continue;
+          t.addCounter(a.key, next - before);
+          const stats = new Set([...Object.keys(a.flat ?? {}), ...Object.keys(a.pct ?? {})]) as Set<StatKey>;
+          for (const k of stats) t.addMod({ stat: k, flat: next * (a.flat?.[k] ?? 0), pct: next * (a.pct?.[k] ?? 0), unique: `stack:${a.key}:${k}`, source: `stack:${a.key}` });
+          this.emit({ t: now, type: 'stack', id: t.id, key: a.key, count: next, max: a.max });
+        }
+        break;
+      }
       case 'vfx': {
         const targets = a.target ? this.resolveTargets(a.target, u, ctx) : [u];
         for (const t of targets) this.emit({ t: now, type: 'vfx', key: a.key, id: u.id, targetId: t.id, pos: t.pos ?? undefined });

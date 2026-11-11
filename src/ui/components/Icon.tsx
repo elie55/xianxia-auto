@@ -107,4 +107,5 @@ export const KEYWORD_ICON: Record<string, string> = {
   Resonance: 'kw_resonance',
   Seal: 'kw_seal',
   Reflection: 'kw_reflection',
+  Rage: 'kw_rage',
 };

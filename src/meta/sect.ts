@@ -93,7 +93,7 @@ export const BUILDINGS: BuildingDef[] = [
     name: 'Recruitment Hall',
     hanzi: '招',
     icon: 'sect_recruitment_hall',
-    desc: 'Exclusive disciples answer the call of a rising sect. Recruit them here and they can join your drafts and shops. Level III: one free draft reroll each run. Level V: the draft shows 4 disciples.',
+    desc: 'Exclusive disciples answer the call of a rising sect. Recruit them here and they can join your drafts and shops. Level II: Xiu Luo answers the call. Level III: one free draft reroll each run. Level V: the draft shows 4 disciples.',
     unlock: 8,
     material: 'cores',
     upgradable: true,
@@ -214,10 +214,16 @@ export const blessingCountFor = (level: number) => (level >= 5 ? 4 : 3);
 
 // ───────────────────────── Recruitment Hall ─────────────────────────
 
-/** An exclusive disciple: the Renown at which they answer the sect's call and what recruiting them costs. */
+/**
+ * An exclusive disciple: what makes them answer the sect's call (a Renown level, or a Recruitment Hall level) and what
+ * recruiting them costs.
+ */
 export interface RecruitDef {
   hero: string;
-  renown: number;
+  /** The Renown level at which they answer the call. */
+  renown?: number;
+  /** The Recruitment Hall level at which they answer the call (docs/META_PROGRESSION.md, section 7). */
+  hall?: number;
   cost: Partial<Purse>;
   /** One line for the Recruitment Hall. */
   blurb: string;
@@ -225,6 +231,7 @@ export interface RecruitDef {
 
 export const RECRUITS: RecruitDef[] = [
   { hero: 'ling_shuang', renown: 10, cost: { funds: 150, jade: 4 }, blurb: 'A Sword Cultivator and Array Master in one: her frost swords fall in waves and freeze what they strike.' },
+  { hero: 'xiu_luo', hall: 2, cost: { funds: 200, jade: 5 }, blurb: 'A Martial Artist and saber master who grows faster, stronger and hungrier with every blow he takes.' },
   { hero: 'zhong_ming', renown: 20, cost: { funds: 250, jade: 6 }, blurb: 'A Body Refiner and Martial Artist whose Golden Bell drinks in every blow she takes and rings it back out as a shockwave.' },
   { hero: 'wen_yan', renown: 25, cost: { funds: 350, jade: 8 }, blurb: 'A Talisman Master and Array Master whose paper seals wait two breaths, then explode on the enemies they mark.' },
   { hero: 'jin_ding', renown: 35, cost: { funds: 450, jade: 10 }, blurb: "An Alchemist and Body Refiner whose golden cauldron turns the sect's Spirit Stones into healing for the whole party." },
@@ -427,8 +434,14 @@ export function omensFor(omens: SectOmen[], pure: boolean): SectOmen[] {
 export function recruitState(m: MetaSave, hero: string): 'locked' | 'waiting' | 'recruited' {
   const r = RECRUIT_BY_HERO[hero];
   const xp = m.renown?.xp ?? 0;
-  if (sectOf(m).disciples.includes(hero)) return 'recruited';
-  return r && isOpen('recruit', xp) && levelOf(xp).level >= r.renown ? 'waiting' : 'locked';
+  const s = sectOf(m);
+  if (s.disciples.includes(hero)) return 'recruited';
+  return r && isOpen('recruit', xp) && levelOf(xp).level >= (r.renown ?? 0) && s.buildings.recruit >= (r.hall ?? 0) ? 'waiting' : 'locked';
+}
+
+/** What an exclusive disciple waits for, for the Recruitment Hall: "Renown 20" or "Hall level II". */
+export function recruitGate(r: RecruitDef): string {
+  return r.hall ? `Hall level ${ROMAN[r.hall]}` : `Renown ${r.renown ?? 0}`;
 }
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
@@ -455,7 +468,10 @@ export function sectToDo(m: MetaSave): string[] {
   const cap = levelCap(xp);
   for (const id of UPGRADABLE) {
     const lvl = s.buildings[id];
-    if (isOpen(id, xp) && lvl < cap && canAfford(s.purse, levelCost(lvl + 1, BUILDING_BY_ID[id].material!))) out.push(`The ${BUILDING_BY_ID[id].name} can rise to level ${ROMAN[lvl + 1]}.`);
+    if (!isOpen(id, xp) || lvl >= cap || !canAfford(s.purse, levelCost(lvl + 1, BUILDING_BY_ID[id].material!))) continue;
+    // a Recruitment Hall level that an exclusive disciple waits for says so
+    const answers = id === 'recruit' ? RECRUITS.find((r) => r.hall === lvl + 1 && !s.disciples.includes(r.hero)) : undefined;
+    out.push(`The ${BUILDING_BY_ID[id].name} can rise to level ${ROMAN[lvl + 1]}${answers ? `, and ${HERO_BY_ID[answers.hero].name} will answer its call` : ''}.`);
   }
   return out;
 }
@@ -487,9 +503,10 @@ export function sectInvite(m: MetaSave): SectInvite {
   if (waiting) return { open: true, ready: false, headline: `${HERO_BY_ID[waiting.hero].name} waits at the gate of the Recruitment Hall.` };
   // the nearest milestone: the next building to open or the next disciple to answer the call
   const next = BUILDINGS.filter((b) => !isOpen(b.id, xp)).sort((a, b) => a.unlock - b.unlock)[0];
-  const coming = RECRUITS.filter((r) => levelOf(xp).level < r.renown).sort((a, b) => a.renown - b.renown)[0];
-  if (next && (!coming || next.unlock <= coming.renown)) return { open: true, ready: false, headline: `Renown ${next.unlock} opens the ${next.name}.`, progress: Math.min(1, xp / cumulativeXp(next.unlock)) };
-  if (coming) return { open: true, ready: false, headline: `At Renown ${coming.renown}, ${HERO_BY_ID[coming.hero].name} answers the sect's call.`, progress: Math.min(1, xp / cumulativeXp(coming.renown)) };
+  const coming = RECRUITS.filter((r) => r.renown !== undefined && levelOf(xp).level < r.renown).sort((a, b) => (a.renown ?? 0) - (b.renown ?? 0))[0];
+  const comingAt = coming?.renown ?? 0;
+  if (next && (!coming || next.unlock <= comingAt)) return { open: true, ready: false, headline: `Renown ${next.unlock} opens the ${next.name}.`, progress: Math.min(1, xp / cumulativeXp(next.unlock)) };
+  if (coming) return { open: true, ready: false, headline: `At Renown ${comingAt}, ${HERO_BY_ID[coming.hero].name} answers the sect's call.`, progress: Math.min(1, xp / cumulativeXp(comingAt)) };
   const n = sectOf(m).bounties.active.length;
   return { open: true, ready: false, headline: n ? `${n} ${n === 1 ? 'bounty waits' : 'bounties wait'} on the Bounty Board.` : 'Bring Sect Funds home from your runs to raise its halls.' };
 }

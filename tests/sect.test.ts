@@ -178,7 +178,8 @@ describe('The main menu sect banner', () => {
     expect(todo[0]).toBe('The Recruitment Hall can recruit Ling Shuang.');
     expect(todo[1]).toBe("The Artifact Forge can craft the Sect Founder's Sword.");
     expect(todo).toContain('The Scripture Pavilion can study the Scrolls of the Five Phases.');
-    expect(todo.at(-1)).toBe('The Recruitment Hall can rise to level II.');
+    // level II brings Xiu Luo, so raising the hall says so
+    expect(todo.at(-1)).toBe('The Recruitment Hall can rise to level II, and Xiu Luo will answer its call.');
     expect(sectInvite(m)).toMatchObject({ open: true, ready: true, headline: todo[0] });
     expect(sectHasNews(m)).toBe(true);
   });

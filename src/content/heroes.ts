@@ -13,6 +13,12 @@ function QIAN_MIRROR(count: number, hpShare: number, seconds: number): ActionDef
   ];
 }
 
+/** Xiu Luo's Rage (up to 20 stacks): each stack is +1% Attack, +2 Attack Speed and +0.5% Omnivamp. */
+export const RAGE_MAX = 20;
+export function RAGE(add: number): ActionDef {
+  return { do: 'stack', key: 'rage', add, max: RAGE_MAX, pct: { attack: 1 }, flat: { attackSpeed: 2, omnivamp: 0.5 } };
+}
+
 /**
  * The 16 launch disciples, then the exclusive disciples the sect recruits. Stats are Rank C (Qi Condensation) values.
  * `qi` in baseStats is STARTING Qi; the ability's qiCost is the pool size.
@@ -1401,6 +1407,79 @@ export const HEROES: HeroDef[] = [
     portrait: 'qian_mian',
     sprite: 'qian_mian',
     accent: '#c3b8ff',
+    exclusive: true,
+  },
+  {
+    // the sixth exclusive disciple (Recruitment Hall level II): every blow he takes makes him faster, stronger and hungrier
+    id: 'xiu_luo',
+    name: 'Xiu Luo',
+    hanzi: '修罗',
+    title: 'Six-Armed Wrath',
+    classes: ['martial', 'sword'],
+    baseStats: { hp: 1050, attack: 46, crit: 15, defense: 32, range: 1 },
+    attackInterval: 0.9,
+    ability: {
+      id: 'six_arms',
+      name: 'Six Arms of the Asura',
+      desc: 'Phantom arms burst from his back: he gains [5 Rage], then strikes his target six times for [45% Attack] each.',
+      qiCost: 60,
+      castTime: 0.5,
+      vfx: 'fist_flurry',
+      actions: [
+        { do: 'vfx', key: 'sig_xiu_luo', target: 'self' },
+        RAGE(5),
+        { do: 'repeat', times: 6, interval: 0.12, actions: [{ do: 'damage', target: 'target', scale: { attack: 0.45 }, kind: 'physical', vfx: 'asura_cut' }] },
+      ],
+      keywords: ['Rage', 'Omnivamp'],
+    },
+    passives: [
+      {
+        id: 'asura_wrath',
+        name: "Asura's Wrath",
+        desc: 'Each blow he takes builds [2 Rage] (up to 20). Each Rage gives him [+1% Attack], [+2 Attack Speed] and [+0.5% Omnivamp].',
+        trigger: { on: 'damaged' },
+        actions: [RAGE(2)],
+        keywords: ['Rage', 'Omnivamp'],
+      },
+    ],
+    daoPaths: [
+      {
+        id: 'xiu_boiling_blood',
+        name: 'Boiling Blood',
+        desc: 'Each blow he takes builds [3 Rage] instead of 2. Gain [300 HP] and [5% Omnivamp].',
+        stats: { hp: 300, omnivamp: 5 },
+        effects: [{ id: 'boiling_blood', desc: 'Blows taken build one more Rage.', trigger: { on: 'damaged' }, actions: [RAGE(1)] }],
+        keywords: ['Rage'],
+      },
+      {
+        id: 'xiu_asura_roar',
+        name: "Asura's Roar",
+        desc: 'Six Arms of the Asura also [Taunts] the enemies beside him for 2 s. Gain [300 HP] and [20 Defense].',
+        stats: { hp: 300, defense: 20 },
+        ability: { extraActions: [{ do: 'status', target: { kind: 'enemiesAdjacent', radius: 1 }, status: 'taunt', duration: 2 }] },
+        keywords: ['Rage', 'Taunt'],
+      },
+      {
+        id: 'xiu_unchained',
+        name: 'Unchained',
+        desc: 'At full [Rage], his blows deal [+30%] damage.',
+        effects: [
+          {
+            id: 'unchained',
+            desc: 'At full Rage, +30% damage.',
+            trigger: { on: 'hit' },
+            conditions: [{ if: 'counterAtLeast', key: 'rage', value: RAGE_MAX }],
+            actions: [{ do: 'damage', target: 'triggerTarget', scale: { triggerAmount: 0.3 }, kind: 'true', canCrit: false }],
+          },
+        ],
+        keywords: ['Rage'],
+      },
+    ],
+    tags: ['Rage', 'Omnivamp'],
+    lore: 'The monastery that raised him named him after the demon he became in his first real fight. He has never lost one since, only bled until he stopped noticing.',
+    portrait: 'xiu_luo',
+    sprite: 'xiu_luo',
+    accent: '#e8433a',
     exclusive: true,
   },
 ];

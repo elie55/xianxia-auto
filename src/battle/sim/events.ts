@@ -46,6 +46,8 @@ export type BattleEvent =
   | { t: number; type: 'shield'; id: number; amount: number; shield: number; lasting: boolean }
   | { t: number; type: 'status'; id: number; status: StatusKind; stacks: number; duration: number }
   | { t: number; type: 'cleanse'; id: number }
+  /** A stack counter changed (the `stack` action, Xiu Luo's Rage): its new count and its cap. */
+  | { t: number; type: 'stack'; id: number; key: string; count: number; max: number }
   /** `vanish`: the unit left without a death of its own (a Reflection shattering or fading). */
   | { t: number; type: 'death'; id: number; vanish?: boolean }
   | { t: number; type: 'revive'; id: number; hp: number }

@@ -62,7 +62,9 @@ export type Keyword =
   /** Wen Yan's delayed talismans (the `delay` action's seal mark). */
   | 'Seal'
   /** Qian Mian's mirror clones (the `clone` action). */
-  | 'Reflection';
+  | 'Reflection'
+  /** Xiu Luo's stacks from blows taken (the `stack` action on the `rage` counter). */
+  | 'Rage';
 
 export type StatusKind = 'burn' | 'poison' | 'frost' | 'stun' | 'taunt' | 'bleed' | 'weaken' | 'sunder';
 
@@ -224,6 +226,11 @@ export type ActionDef =
    * their damage and kills count for the owner, and their end fires the owner's `cloneShattered` effects.
    */
   | { do: 'clone'; count: number; attackShare: number; hpShare: number; duration: number; at?: 'self' | 'target' }
+  /**
+   * Stacks of a named counter that each grant stats (Xiu Luo's Rage): `add` to the count, or `set` it, kept between 0
+   * and `max`; the unit then holds count × `flat` and count × `pct` of each listed stat, as one modifier per stat.
+   */
+  | { do: 'stack'; key: string; max: number; add?: number; set?: number; flat?: Partial<Stats>; pct?: Partial<Stats>; target?: TargetSel }
   | { do: 'vfx'; key: string; target?: TargetSel }
   | { do: 'custom'; id: string; params?: Record<string, number | string> };
 

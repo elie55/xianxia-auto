@@ -70,6 +70,7 @@ export const FLIPBOOK_SHEETS = [
   'fx_sig_wen_yan',
   'fx_sig_jin_ding',
   'fx_sig_qian_mian',
+  'fx_sig_xiu_luo',
   ...SIGNATURE_HEROES.map((h) => `fx_sig_${h}`),
 ];
 
@@ -119,6 +120,9 @@ const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: numbe
   // Reflection's end replays it small where it stood (Shattered Mirror)
   sig_qian_mian: { sheet: 'fx_sig_qian_mian', scale: 1.3, fps: 24 },
   mirror_shatter: { sheet: 'fx_sig_qian_mian', scale: 0.75, fps: 30, alpha: 0.85, jitter: 8 },
+  // Xiu Luo's Six Arms of the Asura: crimson phantom arms burst out around him, then six saber cuts land on his target
+  sig_xiu_luo: { sheet: 'fx_sig_xiu_luo', scale: 1.45, fps: 24, alpha: 0.95 },
+  asura_cut: { sheet: 'fx_slash_arc', tint: 0xff5a46, scale: 0.95, directional: true, jitter: 18 },
   tiger_roar: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 1.7, ground: true },
   impact: { sheet: 'fx_impact_hit', scale: 0.9 },
   fist_flurry: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 0.7 },
@@ -147,6 +151,7 @@ const SIGNATURE_BASE: Record<string, string> = {
   sig_wen_yan: 'talisman_blast',
   sig_jin_ding: 'golden_rain',
   sig_qian_mian: 'mirror_split',
+  sig_xiu_luo: 'asura_roar',
   sig_li_jian: 'sword_slash',
   sig_shan_tie: 'shield_pop',
   sig_hong_lian: 'lotus_bloom',
@@ -188,6 +193,7 @@ const TECHNIQUE_SFX: Record<string, { key: string; rate?: number; volume?: numbe
   wen_yan: { key: 'swing', rate: 1.35, volume: 0.5 },
   jin_ding: { key: 'heal', rate: 0.85, volume: 0.65 },
   qian_mian: { key: 'shatter', rate: 1, volume: 0.6 },
+  xiu_luo: { key: 'boss_roar', rate: 1.35, volume: 0.45 },
   blood_moon_sovereign: { key: 'tribulation', rate: 0.8, volume: 0.5 },
   flood_dragon: { key: 'frost', rate: 0.6, volume: 0.75 },
 };
@@ -1276,6 +1282,20 @@ export class BattleView {
         this.playVfx(e.key, e.id, e.targetId, e.pos ?? undefined);
         break;
       }
+      case 'stack': {
+        // Xiu Luo's Rage: embers as it builds (throttled), and a crimson aura with "FURY" once it is full
+        const v = this.viewOf(e.id);
+        if (!v || e.key !== 'rage') break;
+        if (e.count >= e.max) {
+          v.setAura(0xff4a3a, 0.75);
+          v.tintFlash(0xff4a3a, 0.5);
+          this.texts.spawn(v.x, v.y + v.headY - 24, 'FURY', 'label', { size: 18 });
+          this.fx.embers(v.x, v.y, 0xff6a3a, 14);
+        } else if (this.throttle(`rage:${e.id}`, 1.2)) {
+          this.fx.embers(v.x, v.y, 0xff6a3a, 4);
+        }
+        break;
+      }
       case 'surge': {
         const v = this.viewOf(e.id);
         if (!v) break;
@@ -1397,8 +1417,9 @@ export class BattleView {
       case 'sword_slash':
       case 'fire_slash':
       case 'shadow_slash':
+      case 'asura_cut':
       case 'claw': {
-        const color = key === 'fire_slash' ? 0xff8a3c : key === 'shadow_slash' ? 0xb57cff : key === 'claw' ? 0xffd27f : 0xe8f1ff;
+        const color = key === 'fire_slash' ? 0xff8a3c : key === 'shadow_slash' ? 0xb57cff : key === 'claw' ? 0xffd27f : key === 'asura_cut' ? 0xff5a46 : 0xe8f1ff;
         this.fx.slash(p.x, p.y + chest, facing, color, key === 'claw' ? 50 : 76, -0.2);
         gsap.delayedCall(0.08, () => this.fx.slash(p.x, p.y + chest, facing, color, key === 'claw' ? 50 : 70, 0.35));
         this.fx.sparks(p.x, p.y + chest, facing, color, 6, 240);
@@ -1500,6 +1521,14 @@ export class BattleView {
         this.fx.shockwave(p.x, p.y, 0xff6a3d, 110, 0.5);
         this.shake(3);
         audio.sfx('fire', { volume: 0.55, throttleMs: 120 });
+        break;
+      case 'asura_roar':
+        // Xiu Luo's Six Arms of the Asura: a crimson roar as the phantom arms burst out
+        this.fx.flash(p.x, p.y + chest, 0xff5a46, 220, 0.4);
+        this.fx.shockwave(p.x, p.y, 0xff5a46, 160, 0.5);
+        this.fx.embers(p.x, p.y, 0xff8a3c, 12);
+        this.screenFlash(0xff3a2a, 0.1, 0.35);
+        this.shake(5);
         break;
       case 'mirror_split':
         // Qian Mian's Mirror Flower, Water Moon: a moonlit flash and mirror shards where he steps out of himself

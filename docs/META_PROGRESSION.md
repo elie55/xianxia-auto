@@ -160,8 +160,43 @@ disciple mastery (sections 6.3, 6.5, 6.6 and 10).
     far more often, and the healers' "most wounded ally" used to pick dying Reflections. Reflections lasted 8 s
     first; 6 s brought him down to the top carries.
 
+**The sixth exclusive disciple is built** (2026-11-11):
+- **Xiu Luo** (修罗, "Six-Armed Wrath") answers the call when the Recruitment Hall reaches level II (possible from
+  Renown 10). Recruiting him costs 200 Funds and 5 Heavenly Jade. He is the first disciple gated by a building level
+  instead of Renown, which gives the hall's level II a reward. The hall's panel lists it under "What the hall's levels
+  do", and the sect's to-do line says so when the hall can rise ("…and Xiu Luo will answer its call").
+- Kit: a Martial Artist and Sword Cultivator berserker with a heavy saber.
+  - Asura's Wrath: each blow he takes builds 2 Rage, up to 20. Each Rage gives +1% Attack, +2 Attack Speed and
+    +0.5% Omnivamp; damage over time builds none, and Rage never cools during a fight.
+  - Six Arms of the Asura (60 Qi): he gains 5 Rage, then phantom arms strike his target six times for 45% Attack.
+  - At full Rage: "FURY" over his head and a crimson aura.
+  - Dao Paths:
+    - Boiling Blood: 3 Rage per blow, +300 HP, +5% Omnivamp.
+    - Asura's Roar: the technique taunts the enemies beside him for 2 s; +300 HP, +20 Defense.
+    - Unchained: at full Rage his blows deal +30% damage.
+  - Mastery: a second lore page, the title "Master of the Six-Armed Wrath" and the passive Undying Grudge (he starts
+    every fight with 10 Rage).
+- Engine:
+  - `RecruitDef.hall`, a Recruitment Hall level gate next to `renown`; `recruitGate` names either one.
+  - the action `stack`: a counter whose every stack grants stats, held as one refreshed modifier per stat, with a
+    `stack` battle event.
+  - the keyword Rage, and "Rage n/20" in the arena tooltip.
+- Art: a ChatGPT portrait (four crimson phantom arms with sabers), an AutoSprite pack, painted icons for his three
+  paths, and his own flipbook (`fx_sig_xiu_luo`: crimson phantom blades unfold and cut) over an `asura_roar` base,
+  with crimson `asura_cut` slashes for the six blows.
+- Balance (`scripts/carry-balance.mts`, 300 fights):
+  - The standard lineup puts the carry behind Shan Tie and Bai Hu, where he is rarely hit. There he is
+    lower-middle: rank II 186 to 203 wins, rank III 207 to 236 (margins 29 to 37).
+  - In the front row, where a berserker belongs (Bai Hu moved back), he matches the best melee carries:
+    - rank II: 213 to 227, margin 32 to 38 (Li Jian 220 to 246, Qian Mian 203 to 232);
+    - rank III: 232 to 241, margin 38 to 43 (Li Jian 252 to 271, Tie Quan's Breaker 296).
+  - Tuning on the way:
+    - Rage per blow went from 1 to 2, so FURY comes mid-fight.
+    - Asura's Roar first taunted everything within 2 hexes for 3 s, and he died in 78 of 120 fights.
+    - Boiling Blood gained 100 HP and 5% Omnivamp to catch up with the other paths.
+
 Sect events are built too (6.8), with the first four new foes, and so is the Hall of Ancestors (6.9): phase 4's scope
-is done. Phase 5 (Steam) is not started, nor are exclusive disciples #6 to #8 (listed under "Later").
+is done. Phase 5 (Steam) is not started, nor are exclusive disciples #7 and #8 (listed under "Later").
 
 ---
 
@@ -646,7 +681,7 @@ This content also moves the game toward its v1.0 targets in GAME_DESIGN.md: 25 d
 - a Talisman Master whose talismans explode after a delay (built: Wen Yan)
 - an Alchemist who turns Spirit Stones into healing (built: Jin Ding)
 - a Shadow Walker who leaves mirror clones (built: Qian Mian)
-- a Martial Artist who builds rage with every hit taken
+- a Martial Artist who builds rage with every hit taken (built: Xiu Luo, at Recruitment Hall level II)
 - an Array Master with a spirit-beast companion
 - a mythic Tribulation disciple who rides the lightning, for the final contract
 
