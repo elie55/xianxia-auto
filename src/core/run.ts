@@ -12,6 +12,7 @@ import { ENEMY_BY_ID } from '@/content/enemies';
 import { EVENT_BY_ID, RANDOM_EVENTS } from '@/content/events';
 import { ALL_BLESSINGS, BLESSINGS, DIFFICULTIES, TRAINING_BLESSINGS } from '@/content/difficulties';
 import { DOCTRINE_BY_ID, type DoctrineDef } from '@/content/doctrines';
+import { MASTERY_PATHS } from '@/content/mastery';
 import { classInsights } from '@/content/classes';
 import { ALLY_MAX_COL, BOARD_ROWS, hexKey, offsetToAxial } from '@/battle/sim/hex';
 import { emitRunEvent } from '@/core/runEvents';
@@ -184,6 +185,8 @@ export interface RunState {
   freeRewindUsed?: boolean;
   /** Rising Talent (a Training Grounds blessing) has raised its one disciple. */
   ascendantUsed?: boolean;
+  /** Fights won this run with each disciple on the board, paid to the sect's mastery when the run ends. */
+  masteryWins?: Record<string, number>;
   heroCounter: number;
   victory: boolean;
   endlessScore: number;
@@ -232,6 +235,8 @@ export interface RunSect {
   blessings?: string[];
   /** Blessings the opening draft shows (3; 4 from Training Grounds level V). */
   blessingCount?: number;
+  /** The sect's mastery of each disciple (src/meta/mastery.ts): III offers an exclusive Dao Path, II a golden aura. */
+  mastery?: Record<string, number>;
 }
 
 /** A Spirit Vein node's rank in this run (0 when not taken, or in a Pure run). */
@@ -255,6 +260,8 @@ export interface RunPayout {
   purse?: { funds: number; herbs: number; cores: number; jade: number };
   /** Bounty Board bounties this run met. */
   bounties?: string[];
+  /** Disciple mastery levels this run reached (src/meta/mastery.ts). */
+  masteryUp?: { hero: string; level: number }[];
   /** The carried heirloom grew a level with this victory. */
   heirloomUp?: { id: string; level: number };
 }
@@ -769,7 +776,9 @@ export function prepareRankUp(s: RunState): void {
   }
   const def = HERO_BY_ID[h.defId];
   if (h.rank >= 1 && !h.daoPathId) {
-    s.rankUpChoices = { uid, options: def.daoPaths };
+    // mastery III: the disciple's exclusive fourth Dao Path is offered beside the three
+    const exclusive = (s.sect?.mastery?.[h.defId] ?? 0) >= 3 ? MASTERY_PATHS[h.defId] : undefined;
+    s.rankUpChoices = { uid, options: exclusive ? [...def.daoPaths, exclusive] : def.daoPaths };
     return;
   }
   const rng = rngOf(s);
@@ -785,7 +794,9 @@ export function chooseUpgrade(s: RunState, upgradeId: string): void {
   const h = heroByUid(s, c.uid);
   const up = c.options.find((o) => o.id === upgradeId);
   if (h && up) {
-    if (h.rank >= 1 && !h.daoPathId && HERO_BY_ID[h.defId].daoPaths.some((p) => p.id === up.id)) h.daoPathId = up.id;
+    // a Dao Path: one of the disciple's three, or the exclusive fourth that mastery III offers
+    const isPath = HERO_BY_ID[h.defId].daoPaths.some((p) => p.id === up.id) || MASTERY_PATHS[h.defId]?.id === up.id;
+    if (h.rank >= 1 && !h.daoPathId && isPath) h.daoPathId = up.id;
     else h.insightIds.push(up.id);
   }
   s.pendingRankUps.shift();
@@ -1243,6 +1254,8 @@ export function battleConfig(s: RunState): BattleConfig | null {
       if (h) bench.push(buildHeroUnit(h, ctx, id++, null, false));
     }
   }
+  // disciple mastery II: a golden aura in the arena
+  for (const a of [...allies, ...bench]) if ((s.sect?.mastery?.[a.defId] ?? 0) >= 2) a.masteryAura = true;
   if (s.activeChallenge?.id === 'decay') {
     for (const a of allies) {
       a.stats.hp = Math.round(a.stats.hp * 0.8);
@@ -1315,6 +1328,12 @@ export function finishBattle(s: RunState, result: BattleResult): void {
     return;
   }
   s.stats.wins++;
+  // disciple mastery: a fight won with each disciple on the board
+  for (const u of result.units) {
+    if (u.side !== 'ally' || !u.heroUid || !u.onBoard) continue;
+    const h = heroByUid(s, u.heroUid);
+    if (h) (s.masteryWins ??= {})[h.defId] = (s.masteryWins[h.defId] ?? 0) + 1;
+  }
   // permanent buffs from combat (Apex Predator etc.)
   for (const pb of result.permanentBuffs) {
     const h = heroByUid(s, pb.heroUid);

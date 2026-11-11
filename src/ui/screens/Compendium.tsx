@@ -22,6 +22,8 @@ import { SpriteClip, useSpritePack } from '@/ui/components/SpriteClip';
 import { tip } from '@/ui/components/Tooltip';
 import { audio } from '@/audio/AudioManager';
 import { cssUrl } from '@/ui/assetUrl';
+import { MASTERY_THRESHOLDS, masteryLevel, masteryOf, masteryRewards, masteryWins } from '@/meta/mastery';
+import { LORE_II, MASTERY_PATHS } from '@/content/mastery';
 
 type Tab = 'disciples' | 'classes' | 'enemies' | 'treasures' | 'insights';
 type Kind = 'hero' | 'item' | 'relic' | 'enemy';
@@ -774,6 +776,7 @@ function HeroDetail({ id }: { id: string }) {
         </p>
       )}
       <p class="drawer-lore">{h.lore}</p>
+      {masteryOf(meta.value, h.id) >= 1 && LORE_II[h.id] && <p class="drawer-lore second">{LORE_II[h.id]}</p>}
       <Section title="Technique" aside={`${h.ability.qiCost} Qi`}>
         <p class="drawer-ability-name">{h.ability.name}</p>
         <p>
@@ -795,6 +798,7 @@ function HeroDetail({ id }: { id: string }) {
           </p>
         ))}
       </Section>
+      <MasterySection id={h.id} />
       {h.companion && HERO_BY_ID[h.companion] && (
         <Section title="Dao Companion">
           <p>
@@ -804,6 +808,42 @@ function HeroDetail({ id }: { id: string }) {
       )}
       <Keywords list={h.tags.filter((t) => KEYWORD_DESC[t])} />
     </>
+  );
+}
+
+const MASTERY_ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
+
+/** Disciple mastery (src/meta/mastery.ts): fights won with this disciple, the five levels and what each brings. */
+function MasterySection({ id }: { id: string }) {
+  const h = HERO_BY_ID[id];
+  const wins = masteryWins(meta.value, id);
+  const lvl = masteryLevel(wins);
+  const next = MASTERY_THRESHOLDS[lvl];
+  const path = MASTERY_PATHS[id];
+  return (
+    <Section title="Mastery" aside={lvl ? `Mastery ${MASTERY_ROMAN[lvl]}` : 'Not begun'}>
+      <div class="mastery-bar">
+        <i style={{ width: `${next ? Math.min(100, (wins / next) * 100) : 100}%` }} />
+      </div>
+      <p class="mastery-count">
+        {wins} {wins === 1 ? 'fight' : 'fights'} won with {h.name} on the board
+        {next ? ` · ${next - wins} more for mastery ${MASTERY_ROMAN[lvl + 1]}` : ' · fully mastered'}
+      </p>
+      <ol class="mastery-list">
+        {masteryRewards(id).map((r, i) => (
+          <li key={i} class={i < lvl ? 'done' : ''}>
+            <span class="mastery-step">{MASTERY_ROMAN[i + 1]}</span>
+            <span class="mastery-reward">{r}</span>
+            <span class="mastery-need">{MASTERY_THRESHOLDS[i]}</span>
+          </li>
+        ))}
+      </ol>
+      {path && (
+        <p class={`drawer-path mastery-path ${lvl >= 3 ? '' : 'locked'}`}>
+          <b class="gold">{path.name}</b> <RichText text={path.desc} />
+        </p>
+      )}
+    </Section>
   );
 }
 

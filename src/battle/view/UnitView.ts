@@ -106,7 +106,8 @@ export class UnitView extends Container {
     this.fitShadow();
 
     this.aura = new Graphics();
-    this.auraColor = unit.side === 'ally' ? teamPalette().allyAura : teamPalette().enemyAura;
+    // a mastered disciple (mastery II) stands in a golden aura
+    this.auraColor = unit.side === 'ally' ? (unit.masteryAura ? 0xf3cf78 : teamPalette().allyAura) : teamPalette().enemyAura;
     this.drawAura(this.auraColor);
     this.aura.alpha = 0;
     this.addChild(this.aura);

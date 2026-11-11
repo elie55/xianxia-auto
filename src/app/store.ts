@@ -83,6 +83,8 @@ export interface MetaSave {
   /** Achievement id → unlock time (ms). */
   achievements?: Record<string, number>;
   lifetime?: LifetimeStats;
+  /** Disciple mastery: fights won with each disciple on the board, across all runs (src/meta/mastery.ts). */
+  mastery?: Record<string, number>;
   /** The Sect (src/meta/sect.ts, read through sectOf): Funds and materials, building levels, studies, seals, heirlooms, bounties. */
   sect?: {
     purse?: { funds: number; herbs: number; cores: number; jade: number };

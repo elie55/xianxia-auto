@@ -4,6 +4,7 @@ import { act, run } from '@/app/store';
 import { chooseUpgrade, heroByUid, teamContext } from '@/core/run';
 import { HERO_BY_ID } from '@/content/heroes';
 import { CLASSES } from '@/content/classes';
+import { MASTERY_PATHS } from '@/content/mastery';
 import { RANK_NAMES, type Rank } from '@/core/types';
 import { heroStats } from '@/core/builder';
 import { CountUp } from '@/ui/components/Triumph';
@@ -96,7 +97,7 @@ export function RankUpScreen() {
                     </div>
                   </div>
                   <div class="upgrade-name display">{u.name}</div>
-                  <div class="upgrade-kind">{isDao ? 'Dao Path' : `${u.classPool ? CLASSES[u.classPool].name : 'Class'} Insight`}</div>
+                  <div class={`upgrade-kind ${isDao && MASTERY_PATHS[def.id]?.id === u.id ? 'mastery' : ''}`}>{isDao ? (MASTERY_PATHS[def.id]?.id === u.id ? 'Mastery path · exclusive' : 'Dao Path') : `${u.classPool ? CLASSES[u.classPool].name : 'Class'} Insight`}</div>
                   <div class="upgrade-desc">
                     <RichText text={u.desc} />
                   </div>

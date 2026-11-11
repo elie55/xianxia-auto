@@ -146,6 +146,11 @@
 .frame-swatch.frame-celestial {
   background: linear-gradient(180deg, #fffbe6, #f3cf78 30%, #9fe6ff 62%, #fffbe6);
 }
+/* disciple mastery V: a gilded frame, whatever frame the sect has chosen */
+.hero-card.gilded .pennant-border {
+  background: linear-gradient(180deg, #fff6d0, #f3cf78 22%, #b8862b 50%, #f3cf78 78%, #fff6d0);
+  filter: drop-shadow(0 0 6px rgba(243, 207, 120, 0.65));
+}
 .hero-card.selected .pennant-border {
   background: linear-gradient(180deg, var(--jade-bright), var(--jade) 50%, var(--jade-bright));
 }
@@ -2096,4 +2101,79 @@
 .drawer-exclusive .icon {
   flex: none;
   margin-top: 1px;
+}
+
+/* ───────── Compendium: disciple mastery (src/meta/mastery.ts) ───────── */
+.drawer-lore.second {
+  margin-top: -4px;
+  padding-left: 12px;
+  border-left: 2px solid rgba(243, 207, 120, 0.45);
+}
+.mastery-bar {
+  position: relative;
+  height: 8px;
+  margin: 6px 0 6px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 75, 0.35);
+}
+.mastery-bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #b8862b, #f3cf78);
+  box-shadow: 0 0 8px rgba(243, 207, 120, 0.6);
+}
+.mastery-count {
+  margin: 0 0 8px;
+  font-size: calc(13px * var(--ts, 1));
+  color: var(--paper-dim);
+}
+.mastery-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+.mastery-list li {
+  display: grid;
+  grid-template-columns: 30px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: calc(13px * var(--ts, 1));
+  color: var(--paper-faint);
+  background: rgba(0, 0, 0, 0.25);
+}
+.mastery-list li.done {
+  color: var(--paper);
+  background: rgba(243, 207, 120, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(243, 207, 120, 0.4);
+}
+.mastery-step {
+  font-family: var(--font-display);
+  text-align: center;
+  color: var(--gold);
+}
+.mastery-need {
+  font-size: calc(12px * var(--ts, 1));
+  color: var(--paper-faint);
+}
+.mastery-need::after {
+  content: ' wins';
+}
+.drawer-path.mastery-path.locked {
+  opacity: 0.55;
+}
+.rr-ach.mastery .rr-bounty-seal {
+  color: #f3cf78;
+}
+/* the rank-up screen marks a disciple's exclusive mastery path */
+.upgrade-kind.mastery {
+  color: #f3cf78;
+  text-shadow: 0 0 8px rgba(243, 207, 120, 0.45);
 }

@@ -1,4 +1,5 @@
 import { HEROES } from '@/content/heroes';
+import { MASTER_TITLES, masterTitleId } from '@/meta/mastery';
 
 /**
  * Phase-1 cosmetics (docs/META_PROGRESSION.md, sections 5.3 and 13): avatars, titles, card frames and profile banners,
@@ -81,6 +82,8 @@ export const TITLES: Cosmetic[] = [
   title('empty_hands', 'Empty-Handed Master'),
   title('archivist', 'Archivist'),
   title('hundred_schools', 'Master of a Hundred Schools'),
+  // disciple mastery IV (src/meta/mastery.ts)
+  ...Object.entries(MASTER_TITLES).map(([hero, name]) => title(masterTitleId(hero), name)),
 ];
 
 /** Card frames: the gradient of every disciple card's pennant border. */

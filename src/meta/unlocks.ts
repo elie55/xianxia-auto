@@ -2,6 +2,8 @@ import type { MetaSave } from '@/app/store';
 import { ACH_BY_ID } from '@/meta/achievementDefs';
 import { DEFAULT_COSMETICS, HERO_AVATARS, RENOWN_TRACK, type CosmeticKind } from '@/meta/cosmetics';
 import { levelOf } from '@/meta/renown';
+import { MASTER_TITLES, heroOfMasterTitle, masterTitleId, masteryOf } from '@/meta/mastery';
+import { HERO_BY_ID } from '@/content/heroes';
 
 const key = (kind: CosmeticKind, id: string) => `${kind}:${id}`;
 
@@ -14,6 +16,8 @@ export function unlockedCosmetics(m: MetaSave): Set<string> {
   for (const id of Object.keys(m.achievements ?? {})) for (const r of ACH_BY_ID[id]?.rewards ?? []) out.add(key(r.kind, r.id));
   const winners = new Set(m.lifetime?.winnersWith ?? []);
   for (const a of HERO_AVATARS) if (a.hero && winners.has(a.hero)) out.add(key('avatar', a.id));
+  // disciple mastery IV: the disciple's title
+  for (const hero of Object.keys(MASTER_TITLES)) if (masteryOf(m, hero) >= 4) out.add(key('title', masterTitleId(hero)));
   return out;
 }
 
@@ -32,5 +36,7 @@ export function howToUnlock(kind: CosmeticKind, id: string, how?: string): strin
   if (lvl) return `Reach Renown ${lvl}.`;
   const ach = Object.values(ACH_BY_ID).find((a) => a.rewards?.some((r) => r.kind === kind && r.id === id));
   if (ach) return `Achievement: ${ach.hidden ? 'a secret' : ach.name}.`;
+  const hero = kind === 'title' ? heroOfMasterTitle(id) : undefined;
+  if (hero) return `Reach mastery IV with ${HERO_BY_ID[hero].name}.`;
   return how ?? 'Locked.';
 }

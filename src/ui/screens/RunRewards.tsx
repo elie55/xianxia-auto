@@ -12,6 +12,8 @@ import { Icon } from '@/ui/components/Icon';
 import { audio } from '@/audio/AudioManager';
 import { BOUNTY_BY_ID, CURRENCIES } from '@/meta/sect';
 import { HEIRLOOM_RECIPES } from '@/content/heirlooms';
+import { masteryRewards } from '@/meta/mastery';
+import { HERO_BY_ID } from '@/content/heroes';
 
 /**
  * Sect Rewards, the second step of the run-end screen: what the run paid in Renown, line by line, then the Renown bar
@@ -164,7 +166,7 @@ export function RunRewards({ payout }: { payout: RunPayout }) {
   );
 }
 
-const ROMAN = ['', 'I', 'II', 'III'];
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
 const fmtCost = (c: Partial<Record<string, number>>) =>
   CURRENCIES.filter((x) => c[x.key])
     .map((x) => `+${c[x.key]} ${x.name}`)
@@ -202,6 +204,14 @@ function SectShare({ payout }: { payout: RunPayout }) {
           </div>
         );
       })}
+      {(payout.masteryUp ?? []).map((m) => (
+        <div key={`${m.hero}-${m.level}`} class="rr-ach mastery">
+          <span class="rr-bounty-seal brush">{HERO_BY_ID[m.hero]?.hanzi?.slice(0, 1) ?? '师'}</span>
+          <span class="rr-ach-name">
+            {HERO_BY_ID[m.hero]?.name} reached <b>mastery {ROMAN[m.level]}</b>: {masteryRewards(m.hero)[m.level - 1]}
+          </span>
+        </div>
+      ))}
       {up && (
         <div class="rr-ach heirloom">
           <Icon name={`item_${HEIRLOOM_RECIPES.find((r) => r.id === up.id)?.icon ?? 'pouch'}`} size={40} />

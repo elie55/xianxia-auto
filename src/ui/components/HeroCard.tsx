@@ -12,6 +12,7 @@ import { RichText } from './RichText';
 import { hideTooltip, showTooltip, tip } from './Tooltip';
 import { ITEM_BY_ID } from '@/content/items';
 import { meta } from '@/app/store';
+import { MAX_MASTERY, masteryOf } from '@/meta/mastery';
 
 export const EMPTY_CTX: TeamContext = { relics: [], itemSlotBonus: 0, itemSlotsPerRank: false, warriorBlessing: false, qualityBlessing: false };
 
@@ -126,7 +127,7 @@ export function HeroCard(p: HeroCardProps) {
   return (
     <div
       // the card frame the player picked in the sect profile (src/meta/cosmetics.ts)
-      class={`hero-card ${p.size ?? 'md'} frame-${meta.value.profile?.frame ?? 'gold'} ${p.selected ? 'selected' : ''} ${p.dimmed ? 'dimmed' : ''} ${p.onClick ? 'clickable' : ''} ${showStats ? 'stats-open' : ''} ${p.class ?? ''}`}
+      class={`hero-card ${p.size ?? 'md'} frame-${meta.value.profile?.frame ?? 'gold'} ${masteryOf(meta.value, p.defId) >= MAX_MASTERY ? 'gilded' : ''} ${p.selected ? 'selected' : ''} ${p.dimmed ? 'dimmed' : ''} ${p.onClick ? 'clickable' : ''} ${showStats ? 'stats-open' : ''} ${p.class ?? ''}`}
       style={{ ['--accent' as string]: def.accent }}
       onClick={p.onClick}
       onMouseEnter={() => setHover(true)}

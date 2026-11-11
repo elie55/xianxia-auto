@@ -2,6 +2,7 @@ import type { AbilityDef, ClassId, EffectDef, EnemyDef, Hex, Rank, RelicDef, Sta
 import { STAT_KEYS, emptyStats } from '@/core/types';
 import type { UnitInit } from '@/battle/sim/unit';
 import { HERO_BY_ID } from '@/content/heroes';
+import { masteryPathById } from '@/content/mastery';
 import { CLASSES, classInsights } from '@/content/classes';
 import { ITEM_BY_ID } from '@/content/items';
 import { isFrontForSide } from '@/battle/sim/hex';
@@ -38,7 +39,8 @@ export const BASE_ITEM_SLOTS = 3;
 
 export function heroDaoPath(h: HeroState): UpgradeDef | undefined {
   if (!h.daoPathId) return undefined;
-  return HERO_BY_ID[h.defId]?.daoPaths.find((p) => p.id === h.daoPathId);
+  // a disciple's three paths, or the exclusive fourth that mastery III offers
+  return HERO_BY_ID[h.defId]?.daoPaths.find((p) => p.id === h.daoPathId) ?? masteryPathById(h.defId, h.daoPathId);
 }
 
 export function heroInsights(h: HeroState): UpgradeDef[] {

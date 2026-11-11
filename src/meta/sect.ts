@@ -6,6 +6,7 @@ import { HERO_BY_ID } from '@/content/heroes';
 import { DOCTRINES, DOCTRINE_BY_ID } from '@/content/doctrines';
 import { VEIN_BY_ID, veinPoints, veinSpent, veinValid, type VeinState } from '@/content/vein';
 import { TRAINING_BLESSINGS } from '@/content/difficulties';
+import { masteryLevels } from '@/meta/mastery';
 import { contractMultiplier, cumulativeXp, levelOf, rankOf } from '@/meta/renown';
 
 /**
@@ -372,6 +373,8 @@ export function runSectFor(m: MetaSave, heirloom: string, opts: { doctrine?: str
     // the Training Grounds add options, not power: a Pure run keeps them
     blessings: isOpen('training', xp) ? trainedBlessings(s.buildings.training) : [],
     blessingCount: blessingCountFor(isOpen('training', xp) ? s.buildings.training : 0),
+    // disciple mastery: options and looks, so a Pure run keeps it too
+    mastery: masteryLevels(m),
     pure: pure || undefined,
   };
 }

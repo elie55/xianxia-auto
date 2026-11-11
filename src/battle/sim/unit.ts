@@ -51,6 +51,8 @@ export interface UnitInit {
   targeting?: 'nearest' | 'lowestHp' | 'farthest' | 'random';
   heroUid?: string;
   companion?: string;
+  /** Disciple mastery II: the arena draws this disciple's aura in gold. */
+  masteryAura?: boolean;
   sprite: string;
   scale?: number;
   projectile?: string;
@@ -158,6 +160,8 @@ export class Unit {
   healPct = 0;
   /** Its first auto attack of the fight is a Crit (Shadow Pavilion doctrine); cleared once it lands. */
   firstHitCrit = false;
+  /** Disciple mastery II: drawn with a golden aura. */
+  masteryAura = false;
 
   constructor(init: UnitInit) {
     this.id = init.id;
@@ -177,6 +181,7 @@ export class Unit {
     this.boss = !!init.boss;
     this.elite = !!init.elite;
     this.flying = !!init.flying;
+    this.masteryAura = !!init.masteryAura;
     this.portrait = init.portrait;
     this.isSummon = !!init.isSummon;
     this.targeting = init.targeting ?? (init.classes.includes('shadow') ? 'lowestHp' : 'nearest');

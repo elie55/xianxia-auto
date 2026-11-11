@@ -1250,7 +1250,8 @@ export class BattleView {
           this.fxBack.fireColumn(v.x, v.y, 0xffb86b, 140, 8);
           this.fxBack.flipbook('fx_buff_rise', v.x, v.y + 8, { scale: Math.max(0.9, v.bodyHeight / 180), anchorY: 0.95, tint: 0xffb86b, fps: 22 });
         } else {
-          v.setAura(v.unit.side === 'ally' ? 0x3fbf9f : 0xd2382c, 0.35);
+          // back to its resting aura: gold for a mastered disciple (mastery II)
+          v.setAura(v.unit.side === 'ally' ? (v.unit.masteryAura ? 0xf3cf78 : 0x3fbf9f) : 0xd2382c, 0.35);
         }
         break;
       }

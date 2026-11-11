@@ -1,4 +1,4 @@
-import { screen, setRun } from './store';
+import { meta, screen, setRun } from './store';
 import {
   addHero,
   addItemToInventory,
@@ -22,6 +22,7 @@ import { Battle } from '@/battle/sim/battle';
 import { getBattleView } from '@/battle/view/BattleView';
 import { viewport } from './scale';
 import { run } from './store';
+import { runSectFor } from '@/meta/sect';
 
 /**
  * Developer shortcuts via URL query (dev builds and QA):
@@ -42,6 +43,7 @@ import { run } from './store';
  *   ?demo=cleared      → realm cleared
  *   &realm=1|2|3       → that realm's arena and foes (with any board scene; with boss, its guardian)
  *   &tier=0..7         → the demo run's contract (its battlefields and foes)
+ *   &sect              → the demo run carries the sect: studies, seals, recruits, Training Grounds blessings, mastery
  *   ?demo=end          → run end (victory)
  */
 export function applyDebugQuery(): boolean {
@@ -60,7 +62,7 @@ export function applyDebugQuery(): boolean {
   const value = params.get('demo') ?? '';
   resetItemQuests();
   const tierParam = Number(params.get('tier') ?? 0);
-  const s = newRun(Number.isInteger(tierParam) && tierParam >= 0 && tierParam <= 7 ? tierParam : 0, 42);
+  const s = newRun(Number.isInteger(tierParam) && tierParam >= 0 && tierParam <= 7 ? tierParam : 0, 42, params.has('sect') ? runSectFor(meta.peek(), '') : undefined);
   if (value === 'draft') {
     setRun(s);
     screen.value = 'run';

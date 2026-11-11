@@ -152,7 +152,7 @@ describe('Buildings, the board and the save', () => {
     const m = metaWith({ renown: { xp: cumulativeXp(6) } });
     expect(sectOf(m).buildings).toEqual({ pavilion: 1, forge: 1, recruit: 1, doctrine: 1, vein: 1, training: 1 });
     m.sect = { seals: ['monk_beads'], research: ['five_phases'], heirlooms: [{ id: 'founder_sword', level: 2 }], purse: { funds: 0, herbs: 0, cores: 0, jade: 0 } };
-    expect(runSectFor(m, 'founder_sword')).toEqual({ seals: ['monk_beads'], research: ['five_phases'], heirloom: { id: 'founder_sword', level: 2 }, disciples: [], draftSize: 3, freeRerolls: 0, blessings: [], blessingCount: 3 });
+    expect(runSectFor(m, 'founder_sword')).toEqual({ seals: ['monk_beads'], research: ['five_phases'], heirloom: { id: 'founder_sword', level: 2 }, disciples: [], draftSize: 3, freeRerolls: 0, blessings: [], blessingCount: 3, mastery: {} });
     // a closed Forge sends no heirloom
     expect(runSectFor(metaWith({ renown: { xp: cumulativeXp(3) }, sect: m.sect }), 'founder_sword').heirloom).toBeUndefined();
   });

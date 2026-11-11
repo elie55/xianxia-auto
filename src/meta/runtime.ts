@@ -6,6 +6,7 @@ import { ACH_BY_ID, achievementXp, earnedBy } from '@/meta/achievementDefs';
 import { defaultLifetime, migrateMeta } from '@/meta/migrate';
 import { computeRunRenown, levelOf } from '@/meta/renown';
 import { BOUNTY_BY_ID, SECT_OPENS, addPurse, computeRunPurse, nextHeirloomLevel, refillBounties, sectOf } from '@/meta/sect';
+import { addMastery } from '@/meta/mastery';
 
 /** Achievements earned but not shown yet: the toast layer shows them one by one. */
 export const achievementToasts = signal<string[]>([]);
@@ -105,6 +106,8 @@ export function finishRunMeta(s: RunState): void {
   const carried = s.sect?.heirloom;
   const owned = carried && sect0.heirlooms.find((h) => h.id === carried.id);
   const heirloomUp = won && owned && owned.level < nextHeirloomLevel(owned.level) ? { id: owned.id, level: nextHeirloomLevel(owned.level) } : undefined;
+  // disciple mastery: the run's wins with each disciple on the board
+  const mastered = addMastery(meta.peek().mastery, s.masteryWins);
   updateMeta((m) => {
     m.runsPlayed++;
     if (won) m.runsWon++;
@@ -128,6 +131,7 @@ export function finishRunMeta(s: RunState): void {
       m.leaderboard = m.leaderboard.slice(0, 20);
     }
     m.renown = { xp: before + pay.total };
+    m.mastery = mastered.mastery;
     const sect = sectOf(m);
     sect.purse = addPurse(sect.purse, purse);
     for (const id of met) sect.purse = addPurse(sect.purse, BOUNTY_BY_ID[id].reward);
@@ -136,7 +140,7 @@ export function finishRunMeta(s: RunState): void {
     if (levelOf(m.renown.xp).level >= SECT_OPENS) sect.bounties = refillBounties(sect.bounties.active.filter((id) => !met.includes(id)), [...sect.bounties.done, ...met]);
     m.sect = sect;
   });
-  s.payout = { xpBefore: before, xpAfter: before + pay.total, total: pay.total, lines: pay.lines, achievements: earned.slice(), purse, bounties: met, heirloomUp };
+  s.payout = { xpBefore: before, xpAfter: before + pay.total, total: pay.total, lines: pay.lines, achievements: earned.slice(), purse, bounties: met, heirloomUp, masteryUp: mastered.ups };
 }
 
 /** Ends the run (victory or defeat) and pays it: every run-ending button goes through here. */

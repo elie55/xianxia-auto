@@ -348,6 +348,28 @@ exclusive content without new animations.
 | 4 | 35 | the title "Master of …" |
 | 5 | 50 | a gilded card frame and a statue in the Hall of Ancestors |
 
+**Built (2026-11-11): `src/meta/mastery.ts` and `src/content/mastery.ts`.**
+- **Counting:** a run counts each fight won for every disciple on the board (`RunState.masteryWins`). When the run
+  ends, the count is added to `MetaSave.mastery`, and the Sect Rewards list every level reached.
+- **I:** a second page of lore for all 17 disciples, shown under the first in the Compendium.
+- **II:** a golden aura ring in the arena, which comes back after a Surge.
+- **III:** the first exclusive fourth Dao Paths, offered at Foundation beside the three and marked "Mastery path ·
+  exclusive". Li Jian's Returning Sword (+15 Attack Speed, the Flying Sword strikes again for 90% Attack), Shan Tie's
+  Mountain's Embrace (+10 Defense, Unmoving Mountain shields the allies beside him for 10% of his Max HP), Hong Lian's
+  Phoenix Pyre (Crimson Lotus burns every foe for 12 + 32% Spirit) and Mei Yao's Plum Blossom Rain (Nine-Turn Pill
+  heals every ally for 80 + 110% Spirit and cleanses them).
+- **IV:** the title "Master of …", named after the disciple's technique, in the profile's title picker.
+- **V:** a gilded card frame on that disciple's cards. The Hall of Ancestors and its statues are not built yet.
+- **Pure runs** keep mastery: its paths and looks are options, not power.
+- **Balance of the four paths:** a team of four rank-I disciples fought the same 40 Realm I elite fights with each of
+  the disciple's four paths. All four won every fight, and each new path lands inside the range of the disciple's
+  other three: Returning Sword 2,727 damage (others 2,503 to 2,866), Mountain's Embrace 3,486 shielding (Guardian
+  3,435), Phoenix Pyre 2,268 damage (others 2,376 to 2,567, but spread over every foe), Plum Blossom Rain 528 healing
+  (Poison Pill 517, the others 822 to 909). Phoenix Pyre and Plum Blossom Rain were raised once after a first check
+  left them well below.
+- **Debug:** `?demo=rankup&sect` shows a breakthrough with the sect's mastery (`&sect` gives any demo run the sect's
+  studies, seals, recruits, blessings and mastery).
+
 ### 6.7 Bounty Board
 
 - **The board:** three standing bounties. A finished bounty is replaced by a new one when you return to the sect.
@@ -601,8 +623,10 @@ bounties: { id: string; progress: number }[];
      - Spirit Vein and the Pure run toggle
      - Training Grounds and 6 blessings
      - disciple mastery and the first exclusive Dao Paths
-   - Status (2026-11-11): the Doctrine Hall, the Spirit Vein with the Pure run switch, and the Training Grounds are
-     built (sections 6.3, 6.5 and 10). Disciple mastery is next.
+   - Status (2026-11-11): built. The Doctrine Hall, the Spirit Vein with the Pure run switch, the Training Grounds
+     (sections 6.3, 6.5 and 10) and disciple mastery with the first four exclusive Dao Paths (6.6). Left for later:
+     exclusive paths for the other 13 disciples, painted icons for the new blessings and paths, and play-testing the
+     Spirit Vein's economy.
 4. **Exclusive disciples and foes.**
    - Scope:
      - the first 3 exclusive disciples (art, AutoSprite packs, Dao Paths, VFX)
