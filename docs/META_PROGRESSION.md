@@ -97,8 +97,35 @@ disciple mastery (sections 6.3, 6.5, 6.6 and 10).
   Zhen, Long Mu and Ling Shuang. He deals the most damage of all of them; delayed area damage converts into wins a
   little less than burst on one target, so he sits with Hong Lian, below the best carries.
 
+**The fourth exclusive disciple is built** (2026-11-11):
+- **Jin Ding** (金鼎, "Golden Cauldron") answers the sect's call at Renown 35. Recruiting her costs 450 Funds and 10
+  Heavenly Jade.
+- Kit: an Alchemist and Body Refiner healer who turns the run's Spirit Stones into healing.
+  - Golden Elixir (60 Qi): every ally heals for 60% Spirit + 2 per Spirit Stone the run holds (counted up to 60), and
+    the most wounded ally heals as much again.
+  - Transmutation: her healing past full HP becomes a Shield, up to 20% of the ally's Max HP.
+  - Dao Paths:
+    - Bottomless Cauldron: 50 Qi, the others gain 10 Qi, +15 Spirit.
+    - Gilded Skin: +250 HP and +20 Defense; every cast also shields each ally for 5% of her Max HP, and
+      Transmutation reaches 35%.
+    - Golden Market: 3 healing per Stone, and each cast sells a pill for a Spirit Stone (3 per fight).
+  - Mastery: a second lore page, the title "Master of the Golden Cauldron" and the passive Overflowing Cauldron
+    (Golden Elixir also Cleanses the most wounded ally).
+- Engine:
+  - `BattleConfig.stonesHeld`: the run's Spirit Stones at the fight's start.
+  - a Scale key `stones`: per Stone, counting the Stones earned in the fight too, up to `STONES_SCALE_CAP` (60).
+  - the condition `counterBelow`.
+  - the `overhealShield` counter read by `Battle.heal`.
+- Art: a ChatGPT portrait, an AutoSprite pack, painted icons for her three paths, and her own flipbook
+  (`fx_sig_jin_ding`: the cauldron tips and pours a ring of golden elixir) with a `golden_rain` base.
+- Balance: `npx tsx scripts/healer-balance.mts [rank] [fights] [stones] [healers]` puts each healer on each path
+  behind the same team (Shan Tie, Bai Hu, Li Jian). At rank II, out of 240 fights:
+  - Mei Yao's paths win 141 to 170, Gu Lao's 184 to 187 and Yue Ling's 190 to 210.
+  - Jin Ding with no Stones: 116 to 141. With 30 Stones: 154 to 171. With 60 Stones: 182 to 210.
+  - Saving Stones instead of spending them is the trade: a poor run gets a weak healer, a thrifty run a strong one.
+
 Sect events are built too (6.8), with the first four new foes, and so is the Hall of Ancestors (6.9): phase 4's scope
-is done. Phase 5 (Steam) is not started, nor are exclusive disciples #4 to #8 (listed under "Later").
+is done. Phase 5 (Steam) is not started, nor are exclusive disciples #5 to #8 (listed under "Later").
 
 ---
 
@@ -581,7 +608,7 @@ This content also moves the game toward its v1.0 targets in GAME_DESIGN.md: 25 d
 - a Sword–Array hybrid who lays frozen sword formations (built: Ling Shuang)
 - a Body Refiner who stores damage taken and releases it as a shockwave (built: Zhong Ming)
 - a Talisman Master whose talismans explode after a delay (built: Wen Yan)
-- an Alchemist who turns Spirit Stones into healing
+- an Alchemist who turns Spirit Stones into healing (built: Jin Ding)
 - a Shadow Walker who leaves mirror clones
 - a Martial Artist who builds rage with every hit taken
 - an Array Master with a spirit-beast companion

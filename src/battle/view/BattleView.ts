@@ -68,6 +68,7 @@ export const FLIPBOOK_SHEETS = [
   'fx_frost_swords',
   'fx_sig_zhong_ming',
   'fx_sig_wen_yan',
+  'fx_sig_jin_ding',
   ...SIGNATURE_HEROES.map((h) => `fx_sig_${h}`),
 ];
 
@@ -110,6 +111,9 @@ const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: numbe
   sig_zhong_ming: { sheet: 'fx_sig_zhong_ming', scale: 1.6, ground: true, behind: true, fps: 22 },
   // Wen Yan's Paper Thunder: a sealed talisman ignites and blows up on its enemy
   sig_wen_yan: { sheet: 'fx_sig_wen_yan', scale: 1.25, ground: true, fps: 24, jitter: 10 },
+  // Jin Ding's Golden Elixir: her cauldron tips over her and pours golden elixir around her (drawn in front, light
+  // over the party, since behind her a melee cluster hides the cauldron)
+  sig_jin_ding: { sheet: 'fx_sig_jin_ding', scale: 1.45, ground: true, fps: 22 },
   tiger_roar: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 1.7, ground: true },
   impact: { sheet: 'fx_impact_hit', scale: 0.9 },
   fist_flurry: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 0.7 },
@@ -136,6 +140,7 @@ const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: numbe
 const SIGNATURE_BASE: Record<string, string> = {
   sig_zhong_ming: 'bell_toll',
   sig_wen_yan: 'talisman_blast',
+  sig_jin_ding: 'golden_rain',
   sig_li_jian: 'sword_slash',
   sig_shan_tie: 'shield_pop',
   sig_hong_lian: 'lotus_bloom',
@@ -175,6 +180,7 @@ const TECHNIQUE_SFX: Record<string, { key: string; rate?: number; volume?: numbe
   feng_huang: { key: 'fire', rate: 1.25, volume: 0.7 },
   ling_shuang: { key: 'frost', rate: 1.15, volume: 0.7 },
   wen_yan: { key: 'swing', rate: 1.35, volume: 0.5 },
+  jin_ding: { key: 'heal', rate: 0.85, volume: 0.65 },
   blood_moon_sovereign: { key: 'tribulation', rate: 0.8, volume: 0.5 },
   flood_dragon: { key: 'frost', rate: 0.6, volume: 0.75 },
 };
@@ -1473,6 +1479,13 @@ export class BattleView {
         this.fx.shockwave(p.x, p.y, 0xff6a3d, 110, 0.5);
         this.shake(3);
         audio.sfx('fire', { volume: 0.55, throttleMs: 120 });
+        break;
+      case 'golden_rain':
+        // Jin Ding's Golden Elixir: the cauldron tips and golden light pours over the party
+        this.fxBack.pillar(p.x, p.y, 0xffd36a, 230, 0.7);
+        this.fx.motes(p.x, p.y, 0xffd36a, 18, 200);
+        this.fx.ring(p.x, p.y, 0xffd36a, 200, 4, 0.8, hexLayout.squash);
+        this.screenFlash(0xffd36a, 0.08, 0.45);
         break;
       case 'moon_pulse':
         this.fx.ring(p.x, p.y, 0xc9d8ff, 220, 4, 0.9, hexLayout.squash);

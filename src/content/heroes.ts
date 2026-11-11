@@ -1244,6 +1244,87 @@ export const HEROES: HeroDef[] = [
     projectile: 'fire_talisman',
     exclusive: true,
   },
+  {
+    // the fourth exclusive disciple (Renown 35): she turns the sect's Spirit Stones into healing for the whole party
+    id: 'jin_ding',
+    name: 'Jin Ding',
+    hanzi: '金鼎',
+    title: 'Golden Cauldron',
+    classes: ['alchemist', 'body'],
+    baseStats: { hp: 1050, attack: 28, spirit: 48, crit: 5, defense: 32, range: 2 },
+    ability: {
+      id: 'golden_elixir',
+      name: 'Golden Elixir',
+      desc: 'She tips her cauldron over the party: every ally heals for [60% Spirit + 2 per Spirit Stone you hold] (up to 60 Stones), and the most wounded ally heals as much again.',
+      qiCost: 60,
+      castTime: 0.5,
+      vfx: 'heal_bloom',
+      actions: [
+        { do: 'vfx', key: 'sig_jin_ding', target: 'self' },
+        { do: 'heal', target: 'allAllies', scale: { spirit: 0.6, stones: 2 } },
+        { do: 'heal', target: { kind: 'lowestHpAlly', includeSelf: true }, scale: { spirit: 0.6, stones: 2 }, vfx: 'heal_bloom' },
+      ],
+      keywords: ['Heal'],
+    },
+    passives: [
+      {
+        id: 'transmutation',
+        name: 'Transmutation',
+        desc: "Nothing in her cauldron is wasted: her healing past full HP becomes a [Shield], up to [20%] of the ally's Max HP.",
+        trigger: { on: 'combatStart' },
+        actions: [{ do: 'counter', key: 'overhealShield', add: 20 }],
+        keywords: ['Shield'],
+      },
+    ],
+    daoPaths: [
+      {
+        id: 'jin_bottomless',
+        name: 'Bottomless Cauldron',
+        desc: 'Golden Elixir costs [50 Qi] and gives every other ally [10 Qi]. Gain [15 Spirit].',
+        stats: { spirit: 15 },
+        ability: { qiCost: 50, extraActions: [{ do: 'qi', target: 'otherAllies', amount: 10 }] },
+        keywords: ['Heal'],
+      },
+      {
+        id: 'jin_gilded_skin',
+        name: 'Gilded Skin',
+        desc: "Gain [250 HP] and [20 Defense]. Golden Elixir also gives every ally a [Shield] of [5% of her Max HP], and Transmutation shields reach [35%] of Max HP.",
+        stats: { hp: 250, defense: 20 },
+        ability: { extraActions: [{ do: 'shield', target: 'allAllies', scale: { maxHp: 0.05 }, duration: 6 }] },
+        effects: [{ id: 'gilded_skin', desc: 'Transmutation shields reach 35% of Max HP.', trigger: { on: 'combatStart' }, actions: [{ do: 'counter', key: 'overhealShield', add: 15 }] }],
+        keywords: ['Shield'],
+      },
+      {
+        id: 'jin_golden_market',
+        name: 'Golden Market',
+        desc: 'Golden Elixir heals [3] per Spirit Stone instead of 2, and each cast sells a pill: [+1 Spirit Stone] (at most [3] per fight).',
+        ability: {
+          actions: [
+            { do: 'vfx', key: 'sig_jin_ding', target: 'self' },
+            { do: 'heal', target: 'allAllies', scale: { spirit: 0.6, stones: 3 } },
+            { do: 'heal', target: { kind: 'lowestHpAlly', includeSelf: true }, scale: { spirit: 0.6, stones: 3 }, vfx: 'heal_bloom' },
+          ],
+        },
+        effects: [
+          {
+            id: 'golden_market',
+            desc: 'Each Golden Elixir sells a pill for a Spirit Stone, three per fight.',
+            trigger: { on: 'cast' },
+            conditions: [{ if: 'counterBelow', key: 'pills_sold', value: 3 }],
+            actions: [{ do: 'counter', key: 'pills_sold', add: 1 }, { do: 'stones', amount: 1 }],
+          },
+        ],
+        keywords: ['Heal'],
+      },
+    ],
+    tags: ['Heal', 'Shield'],
+    lore: 'She sold pills to princes until one of them paid her with a cauldron that drinks gold. Every coin she has earned since goes into the pot, and what comes out mends bone.',
+    portrait: 'jin_ding',
+    sprite: 'jin_ding',
+    accent: '#f2c14e',
+    projectile: 'gold_pill',
+    exclusive: true,
+  },
 ];
 
 export const HERO_BY_ID: Record<string, HeroDef> = Object.fromEntries(HEROES.map((h) => [h.id, h]));

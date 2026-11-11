@@ -1326,6 +1326,8 @@ export function battleConfig(s: RunState): BattleConfig | null {
     enemies,
     tribulationAt: s.activeChallenge?.id === 'storm' ? 25 : mods.tribulationAt,
     enemyDamagePct: mods.enemyDamagePct,
+    // Stone-scaled techniques (Jin Ding's Golden Elixir) read the run's Spirit Stones
+    stonesHeld: s.stones,
     startCombatHpLossPct: mods.startCombatHpLossPct,
     spawnEnemy: (enemyId, uid) => {
       const def = ENEMY_BY_ID[enemyId];

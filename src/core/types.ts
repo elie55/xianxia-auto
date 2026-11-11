@@ -86,6 +86,8 @@ export interface Scale {
   triggerAmount?: number;
   /** Ratio of current (not max) HP. */
   currentHp?: number;
+  /** Per Spirit Stone the run holds, counted up to STONES_SCALE_CAP (stones earned during the fight count too). */
+  stones?: number;
 }
 
 export type TargetKind =
@@ -150,7 +152,8 @@ export type ConditionDef =
   | { if: 'isRanged' }
   | { if: 'triggerWasCrit' }
   | { if: 'triggerWasAbility' }
-  | { if: 'counterAtLeast'; key: string; value: number };
+  | { if: 'counterAtLeast'; key: string; value: number }
+  | { if: 'counterBelow'; key: string; value: number };
 
 export type ActionDef =
   | {

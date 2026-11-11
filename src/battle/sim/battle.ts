@@ -37,7 +37,12 @@ export interface BattleConfig {
   startCombatHpLossPct?: number;
   maxTime?: number;
   spawnEnemy?: (enemyId: string, id: number) => UnitInit | null;
+  /** The run's Spirit Stones at the start of the fight, for Stone-scaled actions (Jin Ding's Golden Elixir). */
+  stonesHeld?: number;
 }
+
+/** Stone-scaled actions count at most this many Spirit Stones. */
+export const STONES_SCALE_CAP = 60;
 
 export interface QuestCounters {
   crits: number;
@@ -181,6 +186,8 @@ export class Battle {
   over = false;
   winner: Side | null = null;
   stonesBonus = 0;
+  /** The run's Spirit Stones when the fight began (BattleConfig.stonesHeld). */
+  stonesHeld = 0;
   permanentBuffs: PermanentBuff[] = [];
   quest: QuestCounters = {
     crits: 0,
@@ -212,6 +219,7 @@ export class Battle {
     this.startCombatHpLossPct = cfg.startCombatHpLossPct ?? 0;
     this.maxTime = cfg.maxTime ?? 150;
     this.spawnEnemyFactory = cfg.spawnEnemy;
+    this.stonesHeld = Math.max(0, cfg.stonesHeld ?? 0);
     for (const init of cfg.allies) this.addUnit(init, true);
     for (const init of cfg.bench ?? []) this.addUnit({ ...init, onBoard: false, pos: null }, true);
     for (const init of cfg.enemies) this.addUnit(init, true);
@@ -753,6 +761,12 @@ export class Battle {
     if (o.cleanse) this.cleanse(tgt);
     this.emit({ t: this.time, type: 'heal', id: tgt.id, sourceId: src.id, amount: healed, hp: tgt.hp });
     if (!o.silentTrigger) this.fire(src, 'healed', { target: tgt, amount: healed });
+    // Transmutation (Jin Ding): healing past full HP becomes a shield, up to a share of the ally's Max HP
+    const transmute = o.silentTrigger ? 0 : src.counter('overhealShield');
+    if (transmute > 0 && amount > healed) {
+      const room = (tgt.maxHp * transmute) / 100 - tgt.shield;
+      if (room > 0) this.addShield(src, tgt, Math.min(amount - healed, room), false, 6);
+    }
     return healed;
   }
 
@@ -938,6 +952,9 @@ export class Battle {
         case 'counterAtLeast':
           if (u.counter(c.key) < c.value) return false;
           break;
+        case 'counterBelow':
+          if (u.counter(c.key) >= c.value) return false;
+          break;
       }
     }
     return true;
@@ -979,7 +996,13 @@ export class Battle {
     if (s.counter) v += src.counter(s.counter.key) * s.counter.mult;
     if (s.targetMaxHp && tgt) v += tgt.maxHp * s.targetMaxHp;
     if (s.triggerAmount && ctx.amount) v += ctx.amount * s.triggerAmount;
+    if (s.stones) v += this.stonesCounted * s.stones;
     return v;
+  }
+
+  /** The Spirit Stones a Stone-scaled action counts: those the run holds plus those earned in this fight, capped. */
+  get stonesCounted(): number {
+    return Math.min(STONES_SCALE_CAP, this.stonesHeld + this.stonesBonus);
   }
 
   resolveTargets(sel: TargetSel | undefined, u: Unit, ctx: TriggerCtx): Unit[] {

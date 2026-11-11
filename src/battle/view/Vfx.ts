@@ -611,6 +611,7 @@ export const PROJECTILE_STYLES: Record<string, ProjectileStyle> = {
   spirit_arrow: { shape: 'arrow', color: 0xffe9a0, arc: 40 },
   spirit_bolt: { shape: 'orb', color: 0x9fd5ff, arc: 25 },
   fire_talisman: { shape: 'orb', color: 0xff8a3c, arc: 50 },
+  gold_pill: { shape: 'orb', color: 0xffd36a, arc: 60 },
   ice_shard: { shape: 'arrow', color: 0xa8e4ff, arc: 20 },
   lightning_bolt: { shape: 'orb', color: 0xfff27a, arc: 0 },
   moon_orb: { shape: 'orb', color: 0xc9d8ff, arc: 60 },

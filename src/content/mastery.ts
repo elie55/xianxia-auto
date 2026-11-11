@@ -25,6 +25,7 @@ export const LORE_II: Record<string, string> = {
   feng_huang: 'Each time she rises from the ashes she keeps one thing from the life before: a scar, a song, a grudge. She will not say which she kept this time, only that it was worth dying for.',
   ling_shuang: 'The nine swords belonged to nine elders who sealed a calamity beneath the glacier. When the swords followed her out, the elders came along to see who had woken them. They have not decided yet whether to be pleased.',
   wen_yan: 'The examiners still keep his last paper in a fireproof jar. It has not exploded yet, and nobody wants to be the one who reads it.',
+  jin_ding: "Her ledger lists every patient she has saved and what each one paid. The last line is in her own hand: 'Fed the cauldron my wedding ring. Worth it.'",
   zhong_ming: 'The temple was rebuilt around the bell, not around her, so she took the bell. It rings louder on her back than it ever did in the tower, and the bandits who come back to hear it again do not stay long.',
 };
 
@@ -179,6 +180,13 @@ export const MASTERY_PASSIVES: Record<string, UpgradeDef> = {
       ],
     },
     keywords: ['Frost'],
+  },
+  jin_ding: {
+    id: 'jin_overflowing_cauldron',
+    name: 'Overflowing Cauldron',
+    desc: 'Golden Elixir also [Cleanses] the most wounded ally.',
+    ability: { extraActions: [{ do: 'cleanse', target: { kind: 'lowestHpAlly', includeSelf: true } }] },
+    keywords: ['Heal'],
   },
   wen_yan: {
     id: 'wen_last_stroke',
