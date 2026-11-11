@@ -67,6 +67,7 @@ export const FLIPBOOK_SHEETS = [
   'fx_buff_rise',
   'fx_frost_swords',
   'fx_sig_zhong_ming',
+  'fx_sig_wen_yan',
   ...SIGNATURE_HEROES.map((h) => `fx_sig_${h}`),
 ];
 
@@ -107,6 +108,8 @@ const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: numbe
   frost_sword_rain: { sheet: 'fx_frost_swords', tint: 0xb8e6ff, scale: 1.15, ground: true, fps: 26, alpha: 0.8, jitter: 34 },
   // Zhong Ming's Ten Thousand Echoes: the Golden Bell rings behind her and its rings sweep the ground
   sig_zhong_ming: { sheet: 'fx_sig_zhong_ming', scale: 1.6, ground: true, behind: true, fps: 22 },
+  // Wen Yan's Paper Thunder: a sealed talisman ignites and blows up on its enemy
+  sig_wen_yan: { sheet: 'fx_sig_wen_yan', scale: 1.25, ground: true, fps: 24, jitter: 10 },
   tiger_roar: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 1.7, ground: true },
   impact: { sheet: 'fx_impact_hit', scale: 0.9 },
   fist_flurry: { sheet: 'fx_impact_hit', tint: 0xffd27f, scale: 0.7 },
@@ -132,6 +135,7 @@ const FLIPBOOK_FOR: Record<string, { sheet: string; scale?: number; tint?: numbe
 /** A signature technique key keeps the procedural part (sparks, rings, sounds) of the shared effect it replaced. */
 const SIGNATURE_BASE: Record<string, string> = {
   sig_zhong_ming: 'bell_toll',
+  sig_wen_yan: 'talisman_blast',
   sig_li_jian: 'sword_slash',
   sig_shan_tie: 'shield_pop',
   sig_hong_lian: 'lotus_bloom',
@@ -170,6 +174,7 @@ const TECHNIQUE_SFX: Record<string, { key: string; rate?: number; volume?: numbe
   gu_lao: { key: 'heal', rate: 0.75, volume: 0.6 },
   feng_huang: { key: 'fire', rate: 1.25, volume: 0.7 },
   ling_shuang: { key: 'frost', rate: 1.15, volume: 0.7 },
+  wen_yan: { key: 'swing', rate: 1.35, volume: 0.5 },
   blood_moon_sovereign: { key: 'tribulation', rate: 0.8, volume: 0.5 },
   flood_dragon: { key: 'frost', rate: 0.6, volume: 0.75 },
 };
@@ -1461,6 +1466,13 @@ export class BattleView {
         this.screenFlash(0xffd27f, 0.12, 0.35);
         this.shake(5);
         audio.sfx('bell', { volume: 0.85 });
+        break;
+      case 'talisman_blast':
+        // Wen Yan's talismans: a paper charge going off on its enemy
+        this.fx.burst(p.x, p.y + chest * 0.5, 0xff8a3c, { count: 14, speed: 180, size: 18, life: 0.5 });
+        this.fx.shockwave(p.x, p.y, 0xff6a3d, 110, 0.5);
+        this.shake(3);
+        audio.sfx('fire', { volume: 0.55, throttleMs: 120 });
         break;
       case 'moon_pulse':
         this.fx.ring(p.x, p.y, 0xc9d8ff, 220, 4, 0.9, hexLayout.squash);

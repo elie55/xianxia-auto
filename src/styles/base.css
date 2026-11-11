@@ -372,6 +372,10 @@ button:disabled {
 .kw-Resonance {
   color: #f0b45a;
 }
+.tag.kw-Seal,
+.kw-Seal {
+  color: #ff7a4a;
+}
 .tag.kw-Execute,
 .kw-Execute {
   color: #ff4d4d;

@@ -705,6 +705,7 @@ export class Battle {
     victim.moving = null;
     victim.burns = [];
     victim.bleeds = [];
+    victim.seals = [];
     victim.shields = [];
     this.emit({ t: this.time, type: 'death', id: victim.id });
     if (victim.boss && victim.side === 'enemy') this.killedBoss = true;
@@ -1161,6 +1162,19 @@ export class Battle {
         const dp = hexToPixel(dest);
         u.facing = tp.x >= dp.x ? 1 : -1;
         this.emit({ t: now, type: 'blink', id: u.id, from, to: dest });
+        break;
+      }
+      case 'delay': {
+        // each target is picked now and gets its own timer; the actions then run with that target as `target`
+        for (const t of this.resolveTargets(a.target ?? 'target', u, ctx)) {
+          const at = now + a.seconds;
+          const seal = a.mark === 'seal' ? { until: at, sourceId: u.id } : null;
+          if (seal) t.seals.push(seal);
+          this.schedule(at, () => {
+            if (seal) t.seals = t.seals.filter((s) => s !== seal);
+            if (t.alive) this.executeActions(a.actions, u, { ...ctx, target: t });
+          });
+        }
         break;
       }
       case 'repeat': {

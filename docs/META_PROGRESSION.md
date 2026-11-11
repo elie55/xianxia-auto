@@ -72,8 +72,33 @@ disciple mastery (sections 6.3, 6.5, 6.6 and 10).
   of the same team through Realm I elite and guardian fights from four contracts. At Foundation over 300 fights her
   paths win 69 to 109, against 58 to 109 for Bai Hu and 61 to 73 for Hei Yan. Shan Tie stays the strongest tank.
 
-Phase 5 is not started. The rest of phase 4 (more exclusive disciples, sect events, the Hall of Ancestors) is not
-either.
+**The third exclusive disciple is built** (2026-11-11, phase 4):
+- **Wen Yan** (文焰, "Paper Thunder") answers the sect's call at Renown 25. Recruiting him costs 350 Funds and
+  8 Heavenly Jade.
+- Kit: a Talisman Master and Array Master caster.
+  - Paper Thunder (60 Qi): he seals explosive talismans on the 3 nearest enemies. 1.5 s later each one explodes for
+    125% Spirit on its enemy and those beside it. If the enemy dies first, the talisman burns out.
+  - Lingering Ink: his auto-attacks have a 35% chance to seal a small talisman (50% Spirit, 1.5 s).
+  - Dao Paths: Ten Thousand Seals (5 talismans, +15 Spirit), Thunder Seal (+150 HP, explosions stun for 0.5 s) and
+    Quick Fuse (50 Qi, a 0.75 s fuse, +15 Attack Speed).
+  - Mastery: a second lore page, the title "Master of Paper Thunder" and the passive The Last Stroke (one more
+    talisman on the highest-HP enemy, 90% Spirit).
+- Engine: a new `delay` action picks its targets now and runs its actions on each of them later; `mark: 'seal'`
+  shows a talisman seal on the enemy meanwhile (`Unit.seals`, a seal badge in the arena, "Sealed" in the tooltip,
+  and the new Seal keyword).
+- Art: a ChatGPT portrait, a right-facing image for AutoSprite, an AutoSprite pack, painted icons for his three paths
+  and his own flipbook (`fx_sig_wen_yan`: a talisman falls, ignites and blows up) with a `talisman_blast` burst.
+  The seal badge is a painted medallion like the other statuses (`public/assets/art/ui/status/seal.webp`).
+- Fix found on the way: a status without a painted medallion falls back to its keyword glyph, and those SVGs fill with
+  `currentColor`, which draws black outside the page, so the tinted badge came out black. `UnitView` now paints the
+  glyph white before tinting it.
+- Balance: `npx tsx scripts/carry-balance.mts [rank] [fights] [heroes]` puts each carry on each path behind the same
+  team. At rank II over 200 fights his paths win 141 to 155, against 137 to 149 for Hong Lian and 151 to 173 for Lei
+  Zhen, Long Mu and Ling Shuang. He deals the most damage of all of them; delayed area damage converts into wins a
+  little less than burst on one target, so he sits with Hong Lian, below the best carries.
+
+Phase 5 is not started. The rest of phase 4 (sect events, the Hall of Ancestors and exclusive disciples #4 to #8) is
+not either.
 
 ---
 
@@ -477,7 +502,7 @@ This content also moves the game toward its v1.0 targets in GAME_DESIGN.md: 25 d
 **Working concepts for the exclusive disciples (names are placeholders):**
 - a Sword–Array hybrid who lays frozen sword formations (built: Ling Shuang)
 - a Body Refiner who stores damage taken and releases it as a shockwave (built: Zhong Ming)
-- a Talisman Master whose talismans explode after a delay
+- a Talisman Master whose talismans explode after a delay (built: Wen Yan)
 - an Alchemist who turns Spirit Stones into healing
 - a Shadow Walker who leaves mirror clones
 - a Martial Artist who builds rage with every hit taken
@@ -694,8 +719,8 @@ bounties: { id: string; progress: number }[];
      - the Recruitment Hall
      - sect events with the first new foes
      - the Hall of Ancestors
-   - Status (2026-11-11): the Recruitment Hall, Ling Shuang (Renown 10) and Zhong Ming (Renown 20) are built.
-     Left: the third exclusive disciple, sect events and the Hall of Ancestors.
+   - Status (2026-11-11): the Recruitment Hall and the first three exclusive disciples are built: Ling Shuang
+     (Renown 10), Zhong Ming (Renown 20) and Wen Yan (Renown 25). Left: sect events and the Hall of Ancestors.
 5. **Steam.**
    - Scope:
      - Steamworks bridge, achievements mirror

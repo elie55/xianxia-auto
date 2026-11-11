@@ -32,6 +32,9 @@ const KEYWORDS = new Set([
   'Bleed',
   'Stall',
   'Resonance',
+  'Seal',
+  'Seals',
+  'Sealed',
 ]);
 
 const KEYWORD_CLASS: Record<string, string> = {
@@ -50,6 +53,8 @@ const KEYWORD_CLASS: Record<string, string> = {
   Cleanses: 'Heal',
   Bleed: 'Omnivamp',
   Stall: 'Enlightenment',
+  Seals: 'Seal',
+  Sealed: 'Seal',
 };
 
 const CLASS_NAMES = new Map<string, string>();

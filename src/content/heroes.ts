@@ -1131,6 +1131,119 @@ export const HEROES: HeroDef[] = [
     accent: '#e2a64b',
     exclusive: true,
   },
+  {
+    id: 'wen_yan',
+    name: 'Wen Yan',
+    hanzi: '文焰',
+    title: 'Paper Thunder',
+    classes: ['talisman', 'array'],
+    baseStats: { hp: 720, attack: 24, spirit: 64, crit: 10, defense: 20, range: 4 },
+    ability: {
+      id: 'paper_thunder',
+      name: 'Paper Thunder',
+      desc: 'He seals explosive talismans on the [3 nearest enemies]. [1.5 s] later each one explodes for [125% Spirit] on its enemy and those beside it.',
+      qiCost: 60,
+      castTime: 0.5,
+      vfx: 'talisman_cast',
+      actions: [
+        {
+          do: 'delay',
+          seconds: 1.5,
+          target: { kind: 'nearestEnemies', count: 3 },
+          mark: 'seal',
+          actions: [
+            { do: 'vfx', key: 'sig_wen_yan', target: 'target' },
+            { do: 'damage', target: { kind: 'enemiesAroundTarget', radius: 1 }, scale: { spirit: 1.25 } },
+          ],
+        },
+      ],
+      keywords: ['Seal'],
+    },
+    passives: [
+      {
+        id: 'lingering_ink',
+        name: 'Lingering Ink',
+        desc: 'His auto-attacks have a [35%] chance to seal a small talisman on the target that explodes [1.5 s] later for [50% Spirit].',
+        trigger: { on: 'autoAttack' },
+        conditions: [{ if: 'chance', pct: 35 }],
+        actions: [{ do: 'delay', seconds: 1.5, target: 'triggerTarget', mark: 'seal', actions: [{ do: 'damage', target: 'target', scale: { spirit: 0.5 }, vfx: 'sig_wen_yan' }] }],
+        keywords: ['Seal'],
+      },
+    ],
+    daoPaths: [
+      {
+        id: 'wen_ten_thousand_seals',
+        name: 'Ten Thousand Seals',
+        desc: 'Paper Thunder seals [5] talismans instead of 3. Gain [15 Spirit].',
+        stats: { spirit: 15 },
+        ability: {
+          actions: [
+            {
+              do: 'delay',
+              seconds: 1.5,
+              target: { kind: 'nearestEnemies', count: 5 },
+              mark: 'seal',
+              actions: [
+                { do: 'vfx', key: 'sig_wen_yan', target: 'target' },
+                { do: 'damage', target: { kind: 'enemiesAroundTarget', radius: 1 }, scale: { spirit: 1.25 } },
+              ],
+            },
+          ],
+        },
+        keywords: ['Seal'],
+      },
+      {
+        id: 'wen_thunder_seal',
+        name: 'Thunder Seal',
+        desc: 'Each Paper Thunder explosion also [Stuns] what it hits for 0.5 s. Gain [150 HP].',
+        stats: { hp: 150 },
+        ability: {
+          actions: [
+            {
+              do: 'delay',
+              seconds: 1.5,
+              target: { kind: 'nearestEnemies', count: 3 },
+              mark: 'seal',
+              actions: [
+                { do: 'vfx', key: 'sig_wen_yan', target: 'target' },
+                { do: 'damage', target: { kind: 'enemiesAroundTarget', radius: 1 }, scale: { spirit: 1.25 } },
+                { do: 'status', target: { kind: 'enemiesAroundTarget', radius: 1 }, status: 'stun', duration: 0.5 },
+              ],
+            },
+          ],
+        },
+      },
+      {
+        id: 'wen_quick_fuse',
+        name: 'Quick Fuse',
+        desc: 'Paper Thunder costs [50 Qi] and its talismans explode after [0.75 s] instead of 1.5. Gain [15 Attack Speed].',
+        stats: { attackSpeed: 15 },
+        ability: {
+          qiCost: 50,
+          actions: [
+            {
+              do: 'delay',
+              seconds: 0.75,
+              target: { kind: 'nearestEnemies', count: 3 },
+              mark: 'seal',
+              actions: [
+                { do: 'vfx', key: 'sig_wen_yan', target: 'target' },
+                { do: 'damage', target: { kind: 'enemiesAroundTarget', radius: 1 }, scale: { spirit: 1.25 } },
+              ],
+            },
+          ],
+        },
+        keywords: ['Seal'],
+      },
+    ],
+    tags: ['Seal'],
+    lore: 'He failed the imperial examinations nine times because every essay he wrote caught fire. The tenth time, he stopped writing essays.',
+    portrait: 'wen_yan',
+    sprite: 'wen_yan',
+    accent: '#ff6a3d',
+    projectile: 'fire_talisman',
+    exclusive: true,
+  },
 ];
 
 export const HERO_BY_ID: Record<string, HeroDef> = Object.fromEntries(HEROES.map((h) => [h.id, h]));

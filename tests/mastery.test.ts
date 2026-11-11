@@ -56,7 +56,7 @@ describe('Disciple mastery', () => {
   });
 
   it('gives every disciple a second lore page, a title and a permanent passive that only adds to its kit', () => {
-    const flat = (actions: ActionDef[]): ActionDef[] => actions.flatMap((a) => (a.do === 'repeat' ? [a, ...flat(a.actions)] : [a]));
+    const flat = (actions: ActionDef[]): ActionDef[] => actions.flatMap((a) => (a.do === 'repeat' || a.do === 'delay' ? [a, ...flat(a.actions)] : [a]));
     const ids = new Set<string>();
     for (const h of HEROES) {
       expect(LORE_II[h.id], h.id).toBeTruthy();

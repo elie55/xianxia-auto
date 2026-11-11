@@ -365,6 +365,7 @@ export const KEYWORD_DESC: Record<string, string> = {
   Execute: 'Instantly slays enemies below an HP threshold.',
   Qi: 'Qi fills from attacks; at full Qi the disciple casts their ability.',
   Resonance: 'Part of the damage she takes is stored as Resonance. Ringing the Golden Bell releases it as a shockwave.',
+  Seal: 'A talisman sealed on an enemy explodes a few seconds later. If the enemy dies first, it burns out.',
 };
 
 export const STAT_DESC: Record<string, string> = {

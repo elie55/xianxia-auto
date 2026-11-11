@@ -55,6 +55,7 @@ export const MASTER_TITLES: Record<string, string> = {
   feng_huang: 'Master of the Nirvana Flame',
   ling_shuang: 'Master of the Nine Frost Swords',
   zhong_ming: 'Master of the Golden Bell',
+  wen_yan: 'Master of Paper Thunder',
 };
 /** The cosmetic id of a disciple's mastery title. */
 export const masterTitleId = (hero: string) => `master_${hero}`;

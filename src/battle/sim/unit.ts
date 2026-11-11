@@ -126,6 +126,8 @@ export class Unit {
   // statuses
   burns: BurnInstance[] = [];
   bleeds: BurnInstance[] = [];
+  /** Talisman seals waiting to explode on this unit (Wen Yan's delayed talismans, the `delay` action's `mark`). */
+  seals: { until: number; sourceId: number }[] = [];
   poison = 0;
   poisonSourceId = -1;
   frost = 0;

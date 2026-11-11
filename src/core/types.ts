@@ -58,7 +58,9 @@ export type Keyword =
   | 'Execute'
   | 'Qi'
   /** Zhong Ming's stored damage (the `resonance` counter). */
-  | 'Resonance';
+  | 'Resonance'
+  /** Wen Yan's delayed talismans (the `delay` action's seal mark). */
+  | 'Seal';
 
 export type StatusKind = 'burn' | 'poison' | 'frost' | 'stun' | 'taunt' | 'bleed' | 'weaken' | 'sunder';
 
@@ -194,6 +196,11 @@ export type ActionDef =
   | { do: 'revive'; pct: number }
   | { do: 'blink'; target: TargetSel }
   | { do: 'repeat'; times: number; interval: number; actions: ActionDef[] }
+  /**
+   * Actions that run `seconds` later, once for each target picked now, with that target as `target` (Wen Yan's
+   * talismans). `mark: 'seal'` shows a talisman seal on the target meanwhile. If the target dies first, nothing happens.
+   */
+  | { do: 'delay'; seconds: number; target?: TargetSel; mark?: 'seal'; actions: ActionDef[] }
   | { do: 'convertStat'; from: StatKey; to: StatKey; ratio: number }
   /**
    * A named counter on the unit: `add` a fixed amount, plus `scale` (e.g. a share of the triggering damage), or `set`

@@ -24,6 +24,7 @@ export const LORE_II: Record<string, string> = {
   gu_lao: 'He was a general before he was a monk, and he remembers every soldier he lost by name. He chants them each morning. The list stopped growing the day he started walking beside his companions instead of ahead of them.',
   feng_huang: 'Each time she rises from the ashes she keeps one thing from the life before: a scar, a song, a grudge. She will not say which she kept this time, only that it was worth dying for.',
   ling_shuang: 'The nine swords belonged to nine elders who sealed a calamity beneath the glacier. When the swords followed her out, the elders came along to see who had woken them. They have not decided yet whether to be pleased.',
+  wen_yan: 'The examiners still keep his last paper in a fireproof jar. It has not exploded yet, and nobody wants to be the one who reads it.',
   zhong_ming: 'The temple was rebuilt around the bell, not around her, so she took the bell. It rings louder on her back than it ever did in the tower, and the bandits who come back to hear it again do not stay long.',
 };
 
@@ -178,6 +179,15 @@ export const MASTERY_PASSIVES: Record<string, UpgradeDef> = {
       ],
     },
     keywords: ['Frost'],
+  },
+  wen_yan: {
+    id: 'wen_last_stroke',
+    name: 'The Last Stroke',
+    desc: 'Paper Thunder also seals a talisman on the [highest-HP enemy] that explodes [2 s] later for [90% Spirit].',
+    ability: {
+      extraActions: [{ do: 'delay', seconds: 2, target: 'highestHpEnemy', mark: 'seal', actions: [{ do: 'damage', target: 'target', scale: { spirit: 0.9 }, vfx: 'sig_wen_yan' }] }],
+    },
+    keywords: ['Seal'],
   },
   zhong_ming: {
     id: 'zhong_morning_bell',

@@ -105,4 +105,5 @@ export const KEYWORD_ICON: Record<string, string> = {
   Execute: 'kw_execute',
   Qi: 'kw_qi',
   Resonance: 'kw_resonance',
+  Seal: 'kw_seal',
 };

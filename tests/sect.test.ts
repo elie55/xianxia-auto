@@ -195,7 +195,9 @@ describe('The main menu sect banner', () => {
     const all = metaWith({ renown: { xp: cumulativeXp(13) }, sect: { disciples: ['ling_shuang'], bounties, vein: { stones: 2 } } });
     expect(sectInvite(all)).toMatchObject({ ready: false, headline: "At Renown 20, Zhong Ming answers the sect's call." });
     expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(20) }, sect: { disciples: ['ling_shuang'], bounties, vein: { stones: 2 } } })).headline).toBe('Zhong Ming waits at the gate of the Recruitment Hall.');
-    const done = metaWith({ renown: { xp: cumulativeXp(20) }, sect: { disciples: ['ling_shuang', 'zhong_ming'], bounties, vein: { stones: 2 } } });
+    const both = metaWith({ renown: { xp: cumulativeXp(20) }, sect: { disciples: ['ling_shuang', 'zhong_ming'], bounties, vein: { stones: 2 } } });
+    expect(sectInvite(both).headline).toBe("At Renown 25, Wen Yan answers the sect's call.");
+    const done = metaWith({ renown: { xp: cumulativeXp(25) }, sect: { disciples: ['ling_shuang', 'zhong_ming', 'wen_yan'], bounties, vein: { stones: 2 } } });
     expect(sectInvite(done)).toMatchObject({ ready: false, headline: '3 bounties wait on the Bounty Board.' });
   });
 });

@@ -9,17 +9,32 @@ import { GlowFilter } from 'pixi-filters';
 import { lookMatrix } from '@/content/themes';
 
 /** Status medallion art: painted icons in assets/art/ui/status when present, else the tinted keyword glyph. */
-const STATUS_GLYPH: Record<string, string> = { burn: 'kw_burn', poison: 'kw_poison', frost: 'kw_frost', bleed: 'kw_bleed', taunt: 'kw_taunt', stun: 'kw_lightning' };
+const STATUS_GLYPH: Record<string, string> = { burn: 'kw_burn', poison: 'kw_poison', frost: 'kw_frost', bleed: 'kw_bleed', taunt: 'kw_taunt', stun: 'kw_lightning', seal: 'kw_seal' };
 const statusTex = new Map<string, { tex: Texture; painted: boolean }>();
 const statusLoading = new Set<string>();
 /** Bumped whenever a status texture arrives, so every unit rebuilds its badges once. */
 let statusEpoch = 0;
+/** The keyword glyphs fill with currentColor, which draws black outside the page; paint one white so the badge tint shows. */
+async function glyphTexture(name: string): Promise<Texture | null> {
+  try {
+    const svg = (await (await fetch(`./assets/icons/${name}.svg`)).text()).replaceAll('currentColor', '#ffffff');
+    const img = new Image();
+    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    await img.decode();
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    c.getContext('2d')!.drawImage(img, 0, 0, 64, 64);
+    return Texture.from(c);
+  } catch {
+    return null;
+  }
+}
 function statusTexture(kind: string): void {
   if (statusTex.has(kind) || statusLoading.has(kind)) return;
   statusLoading.add(kind);
   void (async () => {
     const painted = await Assets.load<Texture>(`./assets/art/ui/status/${kind}.webp`).catch(() => null);
-    const tex = painted ?? (STATUS_GLYPH[kind] ? await Assets.load<Texture>(`./assets/icons/${STATUS_GLYPH[kind]}.svg`).catch(() => null) : null);
+    const tex = painted ?? (STATUS_GLYPH[kind] ? await glyphTexture(STATUS_GLYPH[kind]) : null);
     if (tex) {
       statusTex.set(kind, { tex, painted: !!painted });
       statusEpoch++;
@@ -418,6 +433,7 @@ export class UnitView extends Container {
     if (u.bleeds.length) list.push({ kind: 'bleed', count: u.bleeds.length > 1 ? `${u.bleeds.length}` : '' });
     if (u.isStunned) list.push({ kind: 'stun', count: '' });
     if (u.tauntTargetId !== null) list.push({ kind: 'taunt', count: '' });
+    if (u.seals.length) list.push({ kind: 'seal', count: u.seals.length > 1 ? `${u.seals.length}` : '' });
     for (const s of list) statusTexture(s.kind);
     const sig = `${statusEpoch}|${list.map((s) => `${s.kind}${s.count}`).join(',')}`;
     if (sig === this.statusSig) return;

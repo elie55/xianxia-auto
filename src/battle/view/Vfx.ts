@@ -631,6 +631,8 @@ export const STATUS_COLORS: Record<string, number> = {
   bleed: 0xff6b7a,
   weaken: 0xb0a0d0,
   sunder: 0xff9f7a,
+  // a talisman seal waiting to explode (Wen Yan)
+  seal: 0xff6a3d,
 };
 
 /** Signature colour for a class's weapon trails. */
