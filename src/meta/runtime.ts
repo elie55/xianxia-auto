@@ -8,6 +8,7 @@ import { computeRunRenown, levelOf } from '@/meta/renown';
 import { BOUNTY_BY_ID, SECT_OPENS, addPurse, computeRunPurse, nextHeirloomLevel, refillBounties, sectOf } from '@/meta/sect';
 import { addMastery } from '@/meta/mastery';
 import { omenResults, rollSectEvent } from '@/meta/sectEvents';
+import { addVictory, victoryRecord } from '@/meta/hall';
 
 /** Achievements earned but not shown yet: the toast layer shows them one by one. */
 export const achievementToasts = signal<string[]>([]);
@@ -136,6 +137,8 @@ export function finishRunMeta(s: RunState): void {
     }
     m.renown = { xp: before + pay.total };
     m.mastery = omens.mastery;
+    // the Hall of Ancestors raises a statue of the victory's champion
+    if (won) m.hall = { victories: addVictory(m.hall?.victories, victoryRecord(s)) };
     const sect = sectOf(m);
     sect.purse = addPurse(sect.purse, purse);
     for (const id of met) sect.purse = addPurse(sect.purse, BOUNTY_BY_ID[id].reward);

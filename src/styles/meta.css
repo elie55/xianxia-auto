@@ -2322,3 +2322,192 @@
 .result-boon b {
   color: var(--gold-bright);
 }
+
+/* ───────── HALL OF ANCESTORS (docs/META_PROGRESSION.md 6.9): statues of victories and masters ───────── */
+.hall-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 14px;
+}
+.hall-tab .brush {
+  margin-right: 4px;
+  color: var(--gold-bright);
+}
+.hall-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.hall-empty {
+  padding: 18px;
+  border: 1px dashed rgba(212, 168, 75, 0.4);
+  border-radius: 10px;
+  color: var(--paper-dim, #c9c0a8);
+  font-size: calc(15px * var(--ts, 1));
+  text-align: center;
+}
+.hall-older {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--gold);
+  font-size: calc(14px * var(--ts, 1));
+}
+/* a portrait cast in bronze or gold */
+.hall-figure {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.hall-figure img {
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+.hall-figure.bronze img {
+  filter: grayscale(1) sepia(1) saturate(1.7) hue-rotate(-10deg) brightness(0.8) contrast(1.2) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.7));
+}
+.hall-figure.gold img {
+  filter: grayscale(1) sepia(1) saturate(3.2) hue-rotate(4deg) brightness(1.08) contrast(1.12) drop-shadow(0 0 10px rgba(255, 214, 120, 0.55));
+}
+.hall-figure.empty img {
+  filter: grayscale(1) brightness(0.42) contrast(0.85);
+  opacity: 0.5;
+}
+.hall-statues {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.hall-statue {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 10px 12px 12px;
+  border-radius: 10px;
+  background: radial-gradient(120% 80% at 30% 100%, rgba(212, 168, 75, 0.14), rgba(5, 10, 11, 0) 70%), rgba(5, 11, 11, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 75, 0.35);
+}
+.hall-statue .hall-figure {
+  flex: none;
+  width: 92px;
+  padding-bottom: 10px;
+  background: linear-gradient(180deg, transparent 86%, #5a4626 86%, #8a6d3c 92%, #3b2d17 100%);
+}
+.hall-plaque {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: calc(13px * var(--ts, 1));
+  color: var(--paper);
+}
+.hall-plaque > b {
+  font-size: calc(17px * var(--ts, 1));
+  color: #e9c98a;
+}
+.hall-plaque-line.gold {
+  color: var(--gold-bright);
+}
+.hall-team {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 4px;
+}
+.hall-masters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.hall-master {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px 10px;
+  border-radius: 10px;
+  background: rgba(5, 11, 11, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 75, 0.22);
+}
+.hall-master .hall-figure {
+  width: 100%;
+  padding-bottom: 8px;
+  background: linear-gradient(180deg, transparent 88%, #3a3326 88%, #5c5240 94%, #262118 100%);
+}
+.hall-master.gold {
+  background: radial-gradient(90% 70% at 50% 40%, rgba(255, 214, 120, 0.16), rgba(5, 11, 11, 0.5) 70%);
+  box-shadow: inset 0 0 0 1px rgba(243, 207, 120, 0.75), 0 0 16px rgba(243, 207, 120, 0.18);
+}
+.hall-master.gold .hall-figure {
+  background: linear-gradient(180deg, transparent 88%, #8a6a24 88%, #e2bd62 94%, #5e4718 100%);
+}
+.hall-master.bronze .hall-figure {
+  background: linear-gradient(180deg, transparent 88%, #5a4626 88%, #8a6d3c 94%, #3b2d17 100%);
+}
+.hall-master-name {
+  font-size: calc(14px * var(--ts, 1));
+  color: var(--paper);
+  text-align: center;
+}
+.hall-master.gold .hall-master-name {
+  color: var(--gold-bright);
+}
+.hall-master-level {
+  font-size: calc(12px * var(--ts, 1));
+  color: var(--gold);
+}
+.hall-master-bar {
+  width: 70%;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.hall-master-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #b08a3c, #f3cf78);
+}
+.hall-ladder {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hall-ladder-row {
+  display: grid;
+  grid-template-columns: 34px 92px 1fr 80px 100px auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(5, 11, 11, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 75, 0.25);
+  font-size: calc(14px * var(--ts, 1));
+  color: var(--paper);
+}
+.hall-ladder-row.first {
+  box-shadow: inset 0 0 0 1px rgba(243, 207, 120, 0.8), 0 0 14px rgba(243, 207, 120, 0.18);
+}
+.hall-ladder-rank {
+  font-size: calc(20px * var(--ts, 1));
+  color: var(--gold-bright);
+  text-align: center;
+}
+.hall-ladder-score {
+  text-align: right;
+  color: #e9c98a;
+}
+.hall-pure {
+  padding: 1px 8px;
+  border-radius: 9px;
+  font-size: calc(12px * var(--ts, 1));
+  color: #bfe9ff;
+  box-shadow: inset 0 0 0 1px rgba(150, 210, 255, 0.6);
+}
+.hall-merit .ach-grid {
+  grid-template-columns: 1fr;
+}

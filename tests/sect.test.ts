@@ -191,9 +191,10 @@ describe('The main menu sect banner', () => {
     expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(10) }, sect: { disciples: ['ling_shuang'] } })).headline).toBe('Renown 11 opens the Spirit Vein.');
     expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(11) }, sect: { disciples: ['ling_shuang'], vein: { stones: 2 } } })).headline).toBe('Renown 13 opens the Training Grounds.');
     const bounties = { active: ['win_six', 'two_elites', 'realm_one'], done: [] };
-    // the second exclusive disciple is the next milestone, then the bounties once she has joined
+    // the Hall of Ancestors is the next milestone, then the second exclusive disciple, then the bounties once she has joined
     const all = metaWith({ renown: { xp: cumulativeXp(13) }, sect: { disciples: ['ling_shuang'], bounties, vein: { stones: 2 } } });
-    expect(sectInvite(all)).toMatchObject({ ready: false, headline: "At Renown 20, Zhong Ming answers the sect's call." });
+    expect(sectInvite(all)).toMatchObject({ ready: false, headline: 'Renown 17 opens the Hall of Ancestors.' });
+    expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(17) }, sect: { disciples: ['ling_shuang'], bounties, vein: { stones: 2 } } })).headline).toBe("At Renown 20, Zhong Ming answers the sect's call.");
     expect(sectInvite(metaWith({ renown: { xp: cumulativeXp(20) }, sect: { disciples: ['ling_shuang'], bounties, vein: { stones: 2 } } })).headline).toBe('Zhong Ming waits at the gate of the Recruitment Hall.');
     const both = metaWith({ renown: { xp: cumulativeXp(20) }, sect: { disciples: ['ling_shuang', 'zhong_ming'], bounties, vein: { stones: 2 } } });
     expect(sectInvite(both).headline).toBe("At Renown 25, Wen Yan answers the sect's call.");

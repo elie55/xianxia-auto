@@ -155,7 +155,7 @@ function TrackTab() {
 
 const CATEGORIES: AchievementCategory[] = ['progress', 'contracts', 'mastery', 'builds', 'feats', 'discovery', 'secrets'];
 
-function AchievementsTab() {
+export function AchievementsTab() {
   const have = meta.value.achievements ?? {};
   const earnedXp = ACHIEVEMENTS.filter((a) => have[a.id]).reduce((n, a) => n + a.xp, 0);
   const totalXp = ACHIEVEMENTS.reduce((n, a) => n + a.xp, 0);

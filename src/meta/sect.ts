@@ -51,7 +51,7 @@ export function computeRunPurse(s: RunState): Purse {
 
 // ───────────────────────── buildings ─────────────────────────
 
-export type BuildingId = 'hall' | 'pavilion' | 'forge' | 'bounty' | 'recruit' | 'doctrine' | 'vein' | 'training';
+export type BuildingId = 'hall' | 'pavilion' | 'forge' | 'bounty' | 'recruit' | 'doctrine' | 'vein' | 'training' | 'ancestors';
 /** The buildings raised with Funds and materials. */
 export type UpgradableId = 'pavilion' | 'forge' | 'recruit' | 'doctrine' | 'vein' | 'training';
 export const UPGRADABLE: UpgradableId[] = ['forge', 'pavilion', 'doctrine', 'recruit', 'vein', 'training'];
@@ -117,6 +117,15 @@ export const BUILDINGS: BuildingDef[] = [
     unlock: 13,
     material: 'cores',
     upgradable: true,
+  },
+  {
+    id: 'ancestors',
+    name: 'Hall of Ancestors',
+    hanzi: '祖',
+    icon: 'sect_hall_of_ancestors',
+    desc: 'The sect remembers: a statue for the champion of every victory, the masters of each disciple, the best Ladder ascents and the Hall of Merit. Free, no levels.',
+    unlock: 17,
+    upgradable: false,
   },
 ];
 export const BUILDING_BY_ID = Object.fromEntries(BUILDINGS.map((b) => [b.id, b])) as Record<BuildingId, BuildingDef>;

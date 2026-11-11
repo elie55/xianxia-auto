@@ -44,6 +44,7 @@ import { Icon } from '@/ui/components/Icon';
 import { RichText } from '@/ui/components/RichText';
 import { tip } from '@/ui/components/Tooltip';
 import { SectEventScroll } from '@/ui/components/SectEventScroll';
+import { AncestorsPanel } from '@/ui/components/AncestorsPanel';
 import { pendingEvent } from '@/meta/sectEvents';
 import { audio } from '@/audio/AudioManager';
 
@@ -63,6 +64,8 @@ const SPOT: Record<BuildingId, { x: number; y: number }> = {
   vein: { x: 930, y: 880 },
   // the terrace beside the Main Hall, under the maples
   training: { x: 1730, y: 640 },
+  // the small temple between the Pavilion and the Forge, where the sect keeps its ancestors' tablets
+  ancestors: { x: 1085, y: 440 },
 };
 
 /**
@@ -161,7 +164,7 @@ export function SectScreen() {
             <Icon name="ui_close" size={20} />
           </button>
           <div class="sect-drawer-scroll" key={open}>
-            <DrawerHead id={open} level={open === 'hall' ? rankOf(levelOf(xp).level).index + 1 : open === 'bounty' ? 0 : s.buildings[open]} />
+            <DrawerHead id={open} level={open === 'hall' ? rankOf(levelOf(xp).level).index + 1 : open === 'bounty' || open === 'ancestors' ? 0 : s.buildings[open]} />
             {open === 'hall' && <HallPanel />}
             {open === 'pavilion' && <PavilionPanel />}
             {open === 'forge' && <ForgePanel />}
@@ -170,6 +173,7 @@ export function SectScreen() {
             {open === 'doctrine' && <DoctrinePanel />}
             {open === 'vein' && <VeinPanel />}
             {open === 'training' && <TrainingPanel />}
+            {open === 'ancestors' && <AncestorsPanel />}
           </div>
         </aside>
       )}

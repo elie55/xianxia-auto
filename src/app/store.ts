@@ -85,6 +85,8 @@ export interface MetaSave {
   lifetime?: LifetimeStats;
   /** Disciple mastery: fights won with each disciple on the board, across all runs (src/meta/mastery.ts). */
   mastery?: Record<string, number>;
+  /** The Hall of Ancestors (src/meta/hall.ts): a statue for each victory, newest first. */
+  hall?: { victories: { at: number; tier: number; mvp: string; dealt: number; team: string[]; pure?: boolean; floor?: number; minutes?: number }[] };
   /** The Sect (src/meta/sect.ts, read through sectOf): Funds and materials, building levels, studies, seals, heirlooms, bounties. */
   sect?: {
     purse?: { funds: number; herbs: number; cores: number; jade: number };

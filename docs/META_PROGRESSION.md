@@ -97,8 +97,8 @@ disciple mastery (sections 6.3, 6.5, 6.6 and 10).
   Zhen, Long Mu and Ling Shuang. He deals the most damage of all of them; delayed area damage converts into wins a
   little less than burst on one target, so he sits with Hong Lian, below the best carries.
 
-Sect events are built too (6.8), with the first four new foes. Phase 5 is not started. The rest of phase 4 (the Hall
-of Ancestors and exclusive disciples #4 to #8) is not either.
+Sect events are built too (6.8), with the first four new foes, and so is the Hall of Ancestors (6.9): phase 4's scope
+is done. Phase 5 (Steam) is not started, nor are exclusive disciples #4 to #8 (listed under "Later").
 
 ---
 
@@ -404,7 +404,8 @@ exclusive content without new animations.
 - **I:** a second page of lore for all 17 disciples, shown under the first in the Compendium.
 - **II:** a golden aura ring in the arena, which comes back after a Surge.
 - **III:** the title "Master of …", named after the disciple's technique, in the profile's title picker.
-- **IV:** a gilded card frame on that disciple's cards. The Hall of Ancestors and its statues are not built yet.
+- **IV:** a gilded card frame on that disciple's cards. In the Hall of Ancestors (6.9) the disciple stands in bronze
+  from mastery III and gilded at V.
 - **V:** a permanent passive for each of the 17 disciples (`MASTERY_PASSIVES`).
   - **How it works:** from then on the disciple fights with it in every run, on top of whichever Dao Path it takes,
     even before Foundation. The run lists the mastered disciples in `TeamContext.masteryPassives`.
@@ -531,6 +532,32 @@ They join the Compendium when met. Later they can also appear on the Ladder and 
     Tie and Bai Hu always. Hong Lian never wins; she is the weakest duelist in ordinary Heavenly Trials too.
   - A rank I champion rarely beats it (Bai Hu 14% to 46%), so hunting it is a choice for a strong run. Leaving it
     sealed still pays 5 Spirit Stones.
+
+### 6.9 Hall of Ancestors
+
+The sect's memory. It opens at Renown 17, costs nothing and has no levels. It changes no fight: it keeps what the
+player has done and shows it with some ceremony. Its medallion stands on the small temple between the Scripture
+Pavilion and the Artifact Forge.
+
+**Its four halls (tabs).**
+- **Victories.** Every run that clears a contract raises a statue of its champion: the disciple who dealt the most
+  damage. A bronze plaque gives the contract, the date, the damage, the run's party and, when the run went on, the
+  Ladder floor reached. Newest first; the last 60 victories are kept. Victories won before the Hall existed are
+  counted in a line of their own.
+- **Masters.** Each disciple stands on a pedestal:
+  - gilded at mastery V, with their title and their permanent passive;
+  - bronze at mastery III and IV;
+  - an empty pedestal before that, with the wins still needed.
+- **The Ladder.** The ten best ascents of the Heavenly Ladder: floor, score, contract, date and the Pure mark.
+- **Hall of Merit.** The achievement wall, the same one as the Renown screen's Achievements tab.
+
+The statues are the disciples' own portraits in bronze or gold (a CSS treatment); the Hall needs no new character
+art, only its medallion.
+
+**Built (2026-11-11).** `src/meta/hall.ts` (victoryRecord, addVictory, hallOfMasters), the save's `MetaSave.hall`,
+the victory recorded in `finishRunMeta` (`src/meta/runtime.ts`), the panel `src/ui/components/AncestorsPanel.tsx`
+(the Hall of Merit reuses the Renown screen's `AchievementsTab`), the medallion `sect_hall_of_ancestors` (ChatGPT),
+tests in `tests/hall.test.ts`.
 
 ## 7. Exclusive content and how it is unlocked
 
@@ -772,7 +799,7 @@ bounties: { id: string; progress: number }[];
      - the Hall of Ancestors
    - Status (2026-11-11): the Recruitment Hall and the first three exclusive disciples are built: Ling Shuang
      (Renown 10), Zhong Ming (Renown 20) and Wen Yan (Renown 25). Sect events are built with their first four foes
-     (6.8). Left: the Hall of Ancestors.
+     (6.8), and the Hall of Ancestors (6.9). Phase 4 is done.
 5. **Steam.**
    - Scope:
      - Steamworks bridge, achievements mirror
